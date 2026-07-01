@@ -2,60 +2,60 @@
 <html lang="es">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>CONTAX — Sistema Contable</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>CONTAX — Sistema Contable v2</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
-body{font-family:'Segoe UI',sans-serif;background:#F0F2F5;color:#1a1a2e;font-size:13px;line-height:1.4}
+body{font-family:'Segoe UI',sans-serif;background:#F0F2F5;color:#1a1a2e;font-size:13px}
 .hdr{background:#1C2B4B;color:#fff;padding:10px 18px;display:flex;align-items:center;gap:12px;border-bottom:3px solid #3B82F6;position:sticky;top:0;z-index:100}
-.logo{background:#3B82F6;border-radius:6px;width:30px;height:30px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12px;flex-shrink:0}
-.hdr-right{margin-left:auto;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
-.spill{font-size:10px;display:flex;gap:6px;align-items:center}
+.logo{background:#3B82F6;border-radius:6px;width:30px;height:30px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12px;flex-shrink:0;cursor:pointer}
+.hdr-r{margin-left:auto;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
 .ok{color:#4ADE80;font-weight:700}.err{color:#F87171;font-weight:700}
 .layout{display:flex;height:calc(100vh - 50px)}
-.nav{width:190px;background:#1C2B4B;padding:10px 0;overflow-y:auto;flex-shrink:0}
-.ns{padding:12px 14px 3px;font-size:9px;font-weight:700;color:rgba(255,255,255,.3);text-transform:uppercase;letter-spacing:.08em}
-.ni{padding:8px 14px;cursor:pointer;font-size:12px;color:rgba(255,255,255,.55);border-left:3px solid transparent;display:flex;align-items:center;gap:7px;transition:all .1s}
+.nav{width:185px;background:#1C2B4B;overflow-y:auto;flex-shrink:0;padding:6px 0}
+.ns{padding:10px 14px 3px;font-size:9px;font-weight:700;color:rgba(255,255,255,.3);text-transform:uppercase;letter-spacing:.08em}
+.ni{padding:8px 14px;cursor:pointer;font-size:12px;color:rgba(255,255,255,.55);border-left:3px solid transparent;display:flex;align-items:center;gap:7px}
 .ni.a{background:rgba(59,130,246,.25);color:#fff;border-left-color:#3B82F6;font-weight:600}
 .ni:hover:not(.a){color:rgba(255,255,255,.85);background:rgba(255,255,255,.07)}
-.nsumm{padding:10px 14px;font-size:10px;color:rgba(255,255,255,.4);border-top:1px solid rgba(255,255,255,.1);margin-top:6px}
+.nsumm{padding:8px 14px;font-size:10px;color:rgba(255,255,255,.4);border-top:1px solid rgba(255,255,255,.1);margin-top:6px}
 .nsumm div{color:rgba(255,255,255,.55);margin-top:2px}
 .cnt{flex:1;padding:16px;overflow-y:auto}
 .card{background:#fff;border-radius:10px;padding:16px;margin-bottom:12px;box-shadow:0 1px 4px rgba(0,0,0,.07)}
-.ch2{font-size:14px;font-weight:700;color:#1C2B4B;margin-bottom:12px;padding-bottom:6px;border-bottom:2px solid #E8EAED}
-.ch3{font-size:11px;font-weight:700;color:#1C2B4B;margin:12px 0 7px;text-transform:uppercase;letter-spacing:.04em;background:#EEF2FF;padding:4px 8px;border-radius:4px}
+.h2{font-size:14px;font-weight:700;color:#1C2B4B;margin-bottom:12px;padding-bottom:6px;border-bottom:2px solid #E8EAED}
+.h3{font-size:11px;font-weight:700;color:#1C2B4B;margin:12px 0 7px;background:#EEF2FF;padding:4px 8px;border-radius:4px;text-transform:uppercase}
 label{font-size:11px;font-weight:600;color:#555;display:block;margin-bottom:3px}
-input,select,textarea{background:#FFFDE7;border:1.5px solid #F9A825;border-radius:5px;padding:5px 8px;font-size:12px;width:100%;outline:none;font-family:inherit;color:#1a1a2e}
-input:focus,select:focus,textarea:focus{border-color:#3B82F6;box-shadow:0 0 0 2px rgba(59,130,246,.12)}
-.ro{background:#F5F5F5!important;border-color:#DDD!important;color:#777}
+input[type=text],input[type=number],select,textarea{background:#FFFDE7;border:1.5px solid #F9A825;border-radius:5px;padding:5px 8px;font-size:12px;width:100%;outline:none;font-family:inherit;color:#1a1a2e}
+input:focus,select:focus,textarea:focus{border-color:#3B82F6}
+input.ro,select.ro{background:#F5F5F5;border-color:#DDD;color:#777;pointer-events:none}
 textarea{height:150px;resize:vertical;font-family:monospace;font-size:11px}
 .g2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
 .g4{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:10px}
+.g5{display:grid;grid-template-columns:1fr 1fr 1fr 1fr 1fr;gap:10px}
 .btn{background:#1C2B4B;color:#fff;border:none;border-radius:6px;padding:7px 14px;font-size:12px;font-weight:600;cursor:pointer}
-.btn:hover{opacity:.85}
 .btn-blue{background:#3B82F6;color:#fff;border:none;border-radius:5px;padding:5px 11px;font-size:11px;cursor:pointer}
 .btn-del{background:#EF4444;color:#fff;border:none;border-radius:4px;padding:4px 8px;font-size:11px;cursor:pointer}
 .btn-green{background:#10B981;color:#fff;border:none;border-radius:6px;padding:7px 14px;font-size:12px;font-weight:600;cursor:pointer}
 .btn-orange{background:#F59E0B;color:#fff;border:none;border-radius:6px;padding:7px 14px;font-size:12px;font-weight:600;cursor:pointer}
+.btn-purple{background:#7C3AED;color:#fff;border:none;border-radius:6px;padding:7px 14px;font-size:12px;font-weight:600;cursor:pointer}
 .sep{height:1px;background:#E8EAED;margin:12px 0}
 .info{padding:9px 12px;border-radius:7px;font-size:11px;margin-top:8px}
 .ig{background:#F0FDF4;border:1px solid #BBF7D0;color:#065F46}
 .ir{background:#FFF5F5;border:1px solid #FCA5A5;color:#991B1B}
 .ib{background:#EFF6FF;border:1px solid #BFDBFE;color:#1E40AF}
 .iy{background:#FFFBEB;border:1px solid #FDE68A;color:#92400E}
-.af-row,.ing-row{padding:10px;background:#F8FAFC;border-radius:7px;border:1px solid #E2E8F0;margin-bottom:8px}
-.ing-row{display:flex;gap:8px;align-items:flex-end}
 .tab-bar{display:flex;gap:3px;margin-bottom:14px;background:#E8EAED;padding:3px;border-radius:7px;flex-wrap:wrap}
 .tab-btn{padding:5px 12px;border-radius:5px;font-size:11px;cursor:pointer;border:none;background:transparent;color:#666;font-weight:500}
 .tab-btn.a{background:#fff;color:#1C2B4B;font-weight:700;box-shadow:0 1px 3px rgba(0,0,0,.1)}
 table{width:100%;border-collapse:collapse;font-size:11px}
-th{background:#1C2B4B;color:#fff;padding:6px 8px;font-size:10px;font-weight:600;white-space:nowrap;text-align:left}
+th{background:#1C2B4B;color:#fff;padding:6px 8px;font-size:10px;font-weight:600;text-align:left;white-space:nowrap}
 th.r{text-align:right}
-td{padding:5px 8px;border-bottom:1px solid #F0F2F5}
-td.r{font-family:'Courier New',monospace;text-align:right}
+td{padding:5px 8px;border-bottom:1px solid #F0F2F5;vertical-align:top}
+td.r{font-family:'Courier New',monospace;text-align:right;white-space:nowrap}
+td.mono{font-family:monospace;font-size:10px}
 .tr-g{background:#EEF2FF;font-weight:600;color:#1C2B4B}
+.tr-sg{background:#F8FAFC;font-weight:500;color:#374151}
 .tr-t{background:#E8F4FD;font-weight:700}
 .tr-f{background:#1C2B4B;color:#fff;font-weight:700}
 .tr-f td{border:none;color:#fff}
@@ -65,261 +65,1598 @@ td.r{font-family:'Courier New',monospace;text-align:right}
 .cok{color:#059669;font-weight:700}.cer{color:#DC2626;font-weight:700}
 .badge-ok{background:#D1FAE5;color:#065F46;padding:2px 7px;border-radius:10px;font-size:10px;font-weight:700}
 .badge-err{background:#FEE2E2;color:#991B1B;padding:2px 7px;border-radius:10px;font-size:10px;font-weight:700}
+.badge-warn{background:#FEF3C7;color:#92400E;padding:2px 7px;border-radius:10px;font-size:10px;font-weight:700}
 .ee-hdr{text-align:center;margin-bottom:12px}
 .ee-title{font-weight:700;font-size:14px;color:#1C2B4B}
 .ee-sub{font-size:11px;color:#555;margin-top:2px}
-.tbl-wrap{max-height:430px;overflow-y:auto}
-.nota{font-size:10px;color:#888;margin-top:4px;margin-bottom:8px}
-/* EMPRESA SELECTOR */
-.emp-bar{background:#0F172A;padding:6px 18px;display:flex;align-items:center;gap:10px;font-size:11px;color:rgba(255,255,255,.7);border-bottom:1px solid rgba(255,255,255,.1)}
-.emp-badge{background:#3B82F6;color:#fff;padding:3px 10px;border-radius:10px;font-size:11px;font-weight:700;cursor:pointer}
+.tbl-wrap{max-height:460px;overflow-y:auto}
+.nota{font-size:10px;color:#888;margin:4px 0 8px}
+.asiento{background:#F8FAFC;border:1px solid #E2E8F0;border-radius:8px;padding:12px;margin-bottom:10px}
+.asiento-title{font-weight:700;font-size:12px;color:#1C2B4B;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center}
+.asiento-row{display:grid;grid-template-columns:1fr 2fr 1fr 1fr;gap:6px;margin-bottom:4px;align-items:center;font-size:11px}
+.asiento-row label{font-size:10px;color:#888;margin:0}
+.diff-ok{color:#059669;font-weight:700;font-size:11px}
+.diff-err{color:#DC2626;font-weight:700;font-size:11px}
 .emp-modal{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:200;display:flex;align-items:center;justify-content:center}
-.emp-box{background:#fff;border-radius:12px;padding:24px;width:480px;max-height:80vh;overflow-y:auto}
-.emp-item{padding:10px 14px;border-radius:8px;border:1px solid #E2E8F0;margin-bottom:6px;cursor:pointer;display:flex;align-items:center;justify-content:space-between;transition:all .1s}
+.emp-box{background:#fff;border-radius:12px;padding:20px;width:500px;max-height:80vh;overflow-y:auto}
+.emp-item{padding:10px 14px;border-radius:8px;border:1px solid #E2E8F0;margin-bottom:6px;cursor:pointer;display:flex;align-items:center;justify-content:space-between}
 .emp-item:hover{background:#EEF2FF;border-color:#3B82F6}
 .emp-item.active{background:#EEF2FF;border-color:#3B82F6;font-weight:700}
-.autosave{font-size:10px;color:#4ADE80;margin-left:4px}
+.nit-row{display:grid;grid-template-columns:1fr 2fr 1fr 1fr auto;gap:6px;align-items:center;margin-bottom:4px}
+.plan-row{display:grid;grid-template-columns:120px 1fr auto;gap:6px;align-items:center;margin-bottom:3px}
+.comprobante-card{border:1px solid #E2E8F0;border-radius:8px;margin-bottom:12px;overflow:hidden}
+.comprobante-hdr{background:#1C2B4B;color:#fff;padding:8px 12px;display:flex;justify-content:space-between;font-size:12px;font-weight:600}
+input.n{text-align:right}
 </style>
 </head>
 <body>
 <div id="root"></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script>
-// ═══════════════════════════════════════════════════════════════════════
-// CONTAX v1.0 — Sistema Contable Bolivia
-// Desarrollado por CONTAX | Todos los cálculos con ROUND(,2)
-// ═══════════════════════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════
+// CONTAX v2.0 — Sistema Contable Bolivia
+// ═══════════════════════════════════════════════════════════
 
+// ─── UTILS ───────────────────────────────────────────────
 const r2=n=>Math.round(((n||0)+Number.EPSILON)*100)/100;
 const fmt=n=>{if(n==null||isNaN(n))return'—';return r2(n).toLocaleString('de-DE',{minimumFractionDigits:2,maximumFractionDigits:2});};
+const pn=v=>parseFloat((v||'').toString().replace(',','.').replace(/[^\d.-]/g,''))||0;
+// Debounce re-render
+let _rt=null;
+function reLazy(ms){ms=ms||500;clearTimeout(_rt);_rt=setTimeout(re,ms);}
 
-// ─── PLAN DE CUENTAS Y TABLAS ─────────────────────────────────────────
-const CAT={'COMBUSTIBLES':'532021001','TELEFONÍA':'522003001','INTERNET':'522003002','REPUESTOS':'522009001','ACCESORIOS':'522009002','SEGUROS DE VEHÍCULOS':'522023001','MEDICAMENTOS':'522023003','REFRIGERIOS Y ALIMENTACIÓN':'522029001','GASTOS VARIOS':'526002001','OTROS GASTOS':'526002002','OTROS GASTOS ':'526002002','UNIFORMES':'522005001','MATERIALES DE LIMPIEZA':'522005002','MATERIALES DE PUBLICIDAD':'522005003','ACCESORIOS ELECTRÓNICOS':'522005004','REPARACIONES Y MANTENIMIENTO':'522008001','LUBRICANTES Y PIEZAS':'522008002','TRÁMITES LEGALES':'522017001','MATERIAL DE ESCRITORIO':'522018001','SERVICIOS CONTABLES':'523002001','SERVICIOS PROFESIONALES':'523003001','MANTENIMIENTO DE VEHÍCULO':'522008001','SUMINISTROS DE OFICINA':'522018001','GASTOS DE VIAJE Y TRANSPORTE':'526002001'};
-const ACAT={'VEHÍCULO':'123003001','MUEBLES Y ENSERES':'123004001','EQUIPOS DE COMPUTACIÓN':'123006001','EQUIPOS DE COMUNICACIONES':'123007001','EQUIPO DE OFICINA':'123009001','EQUIPO ELECTRÓNICO':'123010001'};
-const TAF={'VEHÍCULO':{vida:5,tasa:.20,cA:'123003001',cD:'124001001',cG:'524001005'},'MUEBLES Y ENSERES':{vida:10,tasa:.10,cA:'123004001',cD:'124001002',cG:'524001004'},'EQUIPOS DE COMPUTACIÓN':{vida:4,tasa:.25,cA:'123006001',cD:'124001003',cG:'524001002'},'EQUIPOS DE COMUNICACIONES':{vida:5,tasa:.20,cA:'123007001',cD:'124001004',cG:'524001001'},'EQUIPO DE OFICINA':{vida:10,tasa:.10,cA:'123009001',cD:'124001005',cG:'524001006'},'EQUIPO ELECTRÓNICO':{vida:4,tasa:.25,cA:'123010001',cD:'124001006',cG:'524001003'}};
-const ACC={'111001001':{n:'CAJA M/N',t:'A',g:'DISPONIBLE'},'111003001':{n:'BANCO',t:'A',g:'DISPONIBLE'},'116001001':{n:'CRÉDITO FISCAL IVA',t:'A',g:'EXIGIBLE',fl:'OPERACIÓN'},'116006001':{n:'IUE A COMPENSAR',t:'A',g:'EXIGIBLE',fl:'OPERACIÓN'},'123003001':{n:'VEHÍCULO',t:'A',g:'BIENES DE USO'},'124001001':{n:'DEP.ACUM. VEHÍCULOS',t:'A',g:'BIENES DE USO'},'123004001':{n:'MUEBLES Y ENSERES',t:'A',g:'BIENES DE USO'},'124001002':{n:'DEP.ACUM. MUEBLES',t:'A',g:'BIENES DE USO'},'123006001':{n:'EQUIPOS COMPUTACIÓN',t:'A',g:'BIENES DE USO'},'124001003':{n:'DEP.ACUM. EQ.COMP.',t:'A',g:'BIENES DE USO'},'123007001':{n:'EQ. COMUNICACIONES',t:'A',g:'BIENES DE USO'},'124001004':{n:'DEP.ACUM. EQ.COM.',t:'A',g:'BIENES DE USO'},'123009001':{n:'EQ. DE OFICINA',t:'A',g:'BIENES DE USO'},'124001005':{n:'DEP.ACUM. EQ.OFICINA',t:'A',g:'BIENES DE USO'},'123010001':{n:'EQUIPO ELECTRÓNICO',t:'A',g:'BIENES DE USO'},'124001006':{n:'DEP.ACUM. EQ.ELEC.',t:'A',g:'BIENES DE USO'},'214001001':{n:'DÉBITO FISCAL IVA',t:'P',g:'DEUDAS FISCALES'},'214004001':{n:'IT POR PAGAR',t:'P',g:'DEUDAS FISCALES'},'214006001':{n:'IUE POR PAGAR',t:'P',g:'DEUDAS FISCALES'},'214026001':{n:'MULTAS E INTERESES',t:'P',g:'DEUDAS FISCALES'},'212003001':{n:'PRÉSTAMOS RECIBIDOS',t:'P',g:'DEUDAS COMERCIALES'},'311001001':{n:'CAPITAL SOCIAL',t:'PT',g:'CAPITAL'},'311002001':{n:'AJUSTE DEL CAPITAL',t:'PT',g:'CAPITAL'},'313001001':{n:'RESULTADOS ACUMULADOS',t:'PT',g:'RESULTADOS'},'314001001':{n:'UTILIDAD GESTIÓN',t:'PT',g:'RESULTADOS'},'411002001':{n:'VENTAS',t:'I',g:'INGRESOS ORDINARIOS'},'411002002':{n:'SERVICIOS DE TRANSPORTE',t:'I',g:'INGRESOS ORDINARIOS'},'411002003':{n:'SERVICIOS DE PUBLICIDAD',t:'I',g:'INGRESOS ORDINARIOS'},'411002004':{n:'SERVICIOS DE GESTIÓN',t:'I',g:'INGRESOS ORDINARIOS'},'411002005':{n:'SERVICIOS DE DELIVERY',t:'I',g:'INGRESOS ORDINARIOS'},'411002006':{n:'COMISIONES POR SERVICIOS',t:'I',g:'INGRESOS ORDINARIOS'},'441001001':{n:'INGRESO AJUSTE INFLACIÓN',t:'I',g:'INGRESOS NO OPERATIVOS'},'441004001':{n:'DIF.REDONDEO (ING)',t:'I',g:'INGRESOS NO OPERATIVOS'},'522003001':{n:'TELEFONÍA',t:'G',g:'GASTOS ADM.'},'522003002':{n:'INTERNET',t:'G',g:'GASTOS ADM.'},'522005001':{n:'UNIFORMES',t:'G',g:'GASTOS ADM.'},'522005002':{n:'MAT. LIMPIEZA',t:'G',g:'GASTOS MATERIALES'},'522005003':{n:'MAT. PUBLICIDAD',t:'G',g:'GASTOS MATERIALES'},'522005004':{n:'ACCESORIOS ELECTRÓNICOS',t:'G',g:'GASTOS MATERIALES'},'522008001':{n:'REPARACIONES/MANTENIMIENTO',t:'G',g:'MANTENIMIENTO VEHÍCULO'},'522008002':{n:'LUBRICANTES Y PIEZAS',t:'G',g:'MANTENIMIENTO VEHÍCULO'},'522009001':{n:'REPUESTOS',t:'G',g:'MANTENIMIENTO VEHÍCULO'},'522009002':{n:'ACCESORIOS',t:'G',g:'MANTENIMIENTO VEHÍCULO'},'522017001':{n:'TRÁMITES LEGALES',t:'G',g:'GASTOS POR SERVICIOS'},'522018001':{n:'MAT. DE ESCRITORIO',t:'G',g:'GASTOS MATERIALES'},'522023001':{n:'SEGUROS DE VEHÍCULOS',t:'G',g:'GASTOS SEGUROS'},'522023003':{n:'MEDICAMENTOS',t:'G',g:'GASTOS SEGUROS'},'522029001':{n:'REFRIGERIOS Y ALIMENTACIÓN',t:'G',g:'GASTOS ADM.'},'523002001':{n:'SERVICIOS CONTABLES',t:'G',g:'GASTOS POR SERVICIOS'},'523003001':{n:'SERVICIOS PROFESIONALES',t:'G',g:'GASTOS POR SERVICIOS'},'524001001':{n:'DEP. EQ. COMUNICACIONES',t:'G',g:'DEPRECIACIONES'},'524001002':{n:'DEP. EQ. COMPUTACIÓN',t:'G',g:'DEPRECIACIONES'},'524001003':{n:'DEP. EQ. ELECTRÓNICO',t:'G',g:'DEPRECIACIONES'},'524001004':{n:'DEP. MUEBLES Y ENSERES',t:'G',g:'DEPRECIACIONES'},'524001005':{n:'DEP. VEHÍCULOS',t:'G',g:'DEPRECIACIONES'},'524001006':{n:'DEP. EQ. DE OFICINA',t:'G',g:'DEPRECIACIONES'},'525002001':{n:'IMPUESTO A LAS TRANSACCIONES',t:'G',g:'GASTOS IMPOSITIVOS'},'526002001':{n:'GASTOS VARIOS',t:'G',g:'OTROS GASTOS'},'526002002':{n:'OTROS GASTOS',t:'G',g:'OTROS GASTOS'},'532021001':{n:'COMBUSTIBLES',t:'G',g:'GASTOS ADM.'},'561001001':{n:'GASTO AJUSTE INFLACIÓN',t:'G',g:'GASTOS NO MONETARIOS'},'561004001':{n:'DIF.REDONDEO (GTO)',t:'G',g:'GASTOS NO MONETARIOS'}};
-const INCC=[{c:'411002001',n:'VENTAS'},{c:'411002002',n:'SERVICIOS DE TRANSPORTE'},{c:'411002003',n:'SERVICIOS DE PUBLICIDAD'},{c:'411002004',n:'SERVICIOS DE GESTIÓN'},{c:'411002005',n:'SERVICIOS DE DELIVERY'},{c:'411002006',n:'COMISIONES POR SERVICIOS'}];
-const MESES=['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
-const DT={caja:0,banco:0,cfIva:0,iueCompensar:0,vehiculo:0,depVehiculo:0,muebles:0,depMuebles:0,equipoComp:0,depEquipoComp:0,equipoCom:0,depEquipoCom:0,equipoOficina:0,depEquipoOficina:0,equipoElec:0,depEquipoElec:0,prestamos:0,dfIva:0,itPagar:0,iuePagar:0,multas:0,capitalSocial:0,ajusteCapital:0,resultadosAcum:0};
+// ─── DEFAULT PLAN DE CUENTAS ─────────────────────────────
+const DEFAULT_PLAN=[
+  {c:'1',C:1,G:null,SG:null,CP:null,CA:null,n:'ACTIVO'},
+  {c:'11',C:1,G:1,SG:null,CP:null,CA:null,n:'ACTIVO CORRIENTE'},
+  {c:'111001001',C:1,G:1,SG:1,CP:'001',CA:'001',n:'CAJA M/N'},
+  {c:'111002001',C:1,G:1,SG:1,CP:'002',CA:'001',n:'BANCO'},
+  {c:'116001001',C:1,G:1,SG:6,CP:'001',CA:'001',n:'CRÉDITO FISCAL IVA'},
+  {c:'116006001',C:1,G:1,SG:6,CP:'006',CA:'001',n:'IUE A COMPENSAR'},
+  {c:'12',C:1,G:2,SG:null,CP:null,CA:null,n:'ACTIVO NO CORRIENTE'},
+  {c:'123003001',C:1,G:2,SG:3,CP:'003',CA:'001',n:'VEHÍCULO'},
+  {c:'124001001',C:1,G:2,SG:4,CP:'001',CA:'001',n:'DEPRECIACIÓN ACUMULADA VEHÍCULOS'},
+  {c:'123004001',C:1,G:2,SG:3,CP:'004',CA:'001',n:'MUEBLES Y ENSERES'},
+  {c:'124001002',C:1,G:2,SG:4,CP:'001',CA:'002',n:'DEPRECIACIÓN ACUMULADA MUEBLES Y ENSERES'},
+  {c:'123006001',C:1,G:2,SG:3,CP:'006',CA:'001',n:'EQUIPOS DE COMPUTACIÓN'},
+  {c:'124001003',C:1,G:2,SG:4,CP:'001',CA:'003',n:'DEPRECIACIÓN ACUMULADA EQUIPOS DE COMPUTACIÓN'},
+  {c:'123007001',C:1,G:2,SG:3,CP:'007',CA:'001',n:'EQUIPOS DE COMUNICACIONES'},
+  {c:'124001004',C:1,G:2,SG:4,CP:'001',CA:'004',n:'DEPRECIACIÓN ACUMULADA EQUIPOS DE COMUNICACIONES'},
+  {c:'123009001',C:1,G:2,SG:3,CP:'009',CA:'001',n:'EQUIPO DE OFICINA'},
+  {c:'124001005',C:1,G:2,SG:4,CP:'001',CA:'005',n:'DEPRECIACIÓN ACUMULADA EQUIPOS DE OFICINA'},
+  {c:'123010001',C:1,G:2,SG:3,CP:'010',CA:'001',n:'EQUIPO ELECTRÓNICO'},
+  {c:'124001006',C:1,G:2,SG:4,CP:'001',CA:'006',n:'DEPRECIACIÓN ACUMULADA EQUIPOS ELECTRÓNICOS'},
+  {c:'2',C:2,G:null,SG:null,CP:null,CA:null,n:'PASIVO'},
+  {c:'21',C:2,G:1,SG:null,CP:null,CA:null,n:'PASIVO CORRIENTE'},
+  {c:'212003001',C:2,G:1,SG:2,CP:'003',CA:'001',n:'PRÉSTAMOS RECIBIDOS'},
+  {c:'214001001',C:2,G:1,SG:4,CP:'001',CA:'001',n:'DÉBITO FISCAL IVA'},
+  {c:'214004001',C:2,G:1,SG:4,CP:'004',CA:'001',n:'IT POR PAGAR'},
+  {c:'214006001',C:2,G:1,SG:4,CP:'006',CA:'001',n:'IUE POR PAGAR'},
+  {c:'214026001',C:2,G:1,SG:4,CP:'026',CA:'001',n:'MULTAS E INTERESES POR PAGAR'},
+  {c:'3',C:3,G:null,SG:null,CP:null,CA:null,n:'PATRIMONIO'},
+  {c:'311001001',C:3,G:1,SG:1,CP:'001',CA:'001',n:'CAPITAL SOCIAL'},
+  {c:'311002001',C:3,G:1,SG:1,CP:'002',CA:'001',n:'AJUSTE DEL CAPITAL'},
+  {c:'313001001',C:3,G:1,SG:3,CP:'001',CA:'001',n:'RESULTADOS ACUMULADOS'},
+  {c:'314001001',C:3,G:1,SG:4,CP:'001',CA:'001',n:'UTILIDAD DE LA GESTIÓN'},
+  {c:'314002001',C:3,G:1,SG:4,CP:'002',CA:'001',n:'PÉRDIDA DE LA GESTIÓN'},
+  {c:'4',C:4,G:null,SG:null,CP:null,CA:null,n:'INGRESOS'},
+  {c:'411002001',C:4,G:1,SG:1,CP:'002',CA:'001',n:'SERVICIOS DE DELIVERY'},
+  {c:'411002002',C:4,G:1,SG:1,CP:'002',CA:'002',n:'SERVICIOS DE TRANSPORTE'},
+  {c:'411002003',C:4,G:1,SG:1,CP:'002',CA:'003',n:'SERVICIOS DE PUBLICIDAD'},
+  {c:'411002004',C:4,G:1,SG:1,CP:'002',CA:'004',n:'INGRESOS POR SERVICIOS'},
+  {c:'431012001',C:4,G:3,SG:1,CP:'012',CA:'001',n:'OTROS INGRESOS'},
+  {c:'441001001',C:4,G:4,SG:1,CP:'001',CA:'001',n:'AJUSTE POR INFLACIÓN Y TENENCIA DE BIENES'},
+  {c:'441002001',C:4,G:4,SG:1,CP:'002',CA:'001',n:'MANTENIMIENTO DE VALOR'},
+  {c:'441004001',C:4,G:4,SG:1,CP:'004',CA:'001',n:'DIFERENCIA POR REDONDEO'},
+  {c:'5',C:5,G:null,SG:null,CP:null,CA:null,n:'EGRESOS'},
+  {c:'522001001',C:5,G:2,SG:2,CP:'001',CA:'001',n:'SERVICIOS BÁSICOS - CRE'},
+  {c:'522002001',C:5,G:2,SG:2,CP:'002',CA:'001',n:'SERVICIOS BÁSICOS - SAGUAPAC'},
+  {c:'522003001',C:5,G:2,SG:2,CP:'003',CA:'001',n:'TELEFONÍA'},
+  {c:'522003002',C:5,G:2,SG:2,CP:'003',CA:'002',n:'INTERNET'},
+  {c:'522005001',C:5,G:2,SG:2,CP:'005',CA:'001',n:'UNIFORMES'},
+  {c:'522005002',C:5,G:2,SG:2,CP:'005',CA:'002',n:'MATERIALES DE LIMPIEZA'},
+  {c:'522005003',C:5,G:2,SG:2,CP:'005',CA:'003',n:'MATERIALES DE PUBLICIDAD'},
+  {c:'522005004',C:5,G:2,SG:2,CP:'005',CA:'004',n:'ACCESORIOS ELECTRÓNICOS'},
+  {c:'522005005',C:5,G:2,SG:2,CP:'005',CA:'005',n:'SUMINISTROS DE OFICINA'},
+  {c:'522006001',C:5,G:2,SG:2,CP:'006',CA:'001',n:'ENVÍOS'},
+  {c:'522008001',C:5,G:2,SG:2,CP:'008',CA:'001',n:'REPARACIONES Y MANTENIMIENTO'},
+  {c:'522008002',C:5,G:2,SG:2,CP:'008',CA:'002',n:'LUBRICANTES Y PIEZAS'},
+  {c:'522009001',C:5,G:2,SG:2,CP:'009',CA:'001',n:'REPUESTOS'},
+  {c:'522009002',C:5,G:2,SG:2,CP:'009',CA:'002',n:'ACCESORIOS'},
+  {c:'522017001',C:5,G:2,SG:2,CP:'017',CA:'001',n:'TRÁMITES LEGALES'},
+  {c:'522018001',C:5,G:2,SG:2,CP:'018',CA:'001',n:'MATERIAL DE ESCRITORIO'},
+  {c:'522022001',C:5,G:2,SG:2,CP:'022',CA:'001',n:'GASTOS DE VIAJE Y TRANSPORTE'},
+  {c:'522023001',C:5,G:2,SG:2,CP:'023',CA:'001',n:'SEGUROS DE VEHÍCULOS'},
+  {c:'522023002',C:5,G:2,SG:2,CP:'023',CA:'002',n:'GASTOS MÉDICOS Y FARMACIAS'},
+  {c:'522023003',C:5,G:2,SG:2,CP:'023',CA:'003',n:'MEDICAMENTOS'},
+  {c:'522029001',C:5,G:2,SG:2,CP:'029',CA:'001',n:'REFRIGERIOS Y ALIMENTACIÓN'},
+  {c:'523002001',C:5,G:2,SG:3,CP:'002',CA:'001',n:'SERVICIOS CONTABLES'},
+  {c:'523003001',C:5,G:2,SG:3,CP:'003',CA:'001',n:'GASTOS LEGALES Y NOTARIALES'},
+  {c:'523005001',C:5,G:2,SG:3,CP:'005',CA:'001',n:'SERVICIOS DE COBRANZA EN LINEA'},
+  {c:'524001001',C:5,G:2,SG:4,CP:'001',CA:'001',n:'DEPRECIACIÓN DE EQUIPOS DE COMUNICACIÓN'},
+  {c:'524001002',C:5,G:2,SG:4,CP:'001',CA:'002',n:'DEPRECIACIÓN DE EQUIPOS DE COMPUTACIÓN'},
+  {c:'524001003',C:5,G:2,SG:4,CP:'001',CA:'003',n:'DEPRECIACIÓN DE EQUIPOS ELECTRÓNICOS'},
+  {c:'524001004',C:5,G:2,SG:4,CP:'001',CA:'004',n:'DEPRECIACIÓN DE MUEBLES Y ENSERES'},
+  {c:'524001005',C:5,G:2,SG:4,CP:'001',CA:'005',n:'DEPRECIACIÓN DE VEHÍCULOS'},
+  {c:'524001006',C:5,G:2,SG:4,CP:'001',CA:'006',n:'DEPRECIACIÓN DE EQUIPOS DE OFICINA'},
+  {c:'525001001',C:5,G:2,SG:5,CP:'001',CA:'001',n:'CRÉDITO FISCAL NO UTILIZADO'},
+  {c:'525002001',C:5,G:2,SG:5,CP:'002',CA:'001',n:'IMPUESTO A LAS TRANSACCIONES'},
+  {c:'525003001',C:5,G:2,SG:5,CP:'003',CA:'001',n:'IMPUESTO SOBRE LAS UTILIDADES DE LAS EMPRESAS'},
+  {c:'525004001',C:5,G:2,SG:5,CP:'004',CA:'001',n:'IUE NO COMPENSADO'},
+  {c:'525019001',C:5,G:2,SG:5,CP:'019',CA:'001',n:'MULTAS E INTERESES'},
+  {c:'526002001',C:5,G:2,SG:6,CP:'002',CA:'001',n:'GASTOS VARIOS'},
+  {c:'526002002',C:5,G:2,SG:6,CP:'002',CA:'002',n:'OTROS GASTOS'},
+  {c:'532021001',C:5,G:3,SG:2,CP:'021',CA:'001',n:'COMBUSTIBLES'},
+  {c:'533003001',C:5,G:3,SG:3,CP:'003',CA:'001',n:'PUBLICIDAD'},
+  {c:'533004001',C:5,G:3,SG:4,CP:'004',CA:'001',n:'FACEBOOK'},
+  {c:'533004002',C:5,G:3,SG:4,CP:'004',CA:'002',n:'GOOGLE'},
+  {c:'534002001',C:5,G:3,SG:4,CP:'002',CA:'001',n:'SERVICIOS PROFESIONALES'},
+  {c:'541002001',C:5,G:4,SG:1,CP:'002',CA:'001',n:'INTERESES SOBRE PRÉSTAMOS BANCARIOS'},
+  {c:'541005001',C:5,G:4,SG:1,CP:'005',CA:'001',n:'COMISIÓN BANCARIA'},
+  {c:'551009002',C:5,G:5,SG:1,CP:'009',CA:'002',n:'GASTOS DE AJUSTES'},
+  {c:'561001001',C:5,G:6,SG:1,CP:'001',CA:'001',n:'AJUSTE POR INFLACIÓN Y TENENCIA DE BIENES'},
+  {c:'561004001',C:5,G:6,SG:1,CP:'004',CA:'001',n:'DIFERENCIA POR REDONDEO'},
+];
 
-// ─── MOTOR CONTABLE ────────────────────────────────────────────────────
-function parseRCV(txt){if(!txt.trim())return[];return txt.trim().split('\n').map(r=>{const c=r.split('\t');return{nro:c[0]?.trim(),razon:c[2]?.trim(),fecha:c[6]?.trim(),total:parseFloat(c[7])||0,ice:parseFloat(c[8])||0,iehd:parseFloat(c[9])||0,ipj:parseFloat(c[10])||0,tasas:parseFloat(c[11])||0,noSujeto:parseFloat(c[12])||0,exentos:parseFloat(c[13])||0,baseCF:parseFloat(c[18])||0,cf:parseFloat(c[19])||0,derechoCF:c[22]?.trim(),estado:c[23]?.trim(),cat:c[24]?.trim()};}).filter(r=>r.nro&&!isNaN(parseFloat(r.nro)));}
-function buildM(entries){const M={};const add=(c,d,h)=>{if(!c)return;if(!M[c])M[c]={debe:0,haber:0};M[c].debe=r2(M[c].debe+r2(d||0));M[c].haber=r2(M[c].haber+r2(h||0));};entries.forEach(e=>(e.lines||[]).forEach(l=>add(l.c,l.d,l.h)));Object.keys(M).forEach(k=>{const{debe,haber}=M[k],t=ACC[k]?.t;M[k].saldo=(t==='A'||t==='G'||t==='I')?r2(debe-haber):r2(haber-debe);M[k].sD=r2(Math.max(0,debe-haber));M[k].sH=r2(Math.max(0,haber-debe));});return M;}
-function genEntries(cfg,tr,rcv,ings,afs,ufv){
-  const E=[];const{ufvInicio:ui,ufvFin:uf}=ufv;const uR=ui>0?r2(uf/ui):1;
-  const tL=[];
-  [['111001001',tr.caja],['111003001',tr.banco],['116001001',tr.cfIva],['116006001',tr.iueCompensar],['123003001',tr.vehiculo],['124001001',-Math.abs(tr.depVehiculo||0)],['123004001',tr.muebles],['124001002',-Math.abs(tr.depMuebles||0)],['123006001',tr.equipoComp],['124001003',-Math.abs(tr.depEquipoComp||0)],['123007001',tr.equipoCom],['124001004',-Math.abs(tr.depEquipoCom||0)],['123009001',tr.equipoOficina],['124001005',-Math.abs(tr.depEquipoOficina||0)],['123010001',tr.equipoElec],['124001006',-Math.abs(tr.depEquipoElec||0)]].forEach(([c,v])=>{if(v>0)tL.push({c,d:r2(v),h:0});else if(v<0)tL.push({c,d:0,h:r2(-v)});});
-  [['212003001',tr.prestamos],['214001001',tr.dfIva],['214004001',tr.itPagar],['214006001',tr.iuePagar],['214026001',tr.multas],['311001001',tr.capitalSocial],['311002001',tr.ajusteCapital],['313001001',tr.resultadosAcum]].forEach(([c,v])=>{if(v)tL.push({c,d:0,h:r2(Math.abs(v))});});
-  E.push({id:'T00',desc:'Asiento de Apertura',lines:tL});
-  const valid=rcv.filter(r=>r.estado==='CONSOLIDADO');
-  if(valid.length){const con={};valid.forEach(r=>{const cat=r.cat?.trim(),code=ACAT[cat]||CAT[cat]||'526002001';const base=r2(r.baseCF+r.noSujeto+r.exentos),cf=r.derechoCF==='SI'?r2(r.cf):0,caja=r2(r.total-r.ice-r.iehd-r.ipj-r.tasas);if(!con[code])con[code]={d:0,h:0};con[code].d=r2(con[code].d+base);if(cf){if(!con['116001001'])con['116001001']={d:0,h:0};con['116001001'].d=r2(con['116001001'].d+cf);}if(!con['111001001'])con['111001001']={d:0,h:0};con['111001001'].h=r2(con['111001001'].h+caja);});const td=r2(Object.values(con).reduce((s,v)=>r2(s+v.d),0)),th=r2(Object.values(con).reduce((s,v)=>r2(s+v.h),0)),diff=r2(td-th);if(Math.abs(diff)>0){if(diff>0){if(!con['561004001'])con['561004001']={d:0,h:0};con['561004001'].h=r2((con['561004001'].h||0)+diff);}else{if(!con['441004001'])con['441004001']={d:0,h:0};con['441004001'].d=r2((con['441004001'].d||0)-diff);}}E.push({id:'CE01',desc:'Egresos RCV',lines:Object.entries(con).map(([c,v])=>({c,d:v.d,h:v.h}))});}
-  ings.forEach((ing,i)=>{if(!(ing.monto>0))return;const neto=r2(ing.monto/1.13),dfIva=r2(ing.monto-neto),it=r2(neto*0.03),diff=r2(ing.monto-neto-dfIva);const lines=[{c:'111001001',d:r2(ing.monto),h:0},{c:ing.cuenta||'411002002',d:0,h:neto},{c:'214001001',d:0,h:dfIva},{c:'525002001',d:it,h:0},{c:'214004001',d:0,h:it}];if(Math.abs(diff)>.001)lines.push(diff>0?{c:'561004001',d:0,h:diff}:{c:'441004001',d:-diff,h:0});E.push({id:'CI'+i,desc:'Ingreso '+MESES[(ing.mes||1)-1],lines});});
-  const capT=r2((tr.capitalSocial||0)+(tr.ajusteCapital||0));const ajC=ui>0?r2(capT*(uR-1)):0;
-  if(Math.abs(ajC)>0)E.push({id:'UFV0',desc:'Ajuste Capital UFV',lines:[{c:'561001001',d:ajC,h:0},{c:'311002001',d:0,h:ajC}]});
-  afs.forEach((af,i)=>{const tab=TAF[af.tipo];if(!tab)return;const{cA,cD,cG}=tab,vH=r2(af.valorHistorico||0),dAP=r2(Math.abs(af.depAcumAnterior||0));const ajA=ui>0?r2(vH*(uR-1)):0,ajD=ui>0?r2(dAP*(uR-1)):0;if(Math.abs(ajA)>0)E.push({id:'UA'+i,desc:'UFV Activo',lines:[{c:cA,d:ajA,h:0},{c:'441001001',d:0,h:ajA}]});if(Math.abs(ajD)>0)E.push({id:'UD'+i,desc:'UFV DepAcum',lines:[{c:'561001001',d:ajD,h:0},{c:cD,d:0,h:ajD}]});const dep=r2(r2(vH+ajA)*tab.tasa);if(dep>0)E.push({id:'D'+i,desc:'Dep:'+af.nombre,lines:[{c:cG,d:dep,h:0},{c:cD,d:0,h:dep}]});});
-  const mT=buildM(E);const tI=r2(Object.entries(mT).filter(([k])=>ACC[k]?.t==='I').reduce((s,[,v])=>r2(s+v.saldo),0));const tG=r2(Object.entries(mT).filter(([k])=>ACC[k]?.t==='G').reduce((s,[,v])=>r2(s+v.saldo),0));const util=r2(tI-tG);const iue=util>0?r2(util*0.25):0;
-  if(iue>0)E.push({id:'IUE',desc:'Provisión IUE',lines:[{c:'116006001',d:iue,h:0},{c:'214006001',d:0,h:iue}]});
-  const m2=buildM(E);const dfS=r2(m2['214001001']?.saldo||0),cfS=r2(m2['116001001']?.saldo||0);const comp=r2(Math.min(dfS,cfS));
-  if(comp>0){E.push({id:'CMP1',desc:'Compensación CF vs DF IVA',lines:[{c:'214001001',d:comp,h:0},{c:'116001001',d:0,h:comp}]});const dfR=r2(dfS-comp);if(dfR>0)E.push({id:'CMP2',desc:'Pago DF restante',lines:[{c:'214001001',d:dfR,h:0},{c:'111001001',d:0,h:dfR}]});}
+// Account lookup by code
+function acctName(code){
+  const e=S.planCuentas.find(a=>a.c===code);
+  return e?e.n:(DEFAULT_PLAN.find(a=>a.c===code)?.n||code);
+}
+
+// TIPO categorization
+function acctTipo(code){
+  if(!code) return '?';
+  const c=code.toString()[0];
+  if(c==='1') return 'A';
+  if(c==='2') return 'P';
+  if(c==='3') return 'PT';
+  if(c==='4') return 'I';
+  if(c==='5') return 'G';
+  return '?';
+}
+
+// All leaf accounts (9 digits) from plan
+function leafAccts(){
+  const plan = S.planCuentas.length>0 ? S.planCuentas : DEFAULT_PLAN;
+  return plan.filter(a=>a.c&&a.c.length===9);
+}
+
+// ─── ACCOUNTING ENGINE ───────────────────────────────────
+function parseRCV(txt){
+  if(!txt||!txt.trim()) return [];
+  return txt.trim().split('\n').map(r=>{
+    const c=r.split('\t');
+    return{nro:c[0]?.trim(),nit:c[1]?.trim(),razon:c[2]?.trim(),fecha:c[6]?.trim(),
+      total:pn(c[7]),ice:pn(c[8]),iehd:pn(c[9]),ipj:pn(c[10]),tasas:pn(c[11]),
+      noSujeto:pn(c[12]),exentos:pn(c[13]),baseCF:pn(c[18]),cf:pn(c[19]),
+      derechoCF:c[22]?.trim(),estado:c[23]?.trim(),cat:c[24]?.trim()};
+  }).filter(r=>r.nro&&!isNaN(parseFloat(r.nro)));
+}
+
+function nitLookup(nit){
+  const db = S.nits||[];
+  const found = db.find(n=>n.nit===nit||n.nit===parseInt(nit));
+  if(found) return {cuenta:found.cuenta, cat:found.cat};
+  return null;
+}
+
+function buildM(entries){
+  const M={};
+  const add=(c,d,h)=>{if(!c)return;if(!M[c])M[c]={debe:0,haber:0};M[c].debe=r2(M[c].debe+r2(d||0));M[c].haber=r2(M[c].haber+r2(h||0));};
+  entries.forEach(e=>(e.lines||[]).forEach(l=>add(l.c,l.d,l.h)));
+  Object.keys(M).forEach(k=>{
+    const{debe,haber}=M[k],t=acctTipo(k);
+    M[k].saldo=(t==='A'||t==='G'||t==='I')?r2(debe-haber):r2(haber-debe);
+    M[k].sD=r2(Math.max(0,debe-haber));
+    M[k].sH=r2(Math.max(0,haber-debe));
+  });
+  return M;
+}
+
+function ufvAt(dateStr){
+  if(!dateStr||!S.ufvData||S.ufvData.length===0) return 0;
+  const target=dateStr.trim();
+  const found=S.ufvData.find(u=>u.fecha===target);
+  return found?pn(found.ufv):0;
+}
+
+function genEntries(){
+  const E=[];
+  const tr=emp().traspaso;
+  const ufvIni=pn(emp().cfg.ufvInicio);
+  const ufvFin=pn(emp().cfg.ufvFin);
+  const uR=ufvIni>0?r2(ufvFin/ufvIni):1;
+
+  // 1. ASIENTO DE APERTURA
+  const aLines=[];
+  const addA=(c,d,h)=>{if(!c||!pn(d)&&!pn(h))return;aLines.push({c,d:r2(pn(d)),h:r2(pn(h))});};
+  // Activos
+  [['111001001',tr.caja,0],['111002001',tr.banco,0],['116001001',tr.cfIva,0],['116006001',tr.iueComp,0],
+   ['123003001',tr.vehiculo,0],['124001001',0,tr.depVehiculo],
+   ['123004001',tr.muebles,0],['124001002',0,tr.depMuebles],
+   ['123006001',tr.equComp,0],['124001003',0,tr.depEquComp],
+   ['123007001',tr.equCom,0],['124001004',0,tr.depEquCom],
+   ['123009001',tr.equOficina,0],['124001005',0,tr.depEquOficina],
+   ['123010001',tr.equElec,0],['124001006',0,tr.depEquElec],
+  ].forEach(([c,d,h])=>addA(c,d,h));
+  // Pasivos y Patrimonio
+  [['212003001',0,tr.prestamos],['214001001',0,tr.dfIva],['214004001',0,tr.itPagar],
+   ['214006001',0,tr.iuePagar],['214026001',0,tr.multas],
+   ['311001001',0,tr.capitalSocial],['311002001',0,tr.ajusteCapital],
+   ['313001001',0,tr.resAcum],
+  ].forEach(([c,d,h])=>addA(c,d,h));
+  E.push({id:'APE',tipo:'T',desc:'ASIENTO DE APERTURA',lines:aLines});
+
+  // 2. OTROS ASIENTOS MANUALES
+  (emp().otrosAsientos||[]).forEach((oa,i)=>{
+    if(!oa.activo) return;
+    const lines=[];
+    (oa.lines||[]).forEach(l=>{
+      if(!l.cuenta) return;
+      const isPred=oa.tipo==='predefined';
+      const v=pn(isPred?l.valor:l.debe||l.haber||0);
+      if(!v) return;
+      const isD=isPred?(l.tipo==='debe'):pn(l.debe)>0;
+      lines.push({c:l.cuenta,d:isD?r2(v):0,h:isD?0:r2(v)});
+    });
+    if(lines.length) E.push({id:'OA'+i,tipo:'T',desc:oa.nombre,lines});
+  });
+
+  // 3. RCV COMPRAS
+  const rcvRows=parseRCV(emp().rcvTxt||'');
+  const valid=rcvRows.filter(r=>r.estado==='CONSOLIDADO');
+  if(valid.length){
+    const con={};
+    valid.forEach(r=>{
+      // NIT lookup first, then cat
+      const lk=nitLookup(r.nit);
+      const code=lk?lk.cuenta:(S.catMap&&S.catMap[r.cat?.trim()])||(r.cat?.trim()==='COMBUSTIBLES'?'532021001':'526002001');
+      const totalNeto=r2(r.total-r.ice-r.iehd-r.ipj-r.tasas);
+      // Bolivia: 87% gasto, 13% CF. Combustible: 30% no sujeto + 70% base
+      let base,cf;
+      if(r.noSujeto>0){
+        // COMBUSTIBLE: noSujeto=total*30%, base=total*70%
+        const base70=r2(totalNeto*0.70);
+        cf=r.derechoCF==='SI'?r2(base70*0.13):0;
+        base=r2(r.noSujeto+base70*0.87); // noSujeto + 87% del 70%
+      } else {
+        cf=r.derechoCF==='SI'?r2(totalNeto*0.13):0;
+        base=r2(totalNeto*0.87);
+      }
+      const caja=totalNeto;
+      if(!con[code])con[code]={d:0,h:0};con[code].d=r2(con[code].d+base);
+      if(cf){if(!con['116001001'])con['116001001']={d:0,h:0};con['116001001'].d=r2(con['116001001'].d+cf);}
+      if(!con['111001001'])con['111001001']={d:0,h:0};con['111001001'].h=r2(con['111001001'].h+caja);
+    });
+    const td=r2(Object.values(con).reduce((s,v)=>r2(s+v.d),0));
+    const th=r2(Object.values(con).reduce((s,v)=>r2(s+v.h),0));
+    const diff=r2(td-th);
+    if(Math.abs(diff)>0.001){if(diff>0){if(!con['561004001'])con['561004001']={d:0,h:0};con['561004001'].h=r2((con['561004001'].h||0)+diff);}else{if(!con['441004001'])con['441004001']={d:0,h:0};con['441004001'].d=r2((con['441004001'].d||0)-diff);}}
+    E.push({id:'RCVEGR',tipo:'E',desc:'COMPROBANTE DE EGRESOS — COMPRAS RCV',lines:Object.entries(con).map(([c,v])=>({c,d:v.d,h:v.h}))});
+  }
+
+  // 4. INGRESOS
+  (emp().ingresos||[]).forEach((ing,i)=>{
+    if(!pn(ing.monto)) return;
+    const tot=r2(pn(ing.monto));
+    // 87% ingreso, 13% DF IVA, 3% IT sobre total ventas (Bolivia)
+    const ingNeto=r2(tot*0.87);
+    const dfIva=r2(tot*0.13);
+    const it=r2(tot*0.03);
+    const diff=r2(tot-ingNeto-dfIva);
+    const lines=[{c:'111001001',d:tot,h:0},{c:ing.cuenta||'411002002',d:0,h:ingNeto},{c:'214001001',d:0,h:dfIva},{c:'525002001',d:it,h:0},{c:'214004001',d:0,h:it}];
+    if(Math.abs(diff)>0.001) lines.push(diff>0?{c:'561004001',d:0,h:diff}:{c:'441004001',d:-diff,h:0});
+    E.push({id:'ING'+i,tipo:'I',desc:'INGRESO '+(ing.mes?['ENERO','FEBRERO','MARZO','ABRIL','MAYO','JUNIO','JULIO','AGOSTO','SEPTIEMBRE','OCTUBRE','NOVIEMBRE','DICIEMBRE'][ing.mes-1]:i+1),lines});
+  });
+
+  // 5. ACTIVOS FIJOS — UFV + DEPRECIACIÓN (calculados)
+  (emp().activos||[]).forEach((af,i)=>{
+    const TAF={'VEHÍCULO':{vida:5,tasa:.20,cA:'123003001',cD:'124001001',cG:'524001005'},'MUEBLES Y ENSERES':{vida:10,tasa:.10,cA:'123004001',cD:'124001002',cG:'524001004'},'EQUIPOS DE COMPUTACIÓN':{vida:4,tasa:.25,cA:'123006001',cD:'124001003',cG:'524001002'},'EQUIPOS DE COMUNICACIONES':{vida:5,tasa:.20,cA:'123007001',cD:'124001004',cG:'524001001'},'EQUIPO DE OFICINA':{vida:10,tasa:.10,cA:'123009001',cD:'124001005',cG:'524001006'},'EQUIPO ELECTRÓNICO':{vida:4,tasa:.25,cA:'123010001',cD:'124001006',cG:'524001003'}};
+    const tab=TAF[af.tipo];if(!tab)return;
+    const vH=r2(pn(af.valorHistorico));
+    const dAP=r2(Math.abs(pn(af.depAcumAnterior)));
+    const ajA=ufvIni>0?r2(vH*(uR-1)):0;
+    const ajD=ufvIni>0?r2(dAP*(uR-1)):0;
+    if(Math.abs(ajA)>0) E.push({id:'UFVA'+i,tipo:'T',desc:'UFV ACTIVO: '+af.nombre,lines:[{c:tab.cA,d:ajA,h:0},{c:'441001001',d:0,h:ajA}]});
+    if(Math.abs(ajD)>0) E.push({id:'UFVD'+i,tipo:'T',desc:'UFV DEP.ACUM: '+af.nombre,lines:[{c:'561001001',d:ajD,h:0},{c:tab.cD,d:0,h:ajD}]});
+    const dep=r2(r2(vH+ajA)*tab.tasa);
+    if(dep>0) E.push({id:'DEP'+i,tipo:'T',desc:'DEPRECIACIÓN: '+af.nombre,lines:[{c:tab.cG,d:dep,h:0},{c:tab.cD,d:0,h:dep}]});
+  });
+
+  // 6. UFV CAPITAL
+  const capT=r2(pn(tr.capitalSocial)+pn(tr.ajusteCapital));
+  const ajC=ufvIni>0?r2(capT*(uR-1)):0;
+  if(Math.abs(ajC)>0) E.push({id:'UFVCAP',tipo:'T',desc:'AJUSTE DE CAPITAL POR UFV',lines:[{c:'561001001',d:ajC,h:0},{c:'311002001',d:0,h:ajC}]});
+
+  // 7. IUE provisional
+  const mT=buildM(E);
+  const tI=r2(Object.entries(mT).filter(([k])=>acctTipo(k)==='I').reduce((s,[,v])=>r2(s+v.saldo),0));
+  const tG=r2(Object.entries(mT).filter(([k])=>acctTipo(k)==='G').reduce((s,[,v])=>r2(s+v.saldo),0));
+  const util=r2(tI-tG);
+  const iue=util>0?r2(util*0.25):0;
+  if(iue>0) E.push({id:'IUE',tipo:'T',desc:'PROVISIÓN IUE',lines:[{c:'116006001',d:iue,h:0},{c:'214006001',d:0,h:iue}]});
+
+  // 8. COMPENSACIÓN IVA
+  const m2=buildM(E);
+  const dfS=r2(m2['214001001']?.saldo||0),cfS=r2(m2['116001001']?.saldo||0);
+  const comp=r2(Math.min(dfS,cfS));
+  if(comp>0){
+    E.push({id:'CMP1',tipo:'T',desc:'COMPENSACIÓN CF VS DF IVA',lines:[{c:'214001001',d:comp,h:0},{c:'116001001',d:0,h:comp}]});
+    const dfR=r2(dfS-comp);
+    if(dfR>0.01) E.push({id:'CMP2',tipo:'T',desc:'PAGO DF IVA PENDIENTE',lines:[{c:'214001001',d:dfR,h:0},{c:'111001001',d:0,h:dfR}]});
+  }
+
   return E;
 }
-function calcAll(emp){
-  const{cfg,tr,rcvTxt,ings,afs,ufv}=emp;
-  const rcv=parseRCV(rcvTxt||'');
-  const E=genEntries(cfg,tr,rcv,ings,afs,ufv);
+
+function calcAll(){
+  const E=genEntries();
   const M=buildM(E);
   const gs=k=>r2(M[k]?.saldo||0);
-  const tI=r2(Object.entries(M).filter(([k])=>ACC[k]?.t==='I').reduce((s,[,v])=>r2(s+v.saldo),0));
-  const tG=r2(Object.entries(M).filter(([k])=>ACC[k]?.t==='G').reduce((s,[,v])=>r2(s+v.saldo),0));
+  const tI=r2(Object.entries(M).filter(([k])=>acctTipo(k)==='I').reduce((s,[,v])=>r2(s+v.saldo),0));
+  const tG=r2(Object.entries(M).filter(([k])=>acctTipo(k)==='G').reduce((s,[,v])=>r2(s+v.saldo),0));
   const util=r2(tI-tG);
-  const aC=r2(['111001001','111003001','116001001','116006001'].reduce((s,c)=>r2(s+gs(c)),0));
-  const aNC=r2(Object.entries(ACC).filter(([,v])=>v.t==='A'&&v.g==='BIENES DE USO').reduce((s,[k])=>r2(s+gs(k)),0));
-  const tA=r2(aC+aNC),tP=r2(Object.entries(ACC).filter(([,v])=>v.t==='P').reduce((s,[k])=>r2(s+gs(k)),0));
-  const tPT=r2(Object.entries(ACC).filter(([,v])=>v.t==='PT').reduce((s,[k])=>r2(s+gs(k)),0)+util);
+  const aC=r2(['111001001','111002001','116001001','116006001'].reduce((s,c)=>r2(s+gs(c)),0));
+  const aNC=r2(Object.entries(M).filter(([k])=>acctTipo(k)==='A'&&k.startsWith('12')).reduce((s,[k])=>r2(s+gs(k)),0));
+  const tA=r2(aC+aNC);
+  const tP=r2(Object.entries(M).filter(([k])=>acctTipo(k)==='P').reduce((s,[k])=>r2(s+gs(k)),0));
+  const tPT=r2(Object.entries(M).filter(([k])=>acctTipo(k)==='PT').reduce((s,[k])=>r2(s+gs(k)),0)+util);
   const difBG=r2(tA-tP-tPT);
-  const dep=r2(Object.entries(ACC).filter(([,v])=>v.g==='DEPRECIACIONES').reduce((s,[k])=>r2(s+gs(k)),0));
-  const{ufvInicio:ui,ufvFin:uf2}=ufv||{};const uR=ui>0?r2(uf2/ui):1;
-  const capT=r2((tr.capitalSocial||0)+(tr.ajusteCapital||0));const ajC=ui>0?r2(capT*(uR-1)):0;
+  const dep=r2(Object.entries(M).filter(([k])=>k.startsWith('524')).reduce((s,[k])=>r2(s+gs(k)),0));
+  const ufvIni=pn(emp().cfg.ufvInicio),ufvFin=pn(emp().cfg.ufvFin);
+  const uR=ufvIni>0?r2(ufvFin/ufvIni):1;
+  const capT=r2(pn(emp().traspaso.capitalSocial)+pn(emp().traspaso.ajusteCapital));
+  const ajC=ufvIni>0?r2(capT*(uR-1)):0;
   const gUFV=gs('561001001'),iUFV=gs('441001001');
-  const vCF=r2(gs('116001001')-(tr.cfIva||0)),vIC=r2(gs('116006001')-(tr.iueCompensar||0));
-  const vDF=r2(gs('214001001')-(tr.dfIva||0)),vIT=r2(gs('214004001')-(tr.itPagar||0));
-  const vIUE=r2(gs('214006001')-(tr.iuePagar||0)),vPr=r2(gs('212003001')-(tr.prestamos||0));
+  const vCF=r2(gs('116001001')-pn(emp().traspaso.cfIva));
+  const vIC=r2(gs('116006001')-pn(emp().traspaso.iueComp));
+  const vDF=r2(gs('214001001')-pn(emp().traspaso.dfIva));
+  const vIT=r2(gs('214004001')-pn(emp().traspaso.itPagar));
+  const vIUE=r2(gs('214006001')-pn(emp().traspaso.iuePagar));
+  const vPr=r2(gs('212003001')-pn(emp().traspaso.prestamos));
   let inv=0;
-  (afs||[]).forEach(af=>{const tab=TAF[af.tipo];if(!tab)return;const vH=r2(af.valorHistorico||0);const ajA=ui>0?r2(vH*(uR-1)):0;const keys={VEHÍCULO:'vehiculo','MUEBLES Y ENSERES':'muebles','EQUIPOS DE COMPUTACIÓN':'equipoComp','EQUIPOS DE COMUNICACIONES':'equipoCom','EQUIPO DE OFICINA':'equipoOficina','EQUIPO ELECTRÓNICO':'equipoElec'};const compra=r2(vH-(tr[keys[af.tipo]]||0)-ajA);if(compra>0)inv=r2(inv-compra);});
+  (emp().activos||[]).forEach(af=>{
+    const TAF={'VEHÍCULO':'vehiculo','MUEBLES Y ENSERES':'muebles','EQUIPOS DE COMPUTACIÓN':'equComp','EQUIPOS DE COMUNICACIONES':'equCom','EQUIPO DE OFICINA':'equOficina','EQUIPO ELECTRÓNICO':'equElec'};
+    const vH=r2(pn(af.valorHistorico));const ajA=ufvIni>0?r2(vH*(uR-1)):0;
+    const k2=TAF[af.tipo];const sAnt=r2(pn(emp().traspaso[k2]||0));
+    const compra=r2(vH-sAnt-ajA);if(compra>0)inv=r2(inv-compra);
+  });
   const fOp=r2(util+dep+gUFV-iUFV-vCF-vIC+vDF+vIT+vIUE);
-  const fFin=r2(-vPr),difF=r2(fOp+inv+fFin),sI=r2(tr.caja||0),sF=r2(sI+difF),cajaMN=gs('111001001');
-  const ssA=Object.keys(M).filter(k=>ACC[k]&&(M[k].debe>0||M[k].haber>0));
-  const ssTD=r2(ssA.reduce((s,k)=>r2(s+r2(M[k].debe)),0)),ssTH=r2(ssA.reduce((s,k)=>r2(s+r2(M[k].haber)),0));
-  const ssTSD=r2(ssA.reduce((s,k)=>r2(s+r2(M[k].sD||0)),0)),ssTSH=r2(ssA.reduce((s,k)=>r2(s+r2(M[k].sH||0)),0));
-  return{rcv,E,M,gs,util,tI,tG,aC,aNC,tA,tP,tPT,difBG,dep,gUFV,iUFV,vCF,vIC,vDF,vIT,vIUE,vPr,inv,fOp,fFin,difF,sI,sF,cajaMN,ajC,ssA,ssTD,ssTH,ssTSD,ssTSH,bgOK:difBG===0,ssOK:r2(ssTSD-ssTSH)===0,fOK:r2(sF-cajaMN)===0};
+  const fFin=r2(-vPr),difF=r2(fOp+inv+fFin);
+  const sI=r2(pn(emp().traspaso.caja)),sF=r2(sI+difF),cajaMN=gs('111001001');
+  const ssA=Object.keys(M).filter(k=>M[k].debe>0||M[k].haber>0).sort();
+  const ssTD=r2(ssA.reduce((s,k)=>r2(s+r2(M[k].debe)),0));
+  const ssTH=r2(ssA.reduce((s,k)=>r2(s+r2(M[k].haber)),0));
+  const ssTSD=r2(ssA.reduce((s,k)=>r2(s+r2(M[k].sD||0)),0));
+  const ssTSH=r2(ssA.reduce((s,k)=>r2(s+r2(M[k].sH||0)),0));
+  return{E,M,gs,util,tI,tG,aC,aNC,tA,tP,tPT,difBG,dep,gUFV,iUFV,vCF,vIC,vDF,vIT,vIUE,vPr,inv,fOp,fFin,difF,sI,sF,cajaMN,ajC,ssA,ssTD,ssTH,ssTSD,ssTSH,bgOK:difBG===0,ssOK:r2(ssTSD-ssTSH)===0,fOK:r2(sF-cajaMN)===0};
 }
 
-// ─── MULTI-EMPRESA + PERSISTENCIA ─────────────────────────────────────
-function newEmp(id){return{id,cfg:{razonSocial:'',ci:'',nit:'',actividad:'',gestion:'2025',ciudad:'SANTA CRUZ DE LA SIERRA'},tr:{...DT},rcvTxt:'',ings:[{mes:1,cuenta:'411002002',monto:0}],afs:[],ufv:{ufvInicio:0,ufvFin:0},updatedAt:new Date().toISOString()};}
-function loadData(){try{const raw=localStorage.getItem('contax_v1');if(raw){const d=JSON.parse(raw);return d;}return null;}catch(e){return null;}}
-function saveData(){try{localStorage.setItem('contax_v1',JSON.stringify({empresas:S.empresas,activeId:S.activeId,updatedAt:new Date().toISOString()}));S.lastSaved=new Date();}catch(e){}}
+// ─── CATEGORY→ACCOUNT MAP ────────────────────────────────
+const DEFAULT_CAT_MAP={'COMBUSTIBLES':'532021001','TELEFONÍA':'522003001','INTERNET':'522003002','REPUESTOS':'522009001','ACCESORIOS':'522009002','SEGUROS DE VEHÍCULOS':'522023001','MEDICAMENTOS':'522023003','REFRIGERIOS Y ALIMENTACIÓN':'522029001','GASTOS VARIOS':'526002001','OTROS GASTOS':'526002002','OTROS GASTOS ':'526002002','UNIFORMES':'522005001','MATERIALES DE LIMPIEZA':'522005002','MATERIALES DE PUBLICIDAD':'522005003','ACCESORIOS ELECTRÓNICOS':'522005004','SUMINISTROS DE OFICINA':'522005005','REPARACIONES Y MANTENIMIENTO':'522008001','LUBRICANTES Y PIEZAS':'522008002','TRÁMITES LEGALES':'522017001','MATERIAL DE ESCRITORIO':'522018001','SERVICIOS CONTABLES':'523002001','GASTOS LEGALES Y NOTARIALES':'523003001','MANTENIMIENTO DE VEHÍCULO':'522008001','GASTOS DE VIAJE Y TRANSPORTE':'522022001','OTROS INGRESOS':'431012001','CRE':'522001001','SAGUAPAC':'522002001'};
 
-let loaded=loadData();
+// ─── STATE ───────────────────────────────────────────────
+const DEF_TR={caja:0,banco:0,cfIva:0,iueComp:0,vehiculo:0,depVehiculo:0,muebles:0,depMuebles:0,equComp:0,depEquComp:0,equCom:0,depEquCom:0,equOficina:0,depEquOficina:0,equElec:0,depEquElec:0,prestamos:0,dfIva:0,itPagar:0,iuePagar:0,multas:0,capitalSocial:0,ajusteCapital:0,resAcum:0};
+const DEF_OA=[
+  {nombre:'Ajuste de Capital',activo:false,lines:[{cuenta:'561001001',debe:'',haber:''},{cuenta:'311002001',debe:'',haber:''}]},
+  {nombre:'Traspaso Resultados Acumulados (Utilidad)',activo:false,lines:[{cuenta:'314001001',debe:'',haber:''},{cuenta:'313001001',debe:'',haber:''}]},
+  {nombre:'Traspaso Resultados Acumulados (Pérdida)',activo:false,lines:[{cuenta:'314002001',debe:'',haber:''},{cuenta:'313001001',debe:'',haber:''}]},
+  {nombre:'IUE Por Pagar / A Compensar',activo:false,lines:[{cuenta:'116006001',debe:'',haber:''},{cuenta:'214006001',debe:'',haber:''}]},
+  {nombre:'Actualización Activo Fijo (Manual)',activo:false,lines:[{cuenta:'123003001',debe:'',haber:''},{cuenta:'123006001',debe:'',haber:''},{cuenta:'441001001',debe:'',haber:''}]},
+  {nombre:'Préstamos Recibidos',activo:false,lines:[{cuenta:'111001001',debe:'',haber:''},{cuenta:'212003001',debe:'',haber:''}]},
+  {nombre:'Multas e Intereses',activo:false,lines:[{cuenta:'525019001',debe:'',haber:''},{cuenta:'214026001',debe:'',haber:''}]},
+  {nombre:'Pago IUE',activo:false,lines:[{cuenta:'214006001',debe:'',haber:''},{cuenta:'111001001',debe:'',haber:''}]},
+  {nombre:'Aumento de Capital',activo:false,lines:[{cuenta:'111001001',debe:'',haber:''},{cuenta:'311001001',debe:'',haber:''}]},
+  {nombre:'IUE No Compensado',activo:false,lines:[{cuenta:'525004001',debe:'',haber:''},{cuenta:'116006001',debe:'',haber:''}]},
+  {nombre:'Ajuste Contable (Libre)',activo:false,lines:[{cuenta:'',debe:'',haber:''},{cuenta:'',debe:'',haber:''}]},
+];
+
+function newEmp(id){return{id,cfg:{razonSocial:'',ci:'',nit:'',actividad:'',gestion:'2025',fechaInicio:'2025-01-01',fechaFin:'2025-12-31',ciudad:'SANTA CRUZ DE LA SIERRA',ufvInicio:'',ufvFin:'',contadorNombre:'',contadorCI:''},traspaso:{...DEF_TR},rcvTxt:'',ingresos:[{mes:1,cuenta:'411002002',monto:''}],activos:[],otrosAsientos:JSON.parse(JSON.stringify(DEF_OA)),updatedAt:new Date().toISOString()};}
+
+function loadLS(){try{const r=localStorage.getItem('contax_v2');return r?JSON.parse(r):null;}catch{return null;}}
+function saveLS(){try{localStorage.setItem('contax_v2',JSON.stringify({empresas:S.empresas,activeId:S.activeId,planCuentas:S.planCuentas,ufvData:S.ufvData,nits:S.nits}));}catch{}}
+
+const saved=loadLS();
 let S={
-  tab:'config',sub:'bg',showEmpModal:false,lastSaved:null,
-  empresas:loaded?.empresas||[newEmp('emp_1')],
-  activeId:loaded?.activeId||'emp_1',
+  tab:'config',sub:'bg',showEmpModal:false,
+  empresas:saved?.empresas||[newEmp('emp_1')],
+  activeId:saved?.activeId||'emp_1',
+  planCuentas:saved?.planCuentas||[],
+  catMap:{...DEFAULT_CAT_MAP},
+  ufvData:saved?.ufvData||[],
+  nits:saved?.nits||[],
 };
 function emp(){return S.empresas.find(e=>e.id===S.activeId)||S.empresas[0];}
-// setEmp: actualiza estado Y re-renderiza (para campos numéricos que afectan cálculos)
-function setEmp(k,v){const e=emp();const keys=k.split('.');let obj=e;keys.slice(0,-1).forEach(key=>obj=obj[key]);obj[keys[keys.length-1]]=v;e.updatedAt=new Date().toISOString();saveData();re();}
-// setEmpTxt: solo actualiza estado SIN re-renderizar (para campos de texto libres)
-// El re-render ocurre al salir del campo (onblur)
-function setEmpTxt(k,v){const e=emp();const keys=k.split('.');let obj=e;keys.slice(0,-1).forEach(key=>obj=obj[key]);obj[keys[keys.length-1]]=v;e.updatedAt=new Date().toISOString();saveData();}
-function utr(k,v){emp().tr[k]=+v||0;emp().updatedAt=new Date().toISOString();saveData();re();}
+function setTr(k,v){emp().traspaso[k]=v;emp().updatedAt=new Date().toISOString();saveLS();}
+function setCfg(k,v){emp().cfg[k]=v;emp().updatedAt=new Date().toISOString();saveLS();}
 
-// ─── EXPORT ───────────────────────────────────────────────────────────
+// ─── EXPORT ──────────────────────────────────────────────
 function exportXL(){
-  const e=emp();const c=calcAll(e);
-  const{M,gs,util,tI,tG,aC,aNC,tA,tP,tPT,difBG,dep,gUFV,iUFV,vCF,vIC,vDF,vIT,vIUE,vPr,inv,fOp,fFin,difF,sI,sF,cajaMN,ssA,ssTD,ssTH,ssTSD,ssTSH}=c;
-  const cfg=e.cfg;const wb=XLSX.utils.book_new();
+  const c=calcAll();const{M,gs,util,tI,tG,aC,aNC,tA,tP,tPT,difBG,dep,gUFV,iUFV,vCF,vIC,vDF,vIT,vIUE,vPr,inv,fOp,fFin,difF,sI,sF,cajaMN,ssA,ssTD,ssTH,ssTSD,ssTSH}=c;
+  const cfg=emp().cfg;const wb=XLSX.utils.book_new();
   const add=(nm,data)=>XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(data),nm);
-  add('Balance General',[['BALANCE GENERAL'],['Empresa: '+cfg.razonSocial,'NIT: '+cfg.nit],['Gestión '+cfg.gestion],[],['CUENTA','MONTO'],['ACTIVO CORRIENTE',''],...['111001001','111003001','116001001','116006001'].map(k=>[ACC[k]?.n,gs(k)]),['TOTAL ACTIVO CORRIENTE',aC],['ACTIVO NO CORRIENTE',''],...Object.entries(ACC).filter(([,v])=>v.t==='A'&&v.g==='BIENES DE USO').map(([k,v])=>[v.n,gs(k)]),['TOTAL ACTIVO NO CORRIENTE',aNC],['TOTAL ACTIVO',tA],[],['PASIVO',''],...Object.entries(ACC).filter(([,v])=>v.t==='P').map(([k,v])=>[v.n,gs(k)]),['TOTAL PASIVO',tP],[],['PATRIMONIO',''],['Capital Social',gs('311001001')],['Ajuste Capital',gs('311002001')],['Resultados Acumulados',gs('313001001')],['Utilidad de la Gestión',util],['TOTAL PATRIMONIO',tPT],['DIFERENCIA BG',difBG]]);
-  add('Estado de Resultados',[['ESTADO DE RESULTADOS'],['Gestión '+cfg.gestion],[],['INGRESOS',''],...Object.entries(ACC).filter(([,v])=>v.t==='I').map(([k,v])=>[v.n,gs(k)]),['TOTAL INGRESOS',tI],[],['GASTOS',''],...Object.entries(ACC).filter(([,v])=>v.t==='G').map(([k,v])=>[v.n,gs(k)]),['TOTAL GASTOS',tG],[],['UTILIDAD DE LA GESTIÓN',util]]);
-  add('Sumas y Saldos',(()=>{const rows=[['BALANCE DE COMPROBACION DE SUMAS Y SALDOS'],['(EXPRESADO EN BOLIVIANOS)'],[],['CODIFICACION DE LA CUENTA',null,null,null,null,'NOMBRE DE LA CUENTA','SUMAS',null,'SALDOS'],['CLASE','GRUPO','SUBGRUPO','CUENTA PRINCIPAL','CUENTA ANALITICA',null,'DEBE','HABER',null,'DEUDOR','ACREEDOR']];ssA.forEach(k=>{rows.push([k.slice(0,1),k.slice(0,2),k.slice(0,3),k.slice(0,6),k,ACC[k]?.n||k,r2(M[k].debe),r2(M[k].haber),null,r2(M[k].sD||0),r2(M[k].sH||0)]);});rows.push([]);rows.push([null,null,null,null,'TOTALES',null,ssTD,ssTH,null,ssTSD,ssTSH]);return rows;})());
-  add('Flujo de Efectivo',[['ESTADO DE FLUJO DE EFECTIVO'],['Gestión '+cfg.gestion],[],['OPERACIÓN',''],['Utilidad',util],['+Depreciaciones',dep],['+Gasto UFV',gUFV],['-Ingreso UFV',-iUFV],['Var CF IVA',-vCF],['Var IUE Comp',-vIC],['Var DF IVA',vDF],['Var IT Pagar',vIT],['Var IUE Pagar',vIUE],['TOTAL OPERACIÓN',fOp],[],['INVERSIÓN',''],['Compras activos',inv],['TOTAL INVERSIÓN',inv],[],['FINANCIAMIENTO',''],['Var Préstamos',-vPr],['TOTAL FINANCIAMIENTO',fFin],[],['DIFERENCIA',difF],['Saldo Inicio',sI],['Saldo Final (Flujo)',sF],['Caja M/N (BG)',cajaMN],['Diferencia',r2(sF-cajaMN)]]);
+  add('Balance General',[['BALANCE GENERAL'],['Empresa: '+cfg.razonSocial,'NIT: '+cfg.nit],['Al '+cfg.fechaFin],['(Expresado en Bolivianos)'],[],['CUENTA','MONTO'],['ACTIVO CORRIENTE',''],...['111001001','111002001','116001001','116006001'].map(k=>[acctName(k),gs(k)]),['TOTAL ACTIVO CORRIENTE',aC],['ACTIVO NO CORRIENTE',''],...Object.keys(M).filter(k=>acctTipo(k)==='A'&&k.startsWith('12')&&gs(k)!==0).map(k=>[acctName(k),gs(k)]),['TOTAL ACTIVO NO CORRIENTE',aNC],['TOTAL ACTIVO',tA],[],['PASIVO',''],...Object.keys(M).filter(k=>acctTipo(k)==='P'&&gs(k)!==0).map(k=>[acctName(k),gs(k)]),['TOTAL PASIVO',tP],[],['PATRIMONIO',''],...Object.keys(M).filter(k=>acctTipo(k)==='PT'&&gs(k)!==0).map(k=>[acctName(k),gs(k)]),['UTILIDAD DE LA GESTIÓN',util],['TOTAL PATRIMONIO',tPT],['DIFERENCIA BG',difBG]]);
+  add('Estado de Resultados',[['ESTADO DE RESULTADOS'],['Empresa: '+cfg.razonSocial],['Del '+cfg.fechaInicio+' al '+cfg.fechaFin],[],['INGRESOS',''],...Object.keys(M).filter(k=>acctTipo(k)==='I'&&gs(k)!==0).map(k=>[acctName(k),gs(k)]),['TOTAL INGRESOS',tI],[],['GASTOS',''],...Object.keys(M).filter(k=>acctTipo(k)==='G'&&gs(k)!==0).map(k=>[acctName(k),gs(k)]),['TOTAL GASTOS',tG],[],['UTILIDAD DE LA GESTIÓN',util]]);
+  // S&S FORMATO SIAT
+  add('Sumas y Saldos',(()=>{
+    const rows=[['BALANCE DE COMPROBACION DE SUMAS Y SALDOS'],['(EXPRESADO EN BOLIVIANOS)'],[],
+      ['CODIFICACION DE LA CUENTA',null,null,null,null,'NOMBRE DE LA CUENTA','SUMAS',null,'SALDOS'],
+      ['CLASE','GRUPO','SUBGRUPO','CUENTA PRINCIPAL','CUENTA ANALITICA',null,'DEBE','HABER',null,'DEUDOR','ACREEDOR']];
+    ssA.forEach(k=>{rows.push([k.slice(0,1),k.slice(0,2),k.slice(0,3),k.slice(0,6),k,acctName(k),r2(M[k].debe),r2(M[k].haber),null,r2(M[k].sD||0),r2(M[k].sH||0)]);});
+    rows.push([]);rows.push([null,null,null,null,'TOTALES',null,ssTD,ssTH,null,ssTSD,ssTSH]);
+    return rows;
+  })());
+  add('Flujo de Efectivo',[['ESTADO DE FLUJO DE EFECTIVO'],['Gestión '+cfg.gestion],[],['OPERACIÓN',''],['Utilidad',util],['+Dep',dep],['+GastoUFV',gUFV],['-IngrUFV',-iUFV],['VarCFIVA',-vCF],['VarIUEComp',-vIC],['VarDFIVA',vDF],['VarITPagar',vIT],['VarIUEPagar',vIUE],['TOTAL OPERACIÓN',fOp],[],['INVERSIÓN',''],['Compras activos',inv],['TOTAL INVERSIÓN',inv],[],['FINANCIAMIENTO',''],['VarPrestamos',-vPr],['TOTAL FINANCIAMIENTO',fFin],[],['DIFERENCIA',difF],['Saldo Inicio',sI],['Saldo Final (Flujo)',sF],['Caja M/N (BG)',cajaMN],['Diferencia',r2(sF-cajaMN)]]);
   XLSX.writeFile(wb,'CONTAX_'+cfg.razonSocial+'_'+cfg.gestion+'.xlsx');
 }
-function exportJSON(){const data=JSON.stringify(emp(),null,2);const a=document.createElement('a');a.href='data:application/json,'+encodeURIComponent(data);a.download='CONTAX_'+emp().cfg.razonSocial+'_'+emp().cfg.gestion+'.json';a.click();}
-function importJSON(){const inp=document.createElement('input');inp.type='file';inp.accept='.json';inp.onchange=e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=ev=>{try{const d=JSON.parse(ev.target.result);if(!d.cfg)return alert('Archivo inválido');if(!S.empresas.find(e=>e.id===d.id))S.empresas.push(d);else S.empresas=S.empresas.map(e=>e.id===d.id?d:e);S.activeId=d.id;saveData();re();}catch(err){alert('Error al importar: '+err.message);}};r.readAsText(f);};inp.click();}
+function exportJSON(){const d=JSON.stringify(emp(),null,2);const a=document.createElement('a');a.href='data:application/json,'+encodeURIComponent(d);a.download='CONTAX_'+emp().cfg.razonSocial+'_'+emp().cfg.gestion+'.json';a.click();}
+function importJSON(){const i=document.createElement('input');i.type='file';i.accept='.json';i.onchange=e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=ev=>{try{const d=JSON.parse(ev.target.result);if(!d.cfg)return alert('Archivo inválido');if(!S.empresas.find(e=>e.id===d.id))S.empresas.push(d);else S.empresas=S.empresas.map(e=>e.id===d.id?d:e);S.activeId=d.id;saveLS();re();}catch(err){alert('Error: '+err.message);}};r.readAsText(f);};i.click();}
+function pasteUFV(txt){
+  const rows=txt.trim().split('\n').map(r=>r.split('\t'));
+  const data=[];
+  rows.forEach(r=>{
+    const fechaRaw=r[0]?.trim();const ufv=r[1]?.trim();
+    if(!fechaRaw||!ufv) return;
+    // Parse date dd/mm/yyyy or ISO
+    let fecha=fechaRaw;
+    if(fechaRaw.includes('/')) {
+      const parts=fechaRaw.split('/');
+      if(parts.length===3) fecha=parts[2].length===4?`${parts[2]}-${parts[1].padStart(2,'0')}-${parts[0].padStart(2,'0')}`:fechaRaw;
+    }
+    data.push({fecha,ufv});
+  });
+  S.ufvData=data;saveLS();re();
+  alert(`✓ ${data.length} UFVs cargadas`);
+}
 
-// ─── RENDER ────────────────────────────────────────────────────────────
-function ni(id,icon,label){return`<div class="ni${S.tab===id?' a':''}" onclick="S.tab='${id}';re()">${icon} ${label}</div>`}
+// ─── RENDER HELPERS ───────────────────────────────────────
+function ni(id,icon,label){return`<div class="ni${S.tab===id?' a':''}" onclick="S.tab='${id}';re()">${icon} <span>${label}</span></div>`}
 function sb(id,label){return`<button class="tab-btn${S.sub===id?' a':''}" onclick="S.sub='${id}';re()">${label}</button>`}
-function tfld(label,k){return`<div><label>${label}</label><input type="number" step="0.01" min="0" value="${emp().tr[k]??0}" oninput="utr('${k}',this.value)"/></div>`}
+// Number field: use text input, no re() on typing, only onblur
+function nf(label,val,onblurCode){
+  const disp=(val===''||val==null||val===0)?'':pn(val).toString().replace('.',',');
+  return`<div><label>${label}</label><input type="text" class="n" value="${disp}" oninput="" onblur="${onblurCode}" /></div>`;
+}
+function tf(label,val,onblurCode){
+  return`<div><label>${label}</label><input type="text" value="${val||''}" onblur="${onblurCode}" /></div>`;
+}
 
+// ─── TAB: CONFIGURACIÓN ───────────────────────────────────
+function renderConfig(c){
+  const cfg=emp().cfg;
+  return`<div class="card">
+    <div class="h2">🏢 Datos del Cliente</div>
+    <div class="g2">
+      ${tf('Razón Social',cfg.razonSocial,"setCfg('razonSocial',this.value);re()")}
+      ${tf('Actividad Económica',cfg.actividad,"setCfg('actividad',this.value)")}
+      ${tf('C.I.',cfg.ci,"setCfg('ci',this.value)")}
+      ${tf('NIT',cfg.nit,"setCfg('nit',this.value)")}
+      ${tf('Gestión (año)',cfg.gestion,"setCfg('gestion',this.value)")}
+      ${tf('Ciudad',cfg.ciudad||'SANTA CRUZ DE LA SIERRA',"setCfg('ciudad',this.value)")}
+    </div>
+    <div class="sep"></div>
+    <div class="h3">📅 Período de la Gestión</div>
+    <div class="g2">
+      <div><label>Fecha Inicio (ej: 2025-01-01 o 2025-02-25)</label><input type="date" value="${cfg.fechaInicio||'2025-01-01'}" onchange="setCfg('fechaInicio',this.value);re()" style="background:#FFFDE7;border:1.5px solid #F9A825;border-radius:5px;padding:5px 8px;font-size:12px;width:100%"/></div>
+      <div><label>Fecha Fin (ej: 2025-12-31)</label><input type="date" value="${cfg.fechaFin||'2025-12-31'}" onchange="setCfg('fechaFin',this.value);re()" style="background:#FFFDE7;border:1.5px solid #F9A825;border-radius:5px;padding:5px 8px;font-size:12px;width:100%"/></div>
+    </div>
+    <div class="info iy" style="margin-top:8px;font-size:11px">
+      <strong>Período activo:</strong> Del ${cfg.fechaInicio||'—'} al ${cfg.fechaFin||'—'} | Gestión ${cfg.gestion}
+    </div>
+    <div class="sep"></div>
+    <div class="h3">📈 UFV del Período</div>
+    <div class="g2">
+      ${nf('UFV al '+cfg.fechaInicio,cfg.ufvInicio,"setCfg('ufvInicio',this.value.replace(',','.'));re()")}
+      ${nf('UFV al '+cfg.fechaFin,cfg.ufvFin,"setCfg('ufvFin',this.value.replace(',','.'));re()")}
+    </div>
+    ${pn(cfg.ufvInicio)>0?`<div class="info ib">Ratio UFV: <strong>${r2(pn(cfg.ufvFin)/pn(cfg.ufvInicio)).toFixed(6)}</strong> → Inflación: <strong>${r2((pn(cfg.ufvFin)/pn(cfg.ufvInicio)-1)*100).toFixed(4)}%</strong></div>`:''}
+    <div class="sep"></div>
+    <div class="h3">✍️ Datos del Contador (para firmantes en PDF)</div>
+    <div class="g2">
+      ${tf('Nombre completo del Contador',cfg.contadorNombre,"setCfg('contadorNombre',this.value)")}
+      ${tf('C.I. del Contador',cfg.contadorCI,"setCfg('contadorCI',this.value)")}
+    </div>
+  </div>`;
+}
+
+// ─── TAB: ASIENTO DE APERTURA ─────────────────────────────
+function renderApertura(){
+  const tr=emp().traspaso;
+  function tf2(label,k){
+    const v=tr[k];const disp=(v===0||v===''||v==null)?'':v.toString().replace('.',',');
+    return`<div><label>${label}</label><input type="text" class="n" value="${disp}" onblur="setTr('${k}',pn(this.value));reLazy()" oninput="" /></div>`;
+  }
+  const actT=r2(pn(tr.caja)+pn(tr.banco)+pn(tr.cfIva)+pn(tr.iueComp)+pn(tr.vehiculo)-pn(tr.depVehiculo)+pn(tr.muebles)-pn(tr.depMuebles)+pn(tr.equComp)-pn(tr.depEquComp)+pn(tr.equCom)-pn(tr.depEquCom)+pn(tr.equOficina)-pn(tr.depEquOficina)+pn(tr.equElec)-pn(tr.depEquElec));
+  const pasT=r2(pn(tr.prestamos)+pn(tr.dfIva)+pn(tr.itPagar)+pn(tr.iuePagar)+pn(tr.multas)+pn(tr.capitalSocial)+pn(tr.ajusteCapital)+pn(tr.resAcum));
+  const dif=r2(actT-pasT);
+  return`<div class="card">
+    <div class="h2">📂 Asiento de Apertura — Saldos Iniciales</div>
+    <div class="h3">ACTIVOS</div>
+    <div class="g4">
+      ${tf2('Caja M/N','caja')}${tf2('Banco','banco')}${tf2('Crédito Fiscal IVA','cfIva')}${tf2('IUE A Compensar','iueComp')}
+      ${tf2('Vehículo (Valor Hist.)','vehiculo')}${tf2('Dep.Acum. Vehículos','depVehiculo')}
+      ${tf2('Muebles y Enseres','muebles')}${tf2('Dep.Acum. Muebles','depMuebles')}
+      ${tf2('Equipos Computación','equComp')}${tf2('Dep.Acum. Eq.Comp.','depEquComp')}
+      ${tf2('Equipos Comunicación','equCom')}${tf2('Dep.Acum. Eq.Com.','depEquCom')}
+      ${tf2('Equipo de Oficina','equOficina')}${tf2('Dep.Acum. Eq.Ofic.','depEquOficina')}
+      ${tf2('Equipo Electrónico','equElec')}${tf2('Dep.Acum. Eq.Elec.','depEquElec')}
+    </div>
+    <div class="h3">PASIVOS</div>
+    <div class="g4">
+      ${tf2('Préstamos Recibidos','prestamos')}${tf2('Débito Fiscal IVA','dfIva')}${tf2('IT Por Pagar','itPagar')}${tf2('IUE Por Pagar','iuePagar')}${tf2('Multas e Intereses','multas')}
+    </div>
+    <div class="h3">PATRIMONIO</div>
+    <div class="g4">
+      ${tf2('Capital Social','capitalSocial')}${tf2('Ajuste del Capital','ajusteCapital')}${tf2('Resultados Acumulados','resAcum')}
+    </div>
+    <div class="info ${dif===0?'ig':'ir'}">
+      <strong>Activo:</strong> ${fmt(actT)} &nbsp;|&nbsp; <strong>Pasivo+Patrimonio:</strong> ${fmt(pasT)} &nbsp;|&nbsp;
+      <strong>Diferencia: ${fmt(dif)} ${dif===0?'✓ CUADRADO':'⚠ DESCUADRADO'}</strong>
+    </div>
+  </div>`;
+}
+
+// ─── TAB: RCV ──────────────────────────────────────────────
+function renderRCV(){
+  const rcv=parseRCV(emp().rcvTxt||'');
+  const valid=rcv.filter(r=>r.estado==='CONSOLIDADO');
+  const rows=rcv.slice(0,80).map(r=>{
+    const lk=nitLookup(r.nit);
+    const cuenta=lk?lk.cuenta:(S.catMap[r.cat?.trim()]||'');
+    const cuentaNombre=cuenta?acctName(cuenta):'Sin asignar';
+    return`<tr style="background:${r.estado==='CONSOLIDADO'?'':'#FFF5F5'}">
+      <td>${r.nro}</td><td style="max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${r.razon||''}</td>
+      <td>${r.nit||''}</td><td>${r.fecha||''}</td><td class="r">${fmt(r.total)}</td><td class="r">${fmt(r.cf)}</td>
+      <td style="font-size:10px">${cuentaNombre}</td>
+      <td><span class="${r.estado==='CONSOLIDADO'?'badge-ok':'badge-err'}">${r.estado||''}</span></td>
+    </tr>`;
+  }).join('');
+  return`<div class="card">
+    <div class="h2">🧾 RCV — Registro de Compras</div>
+    <p class="nota">Pega los datos del RCV del SIAT (columnas A:Y desde fila 3). El NIT se busca automáticamente en la pestaña NIT's.</p>
+    <textarea placeholder="Pegar datos del RCV aquí (Tab-separado)..." onblur="emp().rcvTxt=this.value;saveLS();re()">${emp().rcvTxt||''}</textarea>
+    ${rcv.length?`<div class="info ig" style="margin-top:6px">✓ <strong>${rcv.length}</strong> filas — <strong>${valid.length}</strong> consolidadas — CF total: <strong>${fmt(r2(valid.reduce((s,r)=>r2(s+r.cf),0)))}</strong> Bs</div>`:''}
+    ${rcv.length?`<div class="tbl-wrap" style="margin-top:8px"><table><thead><tr><th>Nº</th><th>Razón Social</th><th>NIT</th><th>Fecha</th><th class="r">Total</th><th class="r">CF</th><th>Cuenta Asignada</th><th>Estado</th></tr></thead><tbody>${rows}</tbody></table></div>`:''}
+  </div>`;
+}
+
+// ─── TAB: INGRESOS ─────────────────────────────────────────
+function renderIngresos(c){
+  const incc=[{c:'411002001',n:'SERVICIOS DE DELIVERY'},{c:'411002002',n:'SERVICIOS DE TRANSPORTE'},{c:'411002003',n:'SERVICIOS DE PUBLICIDAD'},{c:'411002004',n:'INGRESOS POR SERVICIOS'},{c:'431012001',n:'OTROS INGRESOS'}];
+  const meses=['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+  const rows=(emp().ingresos||[]).map((ing,i)=>{
+    const tot=r2(pn(ing.monto)),neto=r2(tot*0.87),df=r2(tot*0.13),it=r2(tot*0.03);
+    return`<div style="padding:10px;background:#F8FAFC;border-radius:7px;border:1px solid #E2E8F0;margin-bottom:8px;display:flex;gap:8px;align-items:flex-end">
+      <div style="flex:.7"><label>Mes</label><select onchange="emp().ingresos[${i}].mes=+this.value;saveLS();re();">${meses.map((m,j)=>`<option value="${j+1}"${(ing.mes||1)===j+1?' selected':''}>${m}</option>`).join('')}</select></div>
+      <div style="flex:2"><label>Cuenta</label><select onchange="emp().ingresos[${i}].cuenta=this.value;saveLS();">${incc.map(a=>`<option value="${a.c}"${ing.cuenta===a.c?' selected':''}>${a.n}</option>`).join('')}</select></div>
+      <div style="flex:1.5"><label>Monto cobrado (con IVA)</label><input type="text" class="n" value="${ing.monto||''}" onblur="emp().ingresos[${i}].monto=this.value;saveLS();reLazy();" oninput=""/></div>
+      <div style="flex:.8;font-size:10px;color:#555;padding-bottom:4px"><div>Neto: <strong>${fmt(neto)}</strong></div><div>DF IVA: <strong>${fmt(df)}</strong></div><div>IT: <strong>${fmt(it)}</strong></div></div>
+      <button class="btn-del" onclick="emp().ingresos.splice(${i},1);saveLS();re()">✕</button>
+    </div>`;
+  }).join('');
+  const tot=r2((emp().ingresos||[]).reduce((s,x)=>r2(s+pn(x.monto)),0));
+  return`<div class="card">
+    <div class="h2">💰 Ingresos del Período</div>
+    <p class="nota">Registra cada ingreso cobrado (con IVA). El IVA 13% y el IT 3% se calculan automáticamente.</p>
+    ${rows}
+    <button class="btn-blue" onclick="emp().ingresos.push({mes:1,cuenta:'411002002',monto:''});saveLS();re()">+ Agregar Ingreso</button>
+    ${tot>0?`<div class="info ib" style="margin-top:8px">Total: <strong>${fmt(tot)}</strong> | Ingreso neto (87%): <strong>${fmt(r2(tot*0.87))}</strong> | DF IVA (13%): <strong>${fmt(r2(tot*0.13))}</strong> | IT (3% total): <strong>${fmt(r2(tot*0.03))}</strong></div>`:''}
+  </div>`;
+}
+
+// ─── TAB: ACTIVOS FIJOS ────────────────────────────────────
+function renderActivos(){
+  const TAF_NAMES=['VEHÍCULO','MUEBLES Y ENSERES','EQUIPOS DE COMPUTACIÓN','EQUIPOS DE COMUNICACIONES','EQUIPO DE OFICINA','EQUIPO ELECTRÓNICO'];
+  const TAF={'VEHÍCULO':{vida:5,tasa:.20},'MUEBLES Y ENSERES':{vida:10,tasa:.10},'EQUIPOS DE COMPUTACIÓN':{vida:4,tasa:.25},'EQUIPOS DE COMUNICACIONES':{vida:5,tasa:.20},'EQUIPO DE OFICINA':{vida:10,tasa:.10},'EQUIPO ELECTRÓNICO':{vida:4,tasa:.25}};
+  const ufvIni=pn(emp().cfg.ufvInicio),ufvFin=pn(emp().cfg.ufvFin);
+  const uR=ufvIni>0?r2(ufvFin/ufvIni):1;
+  const rows=(emp().activos||[]).map((af,i)=>{
+    const tab=TAF[af.tipo];const vH=r2(pn(af.valorHistorico));const dAP=r2(pn(af.depAcumAnterior));
+    const ajA=tab&&ufvIni>0?r2(vH*(uR-1)):0,ajD=tab&&ufvIni>0?r2(dAP*(uR-1)):0;
+    const dep=tab?r2(r2(vH+ajA)*tab.tasa):0;
+    return`<div style="padding:12px;background:#F8FAFC;border-radius:8px;border:1px solid #E2E8F0;margin-bottom:8px">
+      <div class="g4">
+        <div><label>Tipo</label><select onchange="emp().activos[${i}].tipo=this.value;saveLS();reLazy()"><option value="">Seleccionar...</option>${TAF_NAMES.map(k=>`<option value="${k}"${af.tipo===k?' selected':''}>${k}</option>`).join('')}</select></div>
+        <div><label>Descripción</label><input type="text" value="${af.nombre||''}" onblur="emp().activos[${i}].nombre=this.value;saveLS()"/></div>
+        <div><label>Valor Histórico (Bs)</label><input type="text" class="n" value="${af.valorHistorico||''}" onblur="emp().activos[${i}].valorHistorico=pn(this.value);saveLS();reLazy()" oninput=""/></div>
+        <div><label>Dep.Acum. Anterior (Bs)</label><input type="text" class="n" value="${af.depAcumAnterior||''}" onblur="emp().activos[${i}].depAcumAnterior=pn(this.value);saveLS();reLazy()" oninput=""/></div>
+      </div>
+      ${tab&&vH>0?`<div style="font-size:10px;color:#555;margin-top:6px;display:flex;gap:12px;flex-wrap:wrap;background:#F0FDF4;padding:5px 8px;border-radius:5px">
+        <span>UFV Activo: <strong>${fmt(ajA)}</strong></span>
+        <span>Valor actualizado: <strong>${fmt(r2(vH+ajA))}</strong></span>
+        <span style="color:#DC2626">Dep. año (${(tab.tasa*100).toFixed(0)}%): <strong>${fmt(dep)}</strong></span>
+        <span>UFV Dep.Acum ant.: <strong>${fmt(ajD)}</strong></span>
+        <span>Dep.Acum total año: <strong>${fmt(r2(dAP+ajD+dep))}</strong></span>
+      </div>`:''}
+      <div style="text-align:right;margin-top:6px"><button class="btn-del" onclick="emp().activos.splice(${i},1);saveLS();re()">✕ Eliminar</button></div>
+    </div>`;
+  }).join('');
+  return`<div class="card">
+    <div class="h2">🏗️ Activos Fijos</div>
+    <p class="nota">Todos los cálculos usan ROUND(,2) en cada paso. La depreciación y ajuste UFV se generan automáticamente en los comprobantes.</p>
+    ${rows}
+    <button class="btn-blue" onclick="emp().activos.push({tipo:'',nombre:'',valorHistorico:'',depAcumAnterior:''});saveLS();re()">+ Agregar Activo Fijo</button>
+  </div>`;
+}
+
+// ─── TAB: UFVs ─────────────────────────────────────────────
+function renderUFVs(){
+  const data=S.ufvData||[];
+  const ufvIni=pn(emp().cfg.ufvInicio),ufvFin=pn(emp().cfg.ufvFin);
+  return`<div class="card">
+    <div class="h2">📊 UFV's — Unidad de Fomento a la Vivienda</div>
+    <p class="nota">Pega los datos desde tu base de datos de UFVs (formato: FECHA [Tab] UFV, una por línea). Se usarán para el ajuste de capital y activos.</p>
+    <div class="g2" style="margin-bottom:12px">
+      <div>
+        <label>Pegar datos UFV (Fecha[Tab]Valor)</label>
+        <textarea id="ufv-paste" placeholder="01/01/2025	2.47388&#10;02/01/2025	2.47394&#10;..."></textarea>
+      </div>
+      <div>
+        <div style="font-size:12px;font-weight:600;color:#1C2B4B;margin-bottom:8px">Estado actual</div>
+        <div class="info ${data.length>0?'ig':'iy'}">
+          ${data.length>0?`✓ <strong>${data.length}</strong> UFVs cargadas (${data[0]?.fecha} → ${data[data.length-1]?.fecha})`:'No hay UFVs cargadas. Pega y carga desde la izquierda.'}
+        </div>
+        ${ufvIni>0?`<div class="info ib" style="margin-top:8px">UFV inicio: <strong>${ufvIni}</strong> | UFV fin: <strong>${ufvFin}</strong></div>`:''}
+        <div style="margin-top:10px">
+          <p style="font-size:11px;color:#555;margin-bottom:6px"><strong>Buscar UFV por fecha:</strong></p>
+          <div style="display:flex;gap:8px">
+            <input type="date" id="ufv-search" style="background:#FFFDE7;border:1.5px solid #F9A825;border-radius:5px;padding:5px 8px;font-size:12px;flex:1"/>
+            <button class="btn-blue" onclick="searchUFV()">Buscar</button>
+          </div>
+          <div id="ufv-result" style="font-size:12px;margin-top:6px;color:#1C2B4B"></div>
+        </div>
+        <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap">
+          <button class="btn-green" onclick="pasteUFV(document.getElementById('ufv-paste').value)">✓ Cargar UFVs</button>
+          <button class="btn-del" onclick="S.ufvData=[];saveLS();re()">Limpiar</button>
+        </div>
+      </div>
+    </div>
+    ${data.length>0?`<div class="tbl-wrap" style="max-height:250px"><table><thead><tr><th>FECHA</th><th class="r">UFV</th></tr></thead><tbody>${data.slice(0,20).map(u=>`<tr><td>${u.fecha}</td><td class="r">${u.ufv}</td></tr>`).join('')}${data.length>20?`<tr><td colspan="2" style="text-align:center;color:#888;font-size:10px">... y ${data.length-20} más</td></tr>`:''}</tbody></table></div>`:''}
+  </div>`;
+}
+function searchUFV(){const d=document.getElementById('ufv-search').value;if(!d)return;const u=ufvAt(d);document.getElementById('ufv-result').innerHTML=u>0?`<span class="badge-ok">UFV ${d}: <strong>${u}</strong></span>`:`<span class="badge-err">No encontrado para ${d}</span>`;}
+
+// ─── TAB: NITs ─────────────────────────────────────────────
+function renderNITs(){
+  const nits=S.nits||[];
+  const leaves=leafAccts().map(a=>`<option value="${a.c}">${a.c} — ${a.n}</option>`).join('');
+  const rows=nits.map((n,i)=>`<div class="nit-row">
+    <div><label style="font-size:10px">NIT</label><input type="text" value="${n.nit||''}" onblur="S.nits[${i}].nit=this.value;saveLS()" /></div>
+    <div><label style="font-size:10px">Razón Social</label><input type="text" value="${n.razon||''}" onblur="S.nits[${i}].razon=this.value;saveLS()" /></div>
+    <div><label style="font-size:10px">Categoría</label><input type="text" value="${n.cat||''}" onblur="S.nits[${i}].cat=this.value;saveLS()" /></div>
+    <div><label style="font-size:10px">Cuenta Contable</label><select onchange="S.nits[${i}].cuenta=this.value;saveLS()"><option value="">Seleccionar...</option>${leaves.replace(`value="${n.cuenta}"`,`value="${n.cuenta}" selected`)}</select></div>
+    <button class="btn-del" onclick="S.nits.splice(${i},1);saveLS();re()">✕</button>
+  </div>`).join('');
+  return`<div class="card">
+    <div class="h2">🔍 NIT's — Base de Datos de Proveedores</div>
+    <p class="nota">Registra los NITs de tus proveedores con su cuenta contable. El RCV asignará automáticamente la cuenta según el NIT de la factura.</p>
+    <div style="margin-bottom:12px;display:flex;gap:8px;flex-wrap:wrap">
+      <button class="btn-blue" onclick="S.nits.push({nit:'',razon:'',cat:'',cuenta:''});saveLS();re()">+ Agregar NIT</button>
+      <button class="btn-orange" onclick="importNITs()">📥 Importar desde Excel/CSV</button>
+      <input type="text" id="nit-search" placeholder="Buscar NIT o Razón Social..." style="flex:1;min-width:200px;background:#fff;border:1px solid #DDD" oninput="re()"/>
+    </div>
+    ${rows||'<div class="info iy">No hay NITs registrados. Agrega los proveedores frecuentes para asignación automática.</div>'}
+    <div class="nota" style="margin-top:8px">Total registrados: <strong>${nits.length}</strong> proveedores</div>
+  </div>`;
+}
+function importNITs(){
+  const txt=prompt('Pega los datos (NIT[Tab]Razón Social[Tab]Categoría[Tab]Cuenta):');
+  if(!txt) return;
+  const rows=txt.trim().split('\n').map(r=>r.split('\t'));
+  rows.forEach(r=>{
+    if(r.length>=2){
+      S.nits.push({nit:(r[0]||'').trim(),razon:(r[1]||'').trim(),cat:(r[2]||'').trim(),cuenta:(r[3]||'').trim()});
+    }
+  });
+  saveLS();re();
+}
+
+// ─── TAB: PLAN DE CUENTAS ─────────────────────────────────
+function renderPlanCuentas(){
+  const plan=S.planCuentas.length>0?S.planCuentas:DEFAULT_PLAN;
+  const leaves=plan.filter(a=>a.c&&a.c.length===9);
+  const rows=leaves.map((a,i)=>{
+    const idx=S.planCuentas.findIndex(x=>x.c===a.c);
+    return`<div class="plan-row">
+      <div><span style="font-family:monospace;font-size:11px;color:#555">${a.c}</span></div>
+      <input type="text" value="${a.n}" onblur="updatePlan('${a.c}',this.value)" style="font-size:11px"/>
+      <span style="font-size:10px;color:#888">${{1:'ACTIVO',2:'PASIVO',3:'PATRIMONIO',4:'INGRESO',5:'EGRESO'}[a.c[0]]||''}</span>
+    </div>`;
+  }).join('');
+  return`<div class="card">
+    <div class="h2">📋 Plan de Cuentas</div>
+    <p class="nota">Edita el nombre de las cuentas contables. Los cambios se reflejan en todos los estados financieros.</p>
+    <div style="margin-bottom:10px;display:flex;gap:8px">
+      <button class="btn-blue" onclick="resetPlan()">↺ Restaurar predeterminado</button>
+      <span style="font-size:11px;color:#888;line-height:32px">${leaves.length} cuentas analíticas</span>
+    </div>
+    <div class="tbl-wrap" style="max-height:500px">${rows}</div>
+  </div>`;
+}
+function updatePlan(code,nombre){
+  const idx=S.planCuentas.findIndex(a=>a.c===code);
+  if(idx>=0){S.planCuentas[idx].n=nombre;}
+  else{const d=DEFAULT_PLAN.find(a=>a.c===code);if(d)S.planCuentas.push({...d,n:nombre});}
+  saveLS();
+}
+function resetPlan(){if(confirm('¿Restaurar plan de cuentas predeterminado?')){S.planCuentas=[];saveLS();re();}}
+
+// ─── TAB: OTROS ASIENTOS ──────────────────────────────────
+// Asientos predefinidos con cuentas FIJAS
+const PREDEFINED_NAMES=['Ajuste de Capital', 'Traspaso Resultados Acumulados (Utilidad)', 'Traspaso Resultados Acumulados (Pérdida)', 'IUE Por Pagar / A Compensar', 'Préstamos Recibidos en Caja', 'Multas e Intereses', 'Pago IUE con Caja', 'Aumento de Capital', 'IUE No Compensado', 'Compensación CF vs DF IVA Manual'];
+const PREDEFINED_LINES=[[['561001001', 'AJUSTE POR INFLACIÓN Y TENENCIA DE BIENES', 'debe'], ['311002001', 'AJUSTE DEL CAPITAL', 'haber']], [['314001001', 'UTILIDAD DE LA GESTIÓN', 'debe'], ['313001001', 'RESULTADOS ACUMULADOS', 'haber']], [['314002001', 'PÉRDIDA DE LA GESTIÓN', 'debe'], ['313001001', 'RESULTADOS ACUMULADOS', 'haber']], [['116006001', 'IUE A COMPENSAR', 'debe'], ['214006001', 'IUE POR PAGAR', 'haber']], [['111001001', 'CAJA M/N', 'debe'], ['212003001', 'PRÉSTAMOS RECIBIDOS', 'haber']], [['525019001', 'MULTAS E INTERESES', 'debe'], ['214026001', 'MULTAS E INTERESES POR PAGAR', 'haber']], [['214006001', 'IUE POR PAGAR', 'debe'], ['111001001', 'CAJA M/N', 'haber']], [['111001001', 'CAJA M/N', 'debe'], ['311001001', 'CAPITAL SOCIAL', 'haber']], [['525004001', 'IUE NO COMPENSADO', 'debe'], ['116006001', 'IUE A COMPENSAR', 'haber']], [['214001001', 'DÉBITO FISCAL IVA', 'debe'], ['116001001', 'CRÉDITO FISCAL IVA', 'haber']]];
+function renderOtrosAsientos(c){
+  const oas=(emp().otrosAsientos||[]);
+  // Ensure predefined entries exist
+  if(oas.length===0||oas[0].tipo!=='predefined'){
+    // Initialize
+    if(!emp()._oaInit){
+      emp().otrosAsientos=PREDEFINED_NAMES.map((nombre,i)=>({tipo:'predefined',nombre,activo:false,lines:PREDEFINED_LINES[i].map(([c,n,t])=>({cuenta:c,nombre:n,tipo:t,valor:''}))}) );
+      emp()._oaInit=true;saveLS();
+    }
+  }
+  const cards=(emp().otrosAsientos||[]).map((oa,i)=>{
+    const isPred=oa.tipo==='predefined';
+    const lines=(oa.lines||[]);
+    const totD=r2(lines.reduce((s,l)=>r2(s+(l.tipo==='debe'?pn(l.valor):0)),0));
+    const totH=r2(lines.reduce((s,l)=>r2(s+(l.tipo==='haber'?pn(l.valor):0)),0));
+    const cuad=r2(totD-totH)===0&&(totD>0||totH>0);
+    const hasData=totD>0||totH>0;
+    const linesHTML=lines.map((l,j)=>{
+      const disp=l.valor?pn(l.valor).toString().replace('.',','):'';
+      if(isPred){
+        return`<div style="display:grid;grid-template-columns:90px 1fr 120px 120px;gap:6px;margin-bottom:4px;align-items:center;font-size:11px">
+          <span style="font-family:monospace;color:#555;font-size:10px">${l.cuenta}</span>
+          <span>${l.nombre}</span>
+          <input type="text" class="n" placeholder="DEBE" value="${l.tipo==='debe'?disp:''}" ${l.tipo!=='debe'?'readonly class="ro n"':''} onblur="emp().otrosAsientos[${i}].lines[${j}].valor=pn(this.value)||'';saveLS();reLazy()" oninput=""/>
+          <input type="text" class="n" placeholder="HABER" value="${l.tipo==='haber'?disp:''}" ${l.tipo!=='haber'?'readonly class="ro n"':''} onblur="emp().otrosAsientos[${i}].lines[${j}].valor=pn(this.value)||'';saveLS();reLazy()" oninput=""/>
+        </div>`;
+      } else {
+        const selOpts=leafAccts().slice(0,5).map(a=>`<option value="${a.c}">${a.c} — ${a.n}</option>`).join('');
+        return`<div style="display:grid;grid-template-columns:1fr 2fr 120px 120px auto;gap:6px;margin-bottom:4px;align-items:center">
+          <select onchange="emp().otrosAsientos[${i}].lines[${j}].cuenta=this.value;emp().otrosAsientos[${i}].lines[${j}].nombre=this.options[this.selectedIndex].text.split('—')[1]?.trim()||'';saveLS();" style="font-size:11px">
+            <option value="">— Cuenta —</option>${leafAccts().map(a=>`<option value="${a.c}"${l.cuenta===a.c?' selected':''}>${a.c} — ${a.n}</option>`).join('')}
+          </select>
+          <span style="font-size:11px">${l.nombre||''}</span>
+          <input type="text" class="n" placeholder="DEBE" value="${l.tipo==='debe'?disp:''}" onblur="emp().otrosAsientos[${i}].lines[${j}].tipo='debe';emp().otrosAsientos[${i}].lines[${j}].valor=pn(this.value)||'';saveLS();reLazy()" oninput=""/>
+          <input type="text" class="n" placeholder="HABER" value="${l.tipo==='haber'?disp:''}" onblur="emp().otrosAsientos[${i}].lines[${j}].tipo='haber';emp().otrosAsientos[${i}].lines[${j}].valor=pn(this.value)||'';saveLS();reLazy()" oninput=""/>
+          <button class="btn-del" onclick="emp().otrosAsientos[${i}].lines.splice(${j},1);saveLS();re()">✕</button>
+        </div>`;
+      }
+    }).join('');
+    return`<div class="asiento">
+      <div class="asiento-title">
+        <span>${oa.nombre}</span>
+        <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
+          ${hasData?`<span class="${cuad?'diff-ok':'diff-err'}">${cuad?'✓':'✗'}</span>`:''}
+          <label style="font-size:11px;cursor:pointer">
+            <input type="checkbox" ${oa.activo?'checked':''} onchange="emp().otrosAsientos[${i}].activo=this.checked;saveLS();reLazy()"> Incluir
+          </label>
+          ${!isPred?`<button class="btn-blue" onclick="emp().otrosAsientos[${i}].lines.push({cuenta:'',nombre:'',tipo:'debe',valor:''});saveLS();re()">+ Línea</button>`:''}
+          ${hasData?`<button onclick="clearOA(${i})" style="background:#F59E0B;color:#fff;border:none;border-radius:4px;padding:3px 8px;font-size:10px;cursor:pointer">🗑 Limpiar</button>`:''}
+          ${!isPred?`<button class="btn-del" onclick="if(confirm('¿Eliminar?')){emp().otrosAsientos.splice(${i},1);saveLS();re()}">✕ Eliminar</button>`:''}
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:${isPred?'90px 1fr 120px 120px':'1fr 2fr 120px 120px auto'};gap:6px;margin-bottom:6px;font-size:10px;font-weight:600;color:#888">
+        <span>CUENTA</span><span>NOMBRE</span><span style="text-align:right">DEBE</span><span style="text-align:right">HABER</span>${!isPred?'<span></span>':''}
+      </div>
+      ${linesHTML}
+      ${hasData?`<div style="font-size:11px;margin-top:6px;display:flex;gap:16px;padding:4px 8px;background:#F0F4FF;border-radius:4px">
+        <span>DEBE: <strong>${fmt(totD)}</strong></span><span>HABER: <strong>${fmt(totH)}</strong></span>
+        <span class="${cuad?'cok':'cer'}">Diferencia: ${fmt(r2(totD-totH))}</span>
+      </div>`:''}
+    </div>`;
+  }).join('');
+  const hasAnyData=(emp().otrosAsientos||[]).filter(oa=>oa.tipo==='predefined').some(oa=>(oa.lines||[]).some(l=>pn(l.valor)>0));
+  return`<div class="card">
+    <div class="h2">📝 Otros Asientos</div>
+    <p class="nota">Las cuentas de los asientos predeterminados son fijas. Solo ingresa los importes y activa los que apliquen.</p>
+    <div style="margin-bottom:10px;display:flex;gap:8px;flex-wrap:wrap">
+      <button class="btn-blue" onclick="addFreeOA()">+ Asiento Libre</button>
+      ${hasAnyData?`<button class="btn-orange" onclick="if(confirm('¿Limpiar TODOS los asientos predeterminados?')){clearAllPredefined();}">🗑 Limpiar todos los predeterminados</button>`:''}
+    </div>
+    ${cards}
+  </div>`;
+}
+function clearOA(i){const oa=emp().otrosAsientos[i];(oa.lines||[]).forEach(l=>{l.valor='';});oa.activo=false;saveLS();re();}
+function clearAllPredefined(){(emp().otrosAsientos||[]).filter(oa=>oa.tipo==='predefined').forEach(oa=>{(oa.lines||[]).forEach(l=>{l.valor='';});oa.activo=false;});saveLS();re();}
+function addFreeOA(){emp().otrosAsientos.push({tipo:'libre',nombre:'Asiento Libre',activo:false,lines:[{cuenta:'',nombre:'',tipo:'debe',valor:''},{cuenta:'',nombre:'',tipo:'haber',valor:''}]});saveLS();re();}
+function initOAIfNeeded(){
+  const oas=emp().otrosAsientos||[];
+  if(oas.length===0||oas[0].tipo==='predefined') return;
+  // If old format, migrate
+  if(!oas[0].tipo){
+    emp().otrosAsientos=PREDEFINED_NAMES.map((nombre,i2)=>({tipo:'predefined',nombre,activo:false,lines:PREDEFINED_LINES[i2].map(([c,n,t])=>({cuenta:c,nombre:n,tipo:t,valor:''}))}) );
+    saveLS();
+  }
+}
+
+// ─── TAB: COMPROBANTES ────────────────────────────────────
+function renderComprobantes(c){
+  const E=c.E;
+  const cards=E.map(e=>{
+    const totD=r2((e.lines||[]).reduce((s,l)=>r2(s+r2(l.d)),0));
+    const totH=r2((e.lines||[]).reduce((s,l)=>r2(s+r2(l.h)),0));
+    const tipoCls={I:'#059669',E:'#DC2626',T:'#1C2B4B'}[e.tipo]||'#555';
+    const tipoLabel={I:'COMPROBANTE DE INGRESO',E:'COMPROBANTE DE EGRESO',T:'COMPROBANTE DE TRASPASO'}[e.tipo]||e.tipo;
+    const linesHTML=(e.lines||[]).filter(l=>l.d||l.h).map(l=>`<tr>
+      <td class="mono">${l.c}</td><td>${acctName(l.c)}</td>
+      <td class="r">${l.d?fmt(r2(l.d)):''}</td>
+      <td class="r">${l.h?fmt(r2(l.h)):''}</td>
+    </tr>`).join('');
+    return`<div class="comprobante-card">
+      <div class="comprobante-hdr" style="background:${tipoCls}">
+        <span>${tipoLabel}</span><span style="font-weight:400;font-size:11px">${e.id} — ${e.desc}</span>
+      </div>
+      <table style="margin:0">
+        <thead><tr><th>CUENTA</th><th>NOMBRE</th><th class="r">DEBE</th><th class="r">HABER</th></tr></thead>
+        <tbody>${linesHTML}</tbody>
+        <tfoot><tr class="tr-f"><td colspan="2">TOTALES</td><td class="r">${fmt(totD)}</td><td class="r">${fmt(totH)}</td></tr></tfoot>
+      </table>
+    </div>`;
+  }).join('');
+  return`<div class="card">
+    <div class="h2">🗂️ Comprobantes</div>
+    <p class="nota">Vista de todos los comprobantes generados automáticamente (Ingresos, Egresos, Traspasos).</p>
+    ${cards||'<div class="info iy">No hay comprobantes. Ingresa datos en las otras pestañas.</div>'}
+  </div>`;
+}
+
+// ─── TAB: CUADRO DE ACTIVOS FIJOS ────────────────────────
+function renderCuadroAF(){
+  const ufvIni=pn(emp().cfg.ufvInicio),ufvFin=pn(emp().cfg.ufvFin);
+  const uR=ufvIni>0?r2(ufvFin/ufvIni):1;
+  const TAF={'VEHÍCULO':{vida:5,tasa:.20,cA:'123003001',cD:'124001001',cG:'524001005'},'MUEBLES Y ENSERES':{vida:10,tasa:.10,cA:'123004001',cD:'124001002',cG:'524001004'},'EQUIPOS DE COMPUTACIÓN':{vida:4,tasa:.25,cA:'123006001',cD:'124001003',cG:'524001002'},'EQUIPOS DE COMUNICACIONES':{vida:5,tasa:.20,cA:'123007001',cD:'124001004',cG:'524001001'},'EQUIPO DE OFICINA':{vida:10,tasa:.10,cA:'123009001',cD:'124001005',cG:'524001006'},'EQUIPO ELECTRÓNICO':{vida:4,tasa:.25,cA:'123010001',cD:'124001006',cG:'524001003'}};
+  const rows=(emp().activos||[]).map(af=>{
+    const tab=TAF[af.tipo];if(!tab)return '';
+    const vH=r2(pn(af.valorHistorico));
+    const dAP=r2(pn(af.depAcumAnterior));
+    const ajA=ufvIni>0?r2(vH*(uR-1)):0;
+    const vAct=r2(vH+ajA);
+    const dep=r2(vAct*tab.tasa);
+    const ajD=ufvIni>0?r2(dAP*(uR-1)):0;
+    const depAcumTotal=r2(dAP+ajD+dep);
+    const valorNeto=r2(vAct-depAcumTotal);
+    return`<tr>
+      <td>${af.nombre||af.tipo}</td>
+      <td class="r">${fmt(vH)}</td>
+      <td class="r">${fmt(ajA)}</td>
+      <td class="r">${fmt(vAct)}</td>
+      <td class="r">${fmt(dAP>0?-dAP:0)}</td>
+      <td class="r">${fmt(dep)}</td>
+      <td class="r">${fmt(ajD>0?-ajD:0)}</td>
+      <td class="r" style="font-weight:700;color:#DC2626">${fmt(-depAcumTotal)}</td>
+      <td class="r" style="font-weight:700;color:#059669">${fmt(valorNeto)}</td>
+      <td class="r" style="font-size:10px">${(tab.tasa*100).toFixed(0)}%</td>
+    </tr>`;
+  }).join('');
+  const totVH=r2((emp().activos||[]).reduce((s,af)=>r2(s+pn(af.valorHistorico)),0));
+  return`<div class="card">
+    <div class="h2">📊 Cuadro de Activos Fijos</div>
+    <div class="ee-sub" style="margin-bottom:12px">${emp().cfg.razonSocial||'Empresa'} | Gestión ${emp().cfg.gestion} | Del ${emp().cfg.fechaInicio} al ${emp().cfg.fechaFin}</div>
+    <div class="tbl-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th rowspan="2">DESCRIPCIÓN</th>
+          <th class="r" rowspan="2">VALOR ACTUAL</th>
+          <th class="r" rowspan="2">INCR. UFV</th>
+          <th class="r" rowspan="2">VALOR ACTUALIZ.</th>
+          <th class="r" colspan="3">DEPRECIACIÓN</th>
+          <th class="r" rowspan="2">DEP. ACUM. TOTAL</th>
+          <th class="r" rowspan="2">VALOR NETO</th>
+          <th class="r" rowspan="2">TASA</th>
+        </tr>
+        <tr>
+          <th class="r">Acum. Anterior</th>
+          <th class="r">Del Año</th>
+          <th class="r">UFV Dep.Acum</th>
+        </tr>
+      </thead>
+      <tbody>${rows||'<tr><td colspan="10" style="text-align:center;color:#888;padding:20px">No hay activos registrados</td></tr>'}</tbody>
+      <tfoot><tr class="tr-f"><td>TOTALES</td><td class="r">${fmt(totVH)}</td><td colspan="8"></td></tr></tfoot>
+    </table>
+    </div>
+  </div>`;
+}
+
+// ─── TAB: ESTADOS FINANCIEROS ────────────────────────────
+function renderEE(c){
+  const{M,gs,util,tI,tG,aC,aNC,tA,tP,tPT,difBG,dep,gUFV,iUFV,vCF,vIC,vDF,vIT,vIUE,vPr,inv,fOp,fFin,difF,sI,sF,cajaMN,ajC,ssA,ssTD,ssTH,ssTSD,ssTSH,bgOK,ssOK,fOK}=c;
+  const cfg=emp().cfg;
+  let ee='';const st=S.sub;
+
+  if(st==='bg'){
+    const acR=(['111001001','111002001','116001001','116006001']).filter(k=>gs(k)!==0).map(k=>`<tr><td style="padding-left:18px">${acctName(k)}</td><td class="r">${fmt(gs(k))}</td></tr>`).join('');
+    const ancR=Object.keys(M).filter(k=>acctTipo(k)==='A'&&k.startsWith('12')&&gs(k)!==0).map(k=>`<tr><td style="padding-left:18px">${acctName(k)}</td><td class="r">${fmt(gs(k))}</td></tr>`).join('');
+    const pasR=Object.keys(M).filter(k=>acctTipo(k)==='P'&&gs(k)!==0).map(k=>`<tr><td style="padding-left:18px">${acctName(k)}</td><td class="r">${fmt(gs(k))}</td></tr>`).join('');
+    ee=`<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+      <table><thead><tr><th colspan="2">ACTIVO</th></tr></thead><tbody>
+        <tr class="tr-g"><td colspan="2">ACTIVO CORRIENTE</td></tr>${acR}
+        <tr class="tr-t"><td>TOTAL ACTIVO CORRIENTE</td><td class="r">${fmt(aC)}</td></tr>
+        <tr class="tr-g"><td colspan="2">ACTIVO NO CORRIENTE</td></tr>${ancR}
+        <tr class="tr-t"><td>TOTAL ACTIVO NO CORRIENTE</td><td class="r">${fmt(aNC)}</td></tr>
+      </tbody><tfoot><tr class="tr-f"><td>TOTAL ACTIVO</td><td class="r">${fmt(tA)}</td></tr></tfoot></table>
+      <table><thead><tr><th colspan="2">PASIVO + PATRIMONIO</th></tr></thead><tbody>
+        <tr class="tr-g"><td colspan="2">PASIVO CORRIENTE</td></tr>${pasR}
+        <tr class="tr-t"><td>TOTAL PASIVO</td><td class="r">${fmt(tP)}</td></tr>
+        <tr class="tr-g"><td colspan="2">PATRIMONIO</td></tr>
+        ${Object.keys(M).filter(k=>acctTipo(k)==='PT'&&gs(k)!==0).map(k=>`<tr><td style="padding-left:18px">${acctName(k)}</td><td class="r">${fmt(gs(k))}</td></tr>`).join('')}
+        <tr><td style="padding-left:18px">UTILIDAD DE LA GESTIÓN</td><td class="r">${fmt(util)}</td></tr>
+        <tr class="tr-t"><td>TOTAL PATRIMONIO</td><td class="r">${fmt(tPT)}</td></tr>
+      </tbody><tfoot>
+        <tr class="tr-f"><td>TOTAL PASIVO + PATRIMONIO</td><td class="r">${fmt(r2(tP+tPT))}</td></tr>
+        <tr class="${bgOK?'bok':'ber'}"><td>DIFERENCIA</td><td class="r ${bgOK?'cok':'cer'}">${fmt(difBG)} ${bgOK?'✓':''}</td></tr>
+      </tfoot></table>
+    </div>`;
+  }
+  else if(st==='er'){
+    const grp={};
+    Object.keys(M).filter(k=>acctTipo(k)==='I'||acctTipo(k)==='G').forEach(k=>{const t=acctTipo(k),n=acctName(k),s=gs(k);if(!s)return;if(!grp[t])grp[t]=[];grp[t].push({k,n,s});});
+    const iR=(grp['I']||[]).map(({k,n,s})=>`<tr><td style="padding-left:22px">${n}</td><td class="r">${fmt(s)}</td></tr>`).join('');
+    const gR=(grp['G']||[]).map(({k,n,s})=>`<tr><td style="padding-left:22px">${n}</td><td class="r">${fmt(s)}</td></tr>`).join('');
+    ee=`<table><thead><tr><th>CUENTA</th><th class="r">MONTO (Bs)</th></tr></thead><tbody>
+      <tr class="tr-i"><td colspan="2">▸ INGRESOS</td></tr>${iR}
+      <tr class="tr-t"><td>TOTAL INGRESOS</td><td class="r" style="color:#059669">${fmt(tI)}</td></tr>
+      <tr><td colspan="2" style="padding:3px"></td></tr>
+      <tr class="tr-e"><td colspan="2">▸ GASTOS</td></tr>${gR}
+      <tr class="tr-t"><td>TOTAL GASTOS</td><td class="r" style="color:#DC2626">${fmt(tG)}</td></tr>
+    </tbody><tfoot><tr class="${util>=0?'bok':'ber'}"><td style="font-weight:700;padding:7px 8px">UTILIDAD DE LA GESTIÓN</td><td class="r" style="color:${util>=0?'#059669':'#DC2626'};font-size:14px;font-weight:700">${fmt(util)}</td></tr></tfoot></table>`;
+  }
+  else if(st==='ss'){
+    const rows=ssA.map(k=>`<tr><td class="mono">${k}</td><td>${acctName(k)}</td><td class="r">${fmt(r2(M[k].debe))}</td><td class="r">${fmt(r2(M[k].haber))}</td><td class="r">${M[k].sD>0?fmt(r2(M[k].sD)):''}</td><td class="r">${M[k].sH>0?fmt(r2(M[k].sH)):''}</td></tr>`).join('');
+    const difSS=r2(ssTSD-ssTSH);
+    ee=`<div class="tbl-wrap"><table><thead><tr><th>CLASE</th><th>NOMBRE</th><th class="r">SUMAS DEBE</th><th class="r">SUMAS HABER</th><th class="r">SALDO DEUDOR</th><th class="r">SALDO ACREEDOR</th></tr></thead>
+      <tbody>${rows}</tbody>
+      <tfoot><tr class="tr-f"><td colspan="2">TOTALES</td><td class="r">${fmt(ssTD)}</td><td class="r">${fmt(ssTH)}</td><td class="r">${fmt(ssTSD)}</td><td class="r">${fmt(ssTSH)}</td></tr>
+      <tr class="${ssOK?'bok':'ber'}"><td colspan="4"></td><td colspan="2" class="r" style="color:${ssOK?'#059669':'#DC2626'};font-weight:700">Diferencia: ${fmt(difSS)} ${ssOK?'✓':''}</td></tr>
+      </tfoot></table></div>`;
+  }
+  else if(st==='flujo'){
+    ee=`<table><thead><tr><th>CONCEPTO</th><th class="r">MONTO (Bs)</th></tr></thead><tbody>
+      <tr class="tr-g"><td colspan="2">ACTIVIDADES DE OPERACIÓN</td></tr>
+      <tr><td style="padding-left:18px">Utilidad de la Gestión</td><td class="r">${fmt(util)}</td></tr>
+      <tr><td style="padding-left:18px">+ Depreciaciones del año (no monetario)</td><td class="r">${fmt(dep)}</td></tr>
+      <tr><td style="padding-left:18px">+ Gasto Ajuste Inflación UFV (no monetario)</td><td class="r">${fmt(gUFV)}</td></tr>
+      <tr><td style="padding-left:18px">− Ingreso Ajuste Inflación UFV (no monetario)</td><td class="r">${fmt(-iUFV)}</td></tr>
+      ${vCF!==0?`<tr><td style="padding-left:18px">Variación CF IVA</td><td class="r">${fmt(-vCF)}</td></tr>`:''}
+      ${vIC!==0?`<tr><td style="padding-left:18px">Variación IUE A Compensar</td><td class="r">${fmt(-vIC)}</td></tr>`:''}
+      ${vDF!==0?`<tr><td style="padding-left:18px">Variación DF IVA</td><td class="r">${fmt(vDF)}</td></tr>`:''}
+      ${vIT!==0?`<tr><td style="padding-left:18px">Variación IT Por Pagar</td><td class="r">${fmt(vIT)}</td></tr>`:''}
+      ${vIUE!==0?`<tr><td style="padding-left:18px">Variación IUE Por Pagar</td><td class="r">${fmt(vIUE)}</td></tr>`:''}
+      <tr class="tr-t"><td>TOTAL OPERACIÓN</td><td class="r">${fmt(fOp)}</td></tr>
+      <tr class="tr-g"><td colspan="2">ACTIVIDADES DE INVERSIÓN</td></tr>
+      <tr><td style="padding-left:18px">Compras activos fijos (efectivo real, excl. UFV)</td><td class="r">${fmt(inv)}</td></tr>
+      <tr class="tr-t"><td>TOTAL INVERSIÓN</td><td class="r">${fmt(inv)}</td></tr>
+      <tr class="tr-g"><td colspan="2">ACTIVIDADES DE FINANCIAMIENTO</td></tr>
+      ${vPr!==0?`<tr><td style="padding-left:18px">Variación Préstamos</td><td class="r">${fmt(-vPr)}</td></tr>`:''}
+      <tr class="tr-t"><td>TOTAL FINANCIAMIENTO</td><td class="r">${fmt(fFin)}</td></tr>
+    </tbody><tfoot>
+      <tr class="tr-f"><td>DIFERENCIA DE EFECTIVO DE LA GESTIÓN</td><td class="r">${fmt(difF)}</td></tr>
+      <tr><td>Saldo disponible al INICIO</td><td class="r">${fmt(sI)}</td></tr>
+      <tr class="tr-t"><td>Saldo disponible al FINAL (flujo)</td><td class="r" style="font-size:13px">${fmt(sF)}</td></tr>
+      <tr><td>Caja M/N según Balance General</td><td class="r">${fmt(cajaMN)}</td></tr>
+      <tr class="${fOK?'bok':'ber'}"><td>DIFERENCIA</td><td class="r ${fOK?'cok':'cer'}">${fmt(r2(sF-cajaMN))} ${fOK?'✓ CUADRADO':''}</td></tr>
+    </tfoot></table>`;
+  }
+  else if(st==='pat'){
+    const capA=r2(pn(emp().traspaso.capitalSocial)+pn(emp().traspaso.ajusteCapital));
+    const resA=r2(pn(emp().traspaso.resAcum));
+    const capF=r2(capA+ajC);
+    ee=`<table><thead><tr><th>CONCEPTO</th><th class="r">CAPITAL</th><th class="r">RESULT.ACUM.</th><th class="r">UTILIDAD</th><th class="r">TOTAL</th></tr></thead><tbody>
+      <tr class="tr-g"><td>Saldo al INICIO</td><td class="r">${fmt(capA)}</td><td class="r">${fmt(resA)}</td><td class="r">${fmt(0)}</td><td class="r">${fmt(r2(capA+resA))}</td></tr>
+      ${ajC!==0?`<tr><td style="padding-left:18px">+ Ajuste capital UFV</td><td class="r">${fmt(ajC)}</td><td class="r">—</td><td class="r">—</td><td class="r">${fmt(ajC)}</td></tr>`:''}
+      <tr><td style="padding-left:18px">+ Utilidad del período</td><td class="r">—</td><td class="r">—</td><td class="r">${fmt(util)}</td><td class="r">${fmt(util)}</td></tr>
+    </tbody><tfoot><tr class="tr-f"><td>Saldo al FINAL</td><td class="r">${fmt(capF)}</td><td class="r">${fmt(resA)}</td><td class="r">${fmt(util)}</td><td class="r">${fmt(r2(capF+resA+util))}</td></tr></tfoot></table>`;
+  }
+  else if(st==='mayor'){
+    const grp={};Object.keys(M).forEach(k=>{const t=acctTipo(k)||'?';if(!grp[t])grp[t]=[];grp[t].push(k);});
+    const tn={A:'ACTIVO',P:'PASIVO',PT:'PATRIMONIO',I:'INGRESO',G:'GASTO'};
+    ee=Object.entries(grp).map(([t,ks])=>`<div style="margin-bottom:14px">
+      <div class="tr-g" style="padding:5px 8px;border-radius:4px;margin-bottom:3px;font-size:11px">${tn[t]||t}</div>
+      <table><thead><tr><th>CUENTA</th><th>NOMBRE</th><th class="r">DEBE</th><th class="r">HABER</th><th class="r">SALDO</th></tr></thead>
+      <tbody>${ks.map(k=>`<tr><td class="mono">${k}</td><td>${acctName(k)}</td><td class="r">${fmt(r2(M[k].debe))}</td><td class="r">${fmt(r2(M[k].haber))}</td><td class="r" style="font-weight:600">${fmt(r2(M[k].saldo))}</td></tr>`).join('')}</tbody>
+      </table></div>`).join('');
+  }
+
+  return`<div class="card">
+    <div class="tab-bar">${[['bg','Balance General'],['er','Est. Resultados'],['ss','Sumas y Saldos'],['flujo','Flujo Efectivo'],['pat','Patrimonio'],['mayor','Mayor General']].map(([id,lb])=>sb(id,lb)).join('')}</div>
+    <div class="ee-hdr">
+      <div class="ee-title">${{bg:'BALANCE GENERAL',er:'ESTADO DE RESULTADOS',ss:'BALANCE DE COMPROBACIÓN — SUMAS Y SALDOS',flujo:'ESTADO DE FLUJO DE EFECTIVO',pat:'ESTADO DE EVOLUCIÓN DEL PATRIMONIO NETO',mayor:'MAYOR GENERAL'}[st]||''}</div>
+      <div class="ee-sub">${cfg.razonSocial||'Empresa'} | ${cfg.fechaInicio||''} al ${cfg.fechaFin||''} | (Expresado en Bolivianos)</div>
+    </div>
+    ${ee}
+  </div>`;
+}
+
+// ─── EMPRESA MODAL ────────────────────────────────────────
 function renderEmpModal(){
-  const rows=S.empresas.map(e=>`<div class="emp-item${e.id===S.activeId?' active':''}" onclick="S.activeId='${e.id}';S.showEmpModal=false;saveData();re()">
+  const rows=S.empresas.map(e=>`<div class="emp-item${e.id===S.activeId?' active':''}" onclick="S.activeId='${e.id}';S.showEmpModal=false;saveLS();re()">
     <div><strong>${e.cfg.razonSocial||'(Sin nombre)'}</strong><br><span style="font-size:10px;color:#888">NIT: ${e.cfg.nit||'—'} | Gestión: ${e.cfg.gestion} | ${e.updatedAt?new Date(e.updatedAt).toLocaleDateString('es-BO'):''}</span></div>
-    ${e.id!==S.activeId?`<button class="btn-del" onclick="event.stopPropagation();if(confirm('¿Eliminar ${e.cfg.razonSocial||'empresa'}?')){S.empresas=S.empresas.filter(x=>x.id!==e.id);if(S.activeId===e.id)S.activeId=S.empresas[0]?.id;saveData();re();}">✕</button>`:''}
+    ${e.id!==S.activeId?`<button class="btn-del" onclick="event.stopPropagation();if(confirm('¿Eliminar?')){S.empresas=S.empresas.filter(x=>x.id!=='${e.id}');if(S.activeId==='${e.id}')S.activeId=S.empresas[0]?.id;saveLS();re();}">✕</button>`:''}
   </div>`).join('');
   return`<div class="emp-modal" onclick="S.showEmpModal=false;re()">
     <div class="emp-box" onclick="event.stopPropagation()">
-      <div style="font-size:16px;font-weight:700;color:#1C2B4B;margin-bottom:14px">Gestión Multi-Empresa</div>
-      <p style="font-size:11px;color:#888;margin-bottom:12px">Selecciona o crea un cliente. Los datos se guardan automáticamente en este navegador.</p>
+      <div style="font-size:15px;font-weight:700;color:#1C2B4B;margin-bottom:12px">Gestión Multi-Empresa</div>
       ${rows}
       <div class="sep"></div>
       <div style="display:flex;gap:8px;flex-wrap:wrap">
-        <button class="btn-green" onclick="const id='emp_'+Date.now();S.empresas.push(newEmp(id));S.activeId=id;S.showEmpModal=false;saveData();re()">+ Nueva Empresa</button>
+        <button class="btn-green" onclick="const id='emp_'+Date.now();S.empresas.push(newEmp(id));S.activeId=id;S.showEmpModal=false;saveLS();re()">+ Nueva Empresa</button>
         <button class="btn-orange" onclick="importJSON()">📥 Importar JSON</button>
         <button class="btn" onclick="S.showEmpModal=false;re()">Cerrar</button>
       </div>
-      <p style="font-size:10px;color:#aaa;margin-top:10px">💡 Para compartir con un colega: usa "Exportar JSON" y envíale el archivo. Él lo importa en su computadora.</p>
+      <p class="nota" style="margin-top:10px">💡 Para compartir: usa "Guardar JSON" y envía el archivo a un colega.</p>
     </div>
   </div>`;
 }
 
-function renderMain(){
-  const e=emp();const c=calcAll(e);
-  const{rcv,M,gs,util,tI,tG,aC,aNC,tA,tP,tPT,difBG,dep,gUFV,iUFV,vCF,vIC,vDF,vIT,vIUE,vPr,inv,fOp,fFin,difF,sI,sF,cajaMN,ajC,ssA,ssTD,ssTH,ssTSD,ssTSH,bgOK,ssOK,fOK}=c;
-  const cfg=e.cfg,tr=e.tr,uf=e.ufv||{};
 
-  if(S.tab==='config')return`<div class="card"><div class="ch2">🏢 Datos del Cliente</div>
-    <div class="g2">
-      <div><label>Razón Social</label><input value="${cfg.razonSocial||''}" oninput="setEmpTxt('cfg.razonSocial',this.value)" onblur="re()"/></div>
-      <div><label>Actividad Económica</label><input value="${cfg.actividad||''}" oninput="setEmpTxt('cfg.actividad',this.value)" onblur="re()"/></div>
-      <div><label>C.I.</label><input value="${cfg.ci||''}" oninput="setEmpTxt('cfg.ci',this.value)" onblur="re()"/></div>
-      <div><label>NIT</label><input value="${cfg.nit||''}" oninput="setEmpTxt('cfg.nit',this.value)" onblur="re()"/></div>
-      <div><label>Gestión</label><input value="${cfg.gestion||'2025'}" oninput="setEmpTxt('cfg.gestion',this.value)" onblur="re()"/></div>
-      <div><label>Ciudad</label><input value="${cfg.ciudad||'SANTA CRUZ DE LA SIERRA'}" oninput="setEmpTxt('cfg.ciudad',this.value)" onblur="re()"/></div>
+// ─── FIX 7: FORMATO S&S ──────────────────────────────────
+function renderFormatoSS(c){
+  const{M,ssA,ssTD,ssTH,ssTSD,ssTSH}=c;
+  const cfg=emp().cfg;
+  function dlSS(){
+    const wb=XLSX.utils.book_new();
+    const rows=[
+      ['BALANCE DE COMPROBACIÓN DE SUMAS Y SALDOS'],
+      ['(EXPRESADO EN BOLIVIANOS)'],
+      [],
+      ['CODIFICACIÓN DE LA CUENTA',null,null,null,null,'NOMBRE DE LA CUENTA','SUMAS',null,'','SALDOS'],
+      ['CLASE','GRUPO','SUBGRUPO','CUENTA PRINCIPAL','CUENTA ANALÍTICA',null,'DEBE','HABER',null,'DEUDOR','ACREEDOR'],
+    ];
+    ssA.forEach(k=>{rows.push([k.slice(0,1),k.slice(0,2),k.slice(0,3),k.slice(0,6),k,acctName(k),r2(M[k].debe),r2(M[k].haber),null,r2(M[k].sD||0),r2(M[k].sH||0)]);});
+    rows.push([],['','','','','TOTALES',null,ssTD,ssTH,null,ssTSD,ssTSH]);
+    const ws=XLSX.utils.aoa_to_sheet(rows);
+    // Merges for header
+    ws['!merges']=[{s:{r:0,c:0},e:{r:0,c:10}},{s:{r:3,c:0},e:{r:3,c:4}},{s:{r:3,c:6},e:{r:3,c:7}},{s:{r:3,c:9},e:{r:3,c:10}}];
+    ws['!cols']=[{wch:8},{wch:8},{wch:9},{wch:14},{wch:14},{wch:40},{wch:14},{wch:14},{wch:2},{wch:14},{wch:14}];
+    XLSX.utils.book_append_sheet(wb,ws,'Balance de Comprobación');
+    XLSX.writeFile(wb,'BSS_'+cfg.razonSocial+'_'+cfg.gestion+'.xlsx');
+  }
+  const difSS=r2(ssTSD-ssTSH);
+  const rows2=ssA.map(k=>`<tr>
+    <td class="mono">${k.slice(0,1)}</td><td class="mono">${k.slice(0,2)}</td>
+    <td class="mono">${k.slice(0,3)}</td><td class="mono">${k.slice(0,6)}</td>
+    <td class="mono">${k}</td><td>${acctName(k)}</td>
+    <td class="r">${fmt(r2(M[k].debe))}</td><td class="r">${fmt(r2(M[k].haber))}</td>
+    <td></td>
+    <td class="r">${M[k].sD>0?fmt(r2(M[k].sD)):''}</td>
+    <td class="r">${M[k].sH>0?fmt(r2(M[k].sH)):''}</td>
+  </tr>`).join('');
+  return`<div class="card">
+    <div class="h2">📄 Formato S&S — Balance de Comprobación SIAT</div>
+    <div style="margin-bottom:12px;display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+      <button class="btn-green" onclick="dlSS()">⬇ Descargar Excel formato SIAT</button>
+      <span class="${difSS===0?'badge-ok':'badge-err'}">Diferencia: ${fmt(difSS)} ${difSS===0?'✓':''}</span>
     </div>
-    <div class="sep"></div>
-    <div class="ch3">📈 Valores UFV del Período</div>
-    <div class="g2">
-      <div><label>UFV al 01 enero ${cfg.gestion}</label><input type="number" step="0.00001" value="${uf.ufvInicio||''}" oninput="setEmp('ufv.ufvInicio',+this.value);re()"/></div>
-      <div><label>UFV al 31 diciembre ${cfg.gestion}</label><input type="number" step="0.00001" value="${uf.ufvFin||''}" oninput="setEmp('ufv.ufvFin',+this.value);re()"/></div>
+    <div class="ee-hdr">
+      <div class="ee-title">BALANCE DE COMPROBACIÓN DE SUMAS Y SALDOS</div>
+      <div class="ee-sub">${cfg.razonSocial||'Empresa'} | NIT: ${cfg.nit||'—'} | Gestión ${cfg.gestion} | (Expresado en Bolivianos)</div>
     </div>
-    ${(uf.ufvInicio>0)?`<div class="info ib">Ratio: <strong>${r2(uf.ufvFin/uf.ufvInicio).toFixed(6)}</strong> → Inflación: <strong>${r2((uf.ufvFin/uf.ufvInicio-1)*100).toFixed(4)}%</strong> → Ajuste capital: <strong>${fmt(ajC)} Bs</strong></div>`:''}
+    <div class="tbl-wrap">
+    <table><thead>
+      <tr><th colspan="5">CODIFICACIÓN DE LA CUENTA</th><th>NOMBRE DE LA CUENTA</th><th colspan="2">SUMAS</th><th style="width:12px"></th><th colspan="2">SALDOS</th></tr>
+      <tr><th>C</th><th>G</th><th>SG</th><th>CP</th><th>CA</th><th></th><th class="r">DEBE</th><th class="r">HABER</th><th></th><th class="r">DEUDOR</th><th class="r">ACREEDOR</th></tr>
+    </thead><tbody>${rows2}</tbody>
+    <tfoot>
+      <tr class="tr-f"><td colspan="5">TOTALES</td><td></td><td class="r">${fmt(ssTD)}</td><td class="r">${fmt(ssTH)}</td><td></td><td class="r">${fmt(ssTSD)}</td><td class="r">${fmt(ssTSH)}</td></tr>
+    </tfoot></table></div>
   </div>`;
-
-  if(S.tab==='traspaso'){const actT=r2((tr.caja||0)+(tr.banco||0)+(tr.cfIva||0)+(tr.iueCompensar||0)+(tr.vehiculo||0)-(tr.depVehiculo||0)+(tr.muebles||0)-(tr.depMuebles||0)+(tr.equipoComp||0)-(tr.depEquipoComp||0)+(tr.equipoCom||0)-(tr.depEquipoCom||0)+(tr.equipoOficina||0)-(tr.depEquipoOficina||0)+(tr.equipoElec||0)-(tr.depEquipoElec||0));const pasT=r2((tr.prestamos||0)+(tr.dfIva||0)+(tr.itPagar||0)+(tr.iuePagar||0)+(tr.multas||0)+(tr.capitalSocial||0)+(tr.ajusteCapital||0)+(tr.resultadosAcum||0));const dif=r2(actT-pasT);
-  return`<div class="card"><div class="ch2">📂 C.Traspaso — Saldos de Apertura</div>
-    <div class="ch3">ACTIVOS</div>
-    <div class="g4">${tfld('Caja M/N','caja')}${tfld('Banco','banco')}${tfld('CF IVA','cfIva')}${tfld('IUE A Compensar','iueCompensar')}${tfld('Vehículo (hist.)','vehiculo')}${tfld('Dep.Acum. Vehículo','depVehiculo')}${tfld('Muebles y Enseres','muebles')}${tfld('Dep.Acum. Muebles','depMuebles')}${tfld('Equipos Computación','equipoComp')}${tfld('Dep.Acum. Eq.Comp.','depEquipoComp')}${tfld('Equipos Comunicación','equipoCom')}${tfld('Dep.Acum. Eq.Com.','depEquipoCom')}${tfld('Equipo de Oficina','equipoOficina')}${tfld('Dep.Acum. Eq.Ofic.','depEquipoOficina')}${tfld('Equipo Electrónico','equipoElec')}${tfld('Dep.Acum. Eq.Elec.','depEquipoElec')}</div>
-    <div class="ch3">PASIVOS</div>
-    <div class="g4">${tfld('Préstamos','prestamos')}${tfld('Débito Fiscal IVA','dfIva')}${tfld('IT Por Pagar','itPagar')}${tfld('IUE Por Pagar','iuePagar')}${tfld('Multas e Intereses','multas')}</div>
-    <div class="ch3">PATRIMONIO</div>
-    <div class="g4">${tfld('Capital Social','capitalSocial')}${tfld('Ajuste del Capital','ajusteCapital')}${tfld('Resultados Acumulados','resultadosAcum')}</div>
-    <div class="info ${dif===0?'ig':'ir'}"><strong>Activo:</strong> ${fmt(actT)} | <strong>Pas.+Pat.:</strong> ${fmt(pasT)} | <strong>Diferencia: ${fmt(dif)} ${dif===0?'✓ CUADRADO':'⚠ DESCUADRADO'}</strong></div>
-  </div>`;}
-
-  if(S.tab==='rcv'){const valid=rcv.filter(r=>r.estado==='CONSOLIDADO');const rows=rcv.slice(0,80).map(r=>`<tr style="background:${r.estado==='CONSOLIDADO'?'':'#FFF5F5'}"><td>${r.nro}</td><td style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${r.razon||''}</td><td>${r.fecha||''}</td><td class="r">${fmt(r.total)}</td><td class="r">${fmt(r.cf)}</td><td>${r.cat||''}</td><td><span class="${r.estado==='CONSOLIDADO'?'badge-ok':'badge-err'}">${r.estado||''}</span></td></tr>`).join('');
-  return`<div class="card"><div class="ch2">🧾 RCV — Registro de Compras (Egresos)</div>
-    <p class="nota">Pega aquí los datos del RCV descargado del SIAT (columnas A:Y desde fila 3). Solo facturas CONSOLIDADAS son procesadas automáticamente.</p>
-    <textarea placeholder="Pegar datos del RCV aquí (Tab-separado)..." oninput="setEmpTxt('rcvTxt',this.value)" onblur="re()">${e.rcvTxt||''}</textarea>
-    ${rcv.length?`<div class="info ig">✓ <strong>${rcv.length}</strong> filas — <strong>${valid.length}</strong> consolidadas — CF total: <strong>${fmt(r2(valid.reduce((s,r)=>r2(s+r.cf),0)))}</strong> Bs — Compras netas: <strong>${fmt(r2(valid.reduce((s,r)=>r2(s+r.baseCF+r.noSujeto+r.exentos),0)))}</strong> Bs</div>`:''}
-    ${rcv.length?`<div class="tbl-wrap" style="margin-top:8px"><table><thead><tr><th>Nº</th><th>Razón Social</th><th>Fecha</th><th class="r">Total</th><th class="r">CF</th><th>Categoría</th><th>Estado</th></tr></thead><tbody>${rows}</tbody></table></div>`:''}
-  </div>`;}
-
-  if(S.tab==='ingresos'){
-    const ingRows=(e.ings||[]).map((ing,i)=>{const neto=r2((ing.monto||0)/1.13),df=r2((ing.monto||0)-neto),it=r2(neto*0.03);return`<div class="ing-row"><div style="flex:.7"><label>Mes</label><select onchange="e=emp();e.ings[${i}].mes=+this.value;saveData();re()">${MESES.map((m,j)=>`<option value="${j+1}"${(ing.mes||1)===j+1?' selected':''}>${m}</option>`).join('')}</select></div><div style="flex:2"><label>Cuenta</label><select onchange="e=emp();e.ings[${i}].cuenta=this.value;saveData();re()">${INCC.map(a=>`<option value="${a.c}"${ing.cuenta===a.c?' selected':''}>${a.n}</option>`).join('')}</select></div><div style="flex:1.5"><label>Monto (con IVA)</label><input type="number" step="0.01" value="${ing.monto||''}" oninput="emp().ings[${i}].monto=+this.value;saveData();re()"/></div><div style="flex:.7;font-size:10px;color:#555;padding-bottom:4px"><div>Neto: <strong>${fmt(neto)}</strong></div><div>DF: <strong>${fmt(df)}</strong></div><div>IT: <strong>${fmt(it)}</strong></div></div><button class="btn-del" onclick="emp().ings.splice(${i},1);saveData();re()">✕</button></div>`;}).join('');
-    const tot=r2((e.ings||[]).reduce((s,x)=>r2(s+(x.monto||0)),0));
-    return`<div class="card"><div class="ch2">💰 Ingresos del Período</div>
-      <p class="nota">Registra cada ingreso cobrado con IVA incluido. El IVA (13%) y el IT (3%) se calculan automáticamente.</p>
-      ${ingRows}
-      <button class="btn-blue" onclick="emp().ings.push({mes:1,cuenta:'411002002',monto:0});saveData();re()">+ Agregar Ingreso</button>
-      ${(e.ings||[]).length?`<div class="info ib" style="margin-top:8px">Cobrado: <strong>${fmt(tot)}</strong> | Neto: <strong>${fmt(r2(tot/1.13))}</strong> | DF IVA: <strong>${fmt(r2(tot*13/113))}</strong> | IT: <strong>${fmt(r2(r2(tot/1.13)*0.03))}</strong></div>`:''}
-    </div>`;}
-
-  if(S.tab==='activos'){
-    const{ufvInicio:ui2,ufvFin:uf2}=e.ufv||{};const uR2=ui2>0?r2(uf2/ui2):1;
-    const afRows=(e.afs||[]).map((af,i)=>{const tab=TAF[af.tipo];const vH=r2(af.valorHistorico||0),dAP=r2(Math.abs(af.depAcumAnterior||0));const ajA=tab&&ui2>0?r2(vH*(uR2-1)):0,ajD=tab&&ui2>0?r2(dAP*(uR2-1)):0;const dep2=tab?r2(r2(vH+ajA)*tab.tasa):0;return`<div class="af-row"><div class="g4"><div><label>Tipo</label><select onchange="emp().afs[${i}].tipo=this.value;saveData();re()"><option value="">Seleccionar...</option>${Object.keys(TAF).map(k=>`<option value="${k}"${af.tipo===k?' selected':''}>${k}</option>`).join('')}</select></div><div><label>Descripción</label><input value="${af.nombre||''}" oninput="emp().afs[${i}].nombre=this.value;saveData()"/></div><div><label>Valor Histórico (Bs)</label><input type="number" step="0.01" value="${af.valorHistorico||''}" oninput="emp().afs[${i}].valorHistorico=+this.value;saveData();re()"/></div><div><label>Dep.Acum. Anterior (Bs)</label><input type="number" step="0.01" value="${af.depAcumAnterior||''}" oninput="emp().afs[${i}].depAcumAnterior=+this.value;saveData();re()"/></div></div>${tab&&vH>0?`<div style="font-size:10px;color:#555;margin-top:6px;display:flex;gap:12px;flex-wrap:wrap;background:#F0FDF4;padding:5px 8px;border-radius:5px"><span>UFV Activo: <strong>${fmt(ajA)}</strong></span><span>Valor actualizado: <strong>${fmt(r2(vH+ajA))}</strong></span><span style="color:#DC2626">Dep.año: <strong>${fmt(dep2)}</strong> (${(tab.tasa*100).toFixed(0)}%)</span><span>UFV Dep.Acum: <strong>${fmt(ajD)}</strong></span><span>Dep.Acum total: <strong>${fmt(r2(dAP+ajD+dep2))}</strong></span></div>`:''}<div style="text-align:right;margin-top:6px"><button class="btn-del" onclick="emp().afs.splice(${i},1);saveData();re()">✕ Eliminar</button></div></div>`;}).join('');
-    return`<div class="card"><div class="ch2">🏗️ Activos Fijos</div>
-      <p class="nota">Dep. = ROUND(valor_actualizado × tasa, 2). Sin error de decimales acumulados.</p>
-      ${afRows}
-      <button class="btn-blue" onclick="emp().afs.push({tipo:'',nombre:'',valorHistorico:0,depAcumAnterior:0});saveData();re()">+ Agregar Activo Fijo</button>
-    </div>`;}
-
-  if(S.tab==='ee'){
-    let ee='';const st=S.sub;
-    if(st==='bg'){const pasRows=Object.entries(ACC).filter(([,v])=>v.t==='P').filter(([k])=>gs(k)!==0).map(([k,v])=>`<tr><td style="padding-left:18px">${v.n}</td><td class="r">${fmt(gs(k))}</td></tr>`).join('');const acRows=['111001001','111003001','116001001','116006001'].filter(k=>gs(k)!==0).map(k=>`<tr><td style="padding-left:18px">${ACC[k].n}</td><td class="r">${fmt(gs(k))}</td></tr>`).join('');const ancRows=Object.entries(ACC).filter(([,v])=>v.t==='A'&&v.g==='BIENES DE USO').filter(([k])=>gs(k)!==0).map(([k,v])=>`<tr><td style="padding-left:18px">${v.n}</td><td class="r">${fmt(gs(k))}</td></tr>`).join('');
-    ee=`<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px"><table><thead><tr><th colspan="2">ACTIVO</th></tr></thead><tbody><tr class="tr-g"><td colspan="2">ACTIVO CORRIENTE</td></tr>${acRows}<tr class="tr-t"><td>TOTAL ACTIVO CORRIENTE</td><td class="r">${fmt(aC)}</td></tr><tr class="tr-g"><td colspan="2">ACTIVO NO CORRIENTE</td></tr>${ancRows}<tr class="tr-t"><td>TOTAL ACTIVO NO CORRIENTE</td><td class="r">${fmt(aNC)}</td></tr></tbody><tfoot><tr class="tr-f"><td>TOTAL ACTIVO</td><td class="r">${fmt(tA)}</td></tr></tfoot></table>
-    <table><thead><tr><th colspan="2">PASIVO + PATRIMONIO</th></tr></thead><tbody><tr class="tr-g"><td colspan="2">PASIVO CORRIENTE</td></tr>${pasRows}<tr class="tr-t"><td>TOTAL PASIVO</td><td class="r">${fmt(tP)}</td></tr><tr class="tr-g"><td colspan="2">PATRIMONIO</td></tr><tr><td style="padding-left:18px">Capital Social</td><td class="r">${fmt(gs('311001001'))}</td></tr><tr><td style="padding-left:18px">Ajuste del Capital</td><td class="r">${fmt(gs('311002001'))}</td></tr><tr><td style="padding-left:18px">Resultados Acumulados</td><td class="r">${fmt(gs('313001001'))}</td></tr><tr><td style="padding-left:18px">Utilidad de la Gestión</td><td class="r">${fmt(util)}</td></tr><tr class="tr-t"><td>TOTAL PATRIMONIO</td><td class="r">${fmt(tPT)}</td></tr></tbody><tfoot><tr class="tr-f"><td>TOTAL PASIVO + PATRIMONIO</td><td class="r">${fmt(r2(tP+tPT))}</td></tr><tr class="${bgOK?'bok':'ber'}"><td>DIFERENCIA</td><td class="r ${bgOK?'cok':'cer'}">${fmt(difBG)} ${bgOK?'✓':''}</td></tr></tfoot></table></div>`;}
-    else if(st==='er'){const grp={};Object.entries(ACC).filter(([,v])=>v.t==='I'||v.t==='G').forEach(([k,v])=>{const s=gs(k);if(!s)return;if(!grp[v.g])grp[v.g]={t:v.t,it:[]};grp[v.g].it.push({k,n:v.n,s});});const iR=Object.entries(grp).filter(([,v])=>v.t==='I').map(([g,d])=>`<tr class="tr-g"><td colspan="2" style="padding-left:8px">${g}</td></tr>${d.it.map(({n,s})=>`<tr><td style="padding-left:22px">${n}</td><td class="r">${fmt(s)}</td></tr>`).join('')}`).join('');const gR=Object.entries(grp).filter(([,v])=>v.t==='G').map(([g,d])=>`<tr class="tr-g"><td colspan="2" style="padding-left:8px">${g}</td></tr>${d.it.map(({n,s})=>`<tr><td style="padding-left:22px">${n}</td><td class="r">${fmt(s)}</td></tr>`).join('')}`).join('');
-    ee=`<table><thead><tr><th>CUENTA</th><th class="r">MONTO (Bs)</th></tr></thead><tbody><tr class="tr-i"><td colspan="2">▸ INGRESOS</td></tr>${iR}<tr class="tr-t"><td>TOTAL INGRESOS</td><td class="r" style="color:#059669">${fmt(tI)}</td></tr><tr><td colspan="2" style="padding:3px"></td></tr><tr class="tr-e"><td colspan="2">▸ GASTOS</td></tr>${gR}<tr class="tr-t"><td>TOTAL GASTOS</td><td class="r" style="color:#DC2626">${fmt(tG)}</td></tr></tbody><tfoot><tr class="${util>=0?'bok':'ber'}"><td style="font-weight:700;padding:7px 8px">UTILIDAD DE LA GESTIÓN</td><td class="r" style="color:${util>=0?'#059669':'#DC2626'};font-size:14px;font-weight:700">${fmt(util)}</td></tr></tfoot></table>`;}
-    else if(st==='ss'){const rows=ssA.map(k=>`<tr><td style="font-family:monospace;font-size:10px">${k}</td><td>${ACC[k]?.n||k}</td><td class="r">${fmt(r2(M[k].debe))}</td><td class="r">${fmt(r2(M[k].haber))}</td><td class="r">${M[k].sD>0?fmt(r2(M[k].sD)):''}</td><td class="r">${M[k].sH>0?fmt(r2(M[k].sH)):''}</td></tr>`).join('');const difSS=r2(ssTSD-ssTSH);
-    ee=`<div class="tbl-wrap"><table><thead><tr><th>CUENTA</th><th>NOMBRE</th><th class="r">SUMAS DEBE</th><th class="r">SUMAS HABER</th><th class="r">SALDO DEUDOR</th><th class="r">SALDO ACREEDOR</th></tr></thead><tbody>${rows}</tbody><tfoot><tr class="tr-f"><td colspan="2">TOTALES</td><td class="r">${fmt(ssTD)}</td><td class="r">${fmt(ssTH)}</td><td class="r">${fmt(ssTSD)}</td><td class="r">${fmt(ssTSH)}</td></tr><tr class="${ssOK?'bok':'ber'}"><td colspan="4"></td><td colspan="2" class="r" style="color:${ssOK?'#059669':'#DC2626'};font-weight:700">Diferencia: ${fmt(difSS)} ${ssOK?'✓':''}</td></tr></tfoot></table></div>`;}
-    else if(st==='flujo'){ee=`<table><thead><tr><th>CONCEPTO</th><th class="r">MONTO (Bs)</th></tr></thead><tbody><tr class="tr-g"><td colspan="2">ACTIVIDADES DE OPERACIÓN</td></tr><tr><td style="padding-left:18px">Utilidad de la Gestión</td><td class="r">${fmt(util)}</td></tr><tr><td style="padding-left:18px">+ Depreciaciones (no monetario)</td><td class="r">${fmt(dep)}</td></tr><tr><td style="padding-left:18px">+ Gasto UFV (no monetario)</td><td class="r">${fmt(gUFV)}</td></tr><tr><td style="padding-left:18px">− Ingreso UFV (no monetario)</td><td class="r">${fmt(-iUFV)}</td></tr>${vCF!==0?`<tr><td style="padding-left:18px">Variación CF IVA</td><td class="r">${fmt(-vCF)}</td></tr>`:''}${vIC!==0?`<tr><td style="padding-left:18px">Variación IUE Compensar</td><td class="r">${fmt(-vIC)}</td></tr>`:''}${vDF!==0?`<tr><td style="padding-left:18px">Variación DF IVA</td><td class="r">${fmt(vDF)}</td></tr>`:''}${vIT!==0?`<tr><td style="padding-left:18px">Variación IT Por Pagar</td><td class="r">${fmt(vIT)}</td></tr>`:''}${vIUE!==0?`<tr><td style="padding-left:18px">Variación IUE Por Pagar</td><td class="r">${fmt(vIUE)}</td></tr>`:''}
-    <tr class="tr-t"><td>TOTAL OPERACIÓN</td><td class="r">${fmt(fOp)}</td></tr><tr class="tr-g"><td colspan="2">ACTIVIDADES DE INVERSIÓN</td></tr><tr><td style="padding-left:18px">Compras activos fijos (efectivo real)</td><td class="r">${fmt(inv)}</td></tr><tr class="tr-t"><td>TOTAL INVERSIÓN</td><td class="r">${fmt(inv)}</td></tr><tr class="tr-g"><td colspan="2">ACTIVIDADES DE FINANCIAMIENTO</td></tr>${vPr!==0?`<tr><td style="padding-left:18px">Variación Préstamos</td><td class="r">${fmt(-vPr)}</td></tr>`:''}<tr class="tr-t"><td>TOTAL FINANCIAMIENTO</td><td class="r">${fmt(fFin)}</td></tr></tbody><tfoot><tr class="tr-f"><td>DIFERENCIA DE EFECTIVO</td><td class="r">${fmt(difF)}</td></tr><tr><td>Saldo INICIO</td><td class="r">${fmt(sI)}</td></tr><tr class="tr-t"><td>Saldo FINAL (flujo)</td><td class="r" style="font-size:13px">${fmt(sF)}</td></tr><tr><td>Caja M/N según BG</td><td class="r">${fmt(cajaMN)}</td></tr><tr class="${fOK?'bok':'ber'}"><td>DIFERENCIA</td><td class="r ${fOK?'cok':'cer'}">${fmt(r2(sF-cajaMN))} ${fOK?'✓ CUADRADO':''}</td></tr></tfoot></table>`;}
-    else if(st==='pat'){const capA=r2((tr.capitalSocial||0)+(tr.ajusteCapital||0)),resA=r2(tr.resultadosAcum||0),capF=r2(capA+ajC);ee=`<table><thead><tr><th>CONCEPTO</th><th class="r">CAPITAL</th><th class="r">RESULT.ACUM.</th><th class="r">UTILIDAD</th><th class="r">TOTAL</th></tr></thead><tbody><tr class="tr-g"><td>Saldo al INICIO</td><td class="r">${fmt(capA)}</td><td class="r">${fmt(resA)}</td><td class="r">${fmt(0)}</td><td class="r">${fmt(r2(capA+resA))}</td></tr>${ajC!==0?`<tr><td style="padding-left:18px">+ Ajuste capital UFV</td><td class="r">${fmt(ajC)}</td><td class="r">—</td><td class="r">—</td><td class="r">${fmt(ajC)}</td></tr>`:''}<tr><td style="padding-left:18px">+ Utilidad del período</td><td class="r">—</td><td class="r">—</td><td class="r">${fmt(util)}</td><td class="r">${fmt(util)}</td></tr></tbody><tfoot><tr class="tr-f"><td>Saldo al FINAL</td><td class="r">${fmt(capF)}</td><td class="r">${fmt(resA)}</td><td class="r">${fmt(util)}</td><td class="r">${fmt(r2(capF+resA+util))}</td></tr></tfoot></table>`;}
-    else if(st==='mayor'){const grp2={};Object.entries(M).forEach(([k,v])=>{const t=ACC[k]?.t||'?';if(!grp2[t])grp2[t]=[];grp2[t].push([k,v]);});const tn={A:'ACTIVO',P:'PASIVO',PT:'PATRIMONIO',I:'INGRESO',G:'GASTO'};ee=Object.entries(grp2).map(([t,items])=>`<div style="margin-bottom:14px"><div class="tr-g" style="padding:5px 8px;border-radius:4px;margin-bottom:3px;font-size:11px">${tn[t]||t}</div><table><thead><tr><th>CUENTA</th><th>NOMBRE</th><th class="r">DEBE</th><th class="r">HABER</th><th class="r">SALDO</th></tr></thead><tbody>${items.map(([k,v])=>`<tr><td style="font-family:monospace;font-size:10px">${k}</td><td>${ACC[k]?.n||k}</td><td class="r">${fmt(r2(v.debe))}</td><td class="r">${fmt(r2(v.haber))}</td><td class="r" style="font-weight:600">${fmt(r2(v.saldo))}</td></tr>`).join('')}</tbody></table></div>`).join('');}
-    return`<div class="card"><div class="tab-bar">${[['bg','Balance General'],['er','Est. Resultados'],['ss','Sumas y Saldos'],['flujo','Flujo Efectivo'],['pat','Patrimonio'],['mayor','Mayor General']].map(([id,lb])=>sb(id,lb)).join('')}</div><div class="ee-hdr"><div class="ee-title">${{bg:'BALANCE GENERAL',er:'ESTADO DE RESULTADOS',ss:'BALANCE DE COMPROBACIÓN — SUMAS Y SALDOS',flujo:'ESTADO DE FLUJO DE EFECTIVO',pat:'ESTADO DE EVOLUCIÓN DEL PATRIMONIO NETO',mayor:'MAYOR GENERAL'}[st]}</div><div class="ee-sub">${cfg.razonSocial||'Empresa'} | Gestión ${cfg.gestion} | (Expresado en Bolivianos)</div></div>${ee}</div>`;}
-  return`<div class="card" style="text-align:center;padding:40px;color:#888">Selecciona una sección del menú para comenzar.</div>`;
 }
 
+// ─── FIX 8: USUARIOS Y AUDITORÍA ─────────────────────────
+function getUser(){return localStorage.getItem('contax_user')||'Usuario';}
+function setUser(u){localStorage.setItem('contax_user',u);}
+function logAudit(action){
+  const logs=JSON.parse(localStorage.getItem('contax_audit')||'[]');
+  logs.unshift({user:getUser(),action,ts:new Date().toISOString(),empresa:emp().cfg.razonSocial||'—'});
+  if(logs.length>200) logs.splice(100);
+  localStorage.setItem('contax_audit',JSON.stringify(logs));
+}
+function getAudit(){return JSON.parse(localStorage.getItem('contax_audit')||'[]');}
+function getUserStats(){
+  const logs=getAudit();const stats={};
+  logs.forEach(l=>{if(!stats[l.user])stats[l.user]={count:0,empresas:new Set()};stats[l.user].count++;if(l.empresa)stats[l.user].empresas.add(l.empresa);});
+  return Object.entries(stats).map(([u,s])=>({user:u,count:s.count,empresas:s.empresas.size}));
+}
+function renderUsuarios(){
+  const audit=getAudit().slice(0,50);
+  const stats=getUserStats();
+  const cu=getUser();
+  const logRows=audit.map(l=>`<tr>
+    <td>${l.user}</td><td>${l.empresa||'—'}</td><td>${l.action}</td>
+    <td style="font-size:10px;color:#888">${new Date(l.ts).toLocaleString('es-BO')}</td>
+  </tr>`).join('');
+  const statRows=stats.map(s=>`<tr><td style="font-weight:600">${s.user}</td><td class="r">${s.count}</td><td class="r">${s.empresas}</td></tr>`).join('');
+  return`<div class="card">
+    <div class="h2">👤 Usuarios y Auditoría</div>
+    <div class="g2">
+      <div>
+        <div class="h3">MI USUARIO ACTUAL</div>
+        <div style="display:flex;gap:8px;align-items:center;margin-bottom:10px">
+          <input type="text" id="usr-input" value="${cu}" style="flex:1" />
+          <button class="btn-green" onclick="setUser(document.getElementById('usr-input').value);logAudit('Cambio de usuario');re()">Guardar</button>
+        </div>
+        <div class="info ib">Sesión activa: <strong>${cu}</strong></div>
+        <div class="h3" style="margin-top:12px">ESTADÍSTICAS POR USUARIO</div>
+        <table><thead><tr><th>Usuario</th><th class="r">Acciones</th><th class="r">Empresas</th></tr></thead>
+        <tbody>${statRows||'<tr><td colspan="3" style="text-align:center;color:#888">Sin actividad aún</td></tr>'}</tbody></table>
+      </div>
+      <div>
+        <div class="h3">REGISTRO DE ACTIVIDAD (últimas 50 acciones)</div>
+        <div class="tbl-wrap" style="max-height:400px">
+        <table><thead><tr><th>Usuario</th><th>Empresa</th><th>Acción</th><th>Fecha/Hora</th></tr></thead>
+        <tbody>${logRows||'<tr><td colspan="4" style="text-align:center;color:#888">Sin actividad registrada</td></tr>'}</tbody></table></div>
+      </div>
+    </div>
+  </div>`;
+}
+
+// ─── FIX 9: GRÁFICOS ─────────────────────────────────────
+function renderGraficos(c){
+  const{util,tI,tG,gs,M}=c;
+  const cfg=emp().cfg;
+  const NAVY='#1C2B4B',BLUE='#3B82F6',TEAL='#0891B2',SLATE='#475569',STEEL='#64748B',MIST='#94A3B8',LIGHT='#CBD5E1';
+  const palette=[NAVY,BLUE,TEAL,SLATE,STEEL,MIST,LIGHT,'#1E40AF','#0369A1','#0F766E'];
+  // Income by account
+  const incAccts=Object.keys(M).filter(k=>acctTipo(k)==='I'&&gs(k)>0).map(k=>({n:acctName(k).substring(0,20),v:gs(k)}));
+  const gtoAccts=Object.keys(M).filter(k=>acctTipo(k)==='G'&&gs(k)>0).sort((a,b)=>gs(b)-gs(a)).slice(0,8).map(k=>({n:acctName(k).substring(0,20),v:gs(k)}));
+  const svgPie=(items,title)=>{
+    const total=items.reduce((s,x)=>s+x.v,0);if(!total)return`<div style="text-align:center;color:#888;padding:20px">Sin datos</div>`;
+    let start=0;
+    const slices=items.map((item,i)=>{
+      const pct=item.v/total;const angle=pct*360;
+      const r=80;const cx=100;const cy=100;
+      const startRad=start*Math.PI/180;const endRad=(start+angle)*Math.PI/180;
+      const x1=cx+r*Math.sin(startRad);const y1=cy-r*Math.cos(startRad);
+      const x2=cx+r*Math.sin(endRad);const y2=cy-r*Math.cos(endRad);
+      const large=angle>180?1:0;
+      const path=`M${cx},${cy} L${x1.toFixed(1)},${y1.toFixed(1)} A${r},${r},0,${large},1,${x2.toFixed(1)},${y2.toFixed(1)} Z`;
+      start+=angle;
+      return`<path d="${path}" fill="${palette[i%palette.length]}" stroke="#fff" stroke-width="2" opacity="0.9">
+        <title>${item.n}: ${fmt(item.v)}</title></path>`;
+    }).join('');
+    const legend=items.map((item,i)=>`<div style="display:flex;align-items:center;gap:4px;font-size:10px;margin-bottom:2px"><div style="width:10px;height:10px;border-radius:2px;background:${palette[i%palette.length]};flex-shrink:0"></div><span>${item.n}: ${fmt(item.v)}</span></div>`).join('');
+    return`<div style="display:flex;gap:12px;align-items:center">
+      <svg viewBox="0 0 200 200" width="160" height="160"><text x="100" y="20" text-anchor="middle" font-size="11" font-weight="bold" fill="#1C2B4B">${title}</text>${slices}</svg>
+      <div style="flex:1">${legend}</div>
+    </div>`;
+  };
+  const svgBar=(items,title)=>{
+    if(!items.length)return`<div style="text-align:center;color:#888;padding:20px">Sin datos</div>`;
+    const max=Math.max(...items.map(x=>x.v));
+    const bars=items.map((item,i)=>{
+      const h=max>0?Math.round((item.v/max)*100):0;
+      const bw=Math.floor(280/items.length)-6;
+      const x=i*(bw+6)+10;
+      return`<g><rect x="${x}" y="${110-h}" width="${bw}" height="${h}" fill="${palette[i%palette.length]}" rx="2"><title>${item.n}: ${fmt(item.v)}</title></rect>
+        <text x="${x+bw/2}" y="120" text-anchor="middle" font-size="8" fill="#555">${item.n.substring(0,8)}</text></g>`;
+    }).join('');
+    return`<svg viewBox="0 0 300 130" width="100%" style="max-width:400px"><text x="150" y="14" text-anchor="middle" font-size="11" font-weight="bold" fill="#1C2B4B">${title}</text>${bars}</svg>`;
+  };
+  const activo=r2(c.tA);const pasivo=r2(c.tP);const patrimonio=r2(c.tPT);
+  return`<div class="card">
+    <div class="h2">📈 Gráficos — ${cfg.razonSocial||'Empresa'} | Gestión ${cfg.gestion}</div>
+    <div class="g2">
+      <div class="card" style="box-shadow:none;border:1px solid #E2E8F0">
+        <div class="h3">RESULTADO DE LA GESTIÓN</div>
+        <div style="text-align:center;padding:10px">
+          ${svgPie([{n:'Ingresos',v:tI},{n:'Gastos',v:tG}],'Ing vs Gasto')}
+          <div style="margin-top:10px;font-size:13px"><strong style="color:${util>=0?'#059669':'#DC2626'}">${util>=0?'UTILIDAD':'PÉRDIDA'}: ${fmt(Math.abs(util))} Bs</strong></div>
+        </div>
+      </div>
+      <div class="card" style="box-shadow:none;border:1px solid #E2E8F0">
+        <div class="h3">ESTRUCTURA DEL BALANCE</div>
+        <div style="text-align:center;padding:10px">
+          ${svgPie([{n:'Activo',v:activo},{n:'Pasivo',v:pasivo},{n:'Patrimonio',v:patrimonio}],'Balance')}
+        </div>
+      </div>
+      <div class="card" style="box-shadow:none;border:1px solid #E2E8F0;grid-column:1/-1">
+        <div class="h3">PRINCIPALES GASTOS</div>
+        ${svgBar(gtoAccts,'Top Gastos del Período')}
+      </div>
+      ${incAccts.length>1?`<div class="card" style="box-shadow:none;border:1px solid #E2E8F0;grid-column:1/-1">
+        <div class="h3">DESGLOSE DE INGRESOS</div>
+        ${svgPie(incAccts,'Ingresos')}
+      </div>`:''}
+    </div>
+  </div>`;
+}
+
+// ─── FIX 10: REPORTE EJECUTIVO ────────────────────────────
+function renderReporte(c){
+  const{util,tI,tG,tA,tP,tPT,gs,difBG,sI,sF,cajaMN,fOK,bgOK}=c;
+  const cfg=emp().cfg;
+  const margenUtil=tI>0?r2(util/tI*100):0;
+  const endeudamiento=tA>0?r2(tP/tA*100):0;
+  const kard=(val,label,icon,color)=>`<div style="background:#fff;border:1px solid #E2E8F0;border-radius:8px;padding:14px;text-align:center;border-top:3px solid ${color}">
+    <div style="font-size:22px;margin-bottom:2px">${icon}</div>
+    <div style="font-size:18px;font-weight:700;color:${color}">${val}</div>
+    <div style="font-size:11px;color:#666;margin-top:2px">${label}</div>
+  </div>`;
+  const alertas=[];
+  if(!bgOK) alertas.push({type:'err',msg:'Balance General descuadrado — revisar asientos'});
+  if(!fOK) alertas.push({type:'err',msg:'Flujo de Efectivo no cierra con Caja M/N'});
+  if(util<0) alertas.push({type:'warn',msg:'La empresa registra PÉRDIDA en el período'});
+  if(endeudamiento>70) alertas.push({type:'warn',msg:`Alto endeudamiento: ${endeudamiento}% del activo es financiado con deuda`});
+  if(alertas.length===0) alertas.push({type:'ok',msg:'Todos los estados financieros están correctos y cuadrados'});
+  return`<div class="card">
+    <div class="h2">📋 Reporte Ejecutivo — ${cfg.razonSocial||'Empresa'}</div>
+    <div style="font-size:11px;color:#888;margin-bottom:16px">${cfg.fechaInicio} al ${cfg.fechaFin} | NIT: ${cfg.nit||'—'} | Gestión ${cfg.gestion} | ${cfg.actividad||'—'}</div>
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px">
+      ${kard(fmt(tI)+' Bs','Total Ingresos','💰','#059669')}
+      ${kard(fmt(tG)+' Bs','Total Gastos','📤','#DC2626')}
+      ${kard(fmt(util)+' Bs',util>=0?'Utilidad Neta':'Pérdida Neta',util>=0?'📈':'📉',util>=0?'#1C2B4B':'#DC2626')}
+      ${kard(margenUtil+'%','Margen Utilidad','🎯',margenUtil>10?'#059669':margenUtil>0?'#F59E0B':'#DC2626')}
+      ${kard(fmt(tA)+' Bs','Total Activo','🏛️','#1C2B4B')}
+      ${kard(fmt(tP)+' Bs','Total Pasivo','📊','#7C3AED')}
+      ${kard(fmt(tPT)+' Bs','Patrimonio Neto','🏦','#0891B2')}
+      ${kard(endeudamiento+'%','Endeudamiento',endeudamiento<50?'✅':'⚠️',endeudamiento<50?'#059669':'#F59E0B')}
+    </div>
+    <div class="h3">ALERTAS Y OBSERVACIONES</div>
+    ${alertas.map(a=>`<div class="info ${a.type==='err'?'ir':a.type==='warn'?'iy':'ig'}" style="margin-bottom:6px">${a.type==='err'?'❌':a.type==='warn'?'⚠️':'✅'} ${a.msg}</div>`).join('')}
+    <div class="h3">RESUMEN DE ESTADOS FINANCIEROS</div>
+    <div class="g2">
+      <table><thead><tr><th>INDICADOR</th><th class="r">VALOR</th></tr></thead><tbody>
+        <tr><td>Ingresos Operativos</td><td class="r">${fmt(tI)} Bs</td></tr>
+        <tr><td>Gastos Operativos</td><td class="r">${fmt(tG)} Bs</td></tr>
+        <tr class="tr-t"><td>Utilidad / Pérdida</td><td class="r" style="color:${util>=0?'#059669':'#DC2626'}">${fmt(util)} Bs</td></tr>
+        <tr><td>Margen de Utilidad</td><td class="r">${margenUtil}%</td></tr>
+        <tr><td>Total Activo</td><td class="r">${fmt(tA)} Bs</td></tr>
+        <tr><td>Total Pasivo</td><td class="r">${fmt(tP)} Bs</td></tr>
+        <tr><td>Patrimonio Neto</td><td class="r">${fmt(tPT)} Bs</td></tr>
+        <tr><td>Caja M/N</td><td class="r">${fmt(gs('111001001'))} Bs</td></tr>
+      </tbody></table>
+      <div>
+        <div style="padding:12px;background:#F8FAFC;border-radius:8px;border:1px solid #E2E8F0">
+          <div style="font-weight:700;color:#1C2B4B;margin-bottom:8px">Estado de Verificación</div>
+          <div style="font-size:12px">
+            <div style="margin-bottom:4px">${bgOK?'✅':'❌'} Balance General: ${bgOK?'CUADRADO':'DESCUADRADO'}</div>
+            <div style="margin-bottom:4px">${fOK?'✅':'❌'} Flujo de Efectivo: ${fOK?'CUADRA':'NO CUADRA'}</div>
+            <div style="margin-bottom:4px">${util>=0?'✅':'⚠️'} Resultado: ${util>=0?'UTILIDAD':'PÉRDIDA'} de ${fmt(Math.abs(util))} Bs</div>
+            <div style="margin-bottom:4px">👤 Contador: ${cfg.contadorNombre||'No especificado'} ${cfg.contadorCI?'(CI: '+cfg.contadorCI+')':''}</div>
+          </div>
+        </div>
+        <div style="padding:12px;background:#1C2B4B;border-radius:8px;color:#fff;margin-top:10px">
+          <div style="font-weight:700;margin-bottom:8px">CONTAX — Firma Profesional</div>
+          <div style="font-size:11px;opacity:.8">Elaborado por: <strong>${cfg.contadorNombre||'—'}</strong></div>
+          <div style="font-size:11px;opacity:.8">C.I.: ${cfg.contadorCI||'—'}</div>
+          <div style="font-size:11px;opacity:.8">Fecha: ${new Date().toLocaleDateString('es-BO')}</div>
+        </div>
+      </div>
+    </div>
+  </div>`;
+}
+
+// ─── FIX 11: IA ASISTENTE ────────────────────────────────
+function renderIAApi(c){
+  const saved_key=localStorage.getItem('contax_ia_key')||'';
+  const saved_prov=localStorage.getItem('contax_ia_provider')||'claude';
+  const msgs=JSON.parse(localStorage.getItem('contax_ia_msgs')||'[]');
+  const chat=msgs.map(m=>`<div style="margin-bottom:8px;display:flex;gap:8px;${m.role==='user'?'flex-direction:row-reverse':''}">
+    <div style="background:${m.role==='user'?'#1C2B4B':'#F0F2F5'};color:${m.role==='user'?'#fff':'#1a1a2e'};padding:8px 12px;border-radius:8px;max-width:80%;font-size:12px;white-space:pre-wrap">${m.content}</div>
+  </div>`).join('');
+  return`<div class="card">
+    <div class="h2">🤖 IA Asistente Contable</div>
+    <p class="nota">Conecta tu propia API de IA para que analice los datos del balance y te ayude a resolver problemas contables.</p>
+    <div class="g2" style="margin-bottom:12px">
+      <div>
+        <label>Proveedor de IA</label>
+        <select id="ia-prov" onchange="localStorage.setItem('contax_ia_provider',this.value)" style="background:#FFFDE7;border:1.5px solid #F9A825;border-radius:5px;padding:5px 8px;font-size:12px;width:100%">
+          <option value="claude" ${saved_prov==='claude'?'selected':''}>Claude (Anthropic)</option>
+          <option value="openai" ${saved_prov==='openai'?'selected':''}>ChatGPT (OpenAI)</option>
+          <option value="deepseek" ${saved_prov==='deepseek'?'selected':''}>DeepSeek</option>
+          <option value="gemini" ${saved_prov==='gemini'?'selected':''}>Gemini (Google)</option>
+        </select>
+      </div>
+      <div>
+        <label>API Key</label>
+        <input type="password" id="ia-key" value="${saved_key}" placeholder="Pega tu API key aquí" onblur="localStorage.setItem('contax_ia_key',this.value)"/>
+      </div>
+    </div>
+    <div style="background:#F8FAFC;border:1px solid #E2E8F0;border-radius:8px;padding:12px;height:300px;overflow-y:auto;margin-bottom:8px" id="ia-chat">
+      ${chat||'<div style="color:#888;text-align:center;padding:40px">💬 Inicia una conversación. La IA tiene acceso a todos los datos de tu balance.</div>'}
+    </div>
+    <div style="display:flex;gap:8px">
+      <input type="text" id="ia-input" placeholder="Ej: ¿Por qué no cuadra mi flujo de efectivo? ¿Qué está mal en el balance?" style="flex:1" onkeydown="if(event.key==='Enter')sendIA()"/>
+      <button class="btn-purple" onclick="sendIA()">Enviar</button>
+      <button onclick="localStorage.setItem('contax_ia_msgs','[]');re()" style="background:#EF4444;color:#fff;border:none;border-radius:5px;padding:5px 10px;cursor:pointer">🗑</button>
+    </div>
+    <div class="info iy" style="margin-top:8px;font-size:10px">⚠️ La API key se guarda solo en tu navegador. Para usar Claude, necesitas una API key de console.anthropic.com. OpenAI: platform.openai.com. La IA recibe el contexto completo del balance actual.</div>
+  </div>`;
+}
+async function sendIA(){
+  const input=document.getElementById('ia-input');
+  const msg=input.value.trim();if(!msg)return;
+  const key=localStorage.getItem('contax_ia_key')||'';
+  const prov=localStorage.getItem('contax_ia_provider')||'claude';
+  if(!key){alert('Configura tu API key primero');return;}
+  const msgs=JSON.parse(localStorage.getItem('contax_ia_msgs')||'[]');
+  const c=calcAll();
+  const ctx=`Contexto contable actual:
+Empresa: ${emp().cfg.razonSocial}, NIT: ${emp().cfg.nit}, Gestión: ${emp().cfg.gestion}
+Período: ${emp().cfg.fechaInicio} al ${emp().cfg.fechaFin}
+Ingresos: ${fmt(c.tI)} Bs | Gastos: ${fmt(c.tG)} Bs | Utilidad: ${fmt(c.util)} Bs
+Activo: ${fmt(c.tA)} Bs | Pasivo: ${fmt(c.tP)} Bs | Patrimonio: ${fmt(c.tPT)} Bs
+Balance cuadra: ${c.bgOK?'SÍ':'NO'} (dif: ${fmt(c.difBG)}) | Flujo cuadra: ${c.fOK?'SÍ':'NO'}
+Caja M/N: ${fmt(c.gs('111001001'))} Bs | Saldo flujo: ${fmt(c.sF)} Bs`;
+  msgs.push({role:'user',content:msg});
+  localStorage.setItem('contax_ia_msgs',JSON.stringify(msgs));
+  re();
+  input.value='Enviando...';
+  try{
+    let resp;
+    if(prov==='claude'){
+      const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01'},body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:1000,system:'Eres un experto contador boliviano. Analiza los datos contables y ayuda a resolver problemas. Sé preciso y conciso.',messages:[{role:'user',content:ctx+'
+
+Pregunta: '+msgs.map(m=>m.role+': '+m.content).join('
+')}]})});
+      const d=await r.json();resp=d.content?.[0]?.text||d.error?.message||'Error';
+    } else if(prov==='openai'){
+      const r=await fetch('https://api.openai.com/v1/chat/completions',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+key},body:JSON.stringify({model:'gpt-4o-mini',messages:[{role:'system',content:'Eres experto contador boliviano.'},{role:'user',content:ctx},...msgs]})});
+      const d=await r.json();resp=d.choices?.[0]?.message?.content||d.error?.message||'Error';
+    } else if(prov==='deepseek'){
+      const r=await fetch('https://api.deepseek.com/v1/chat/completions',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+key},body:JSON.stringify({model:'deepseek-chat',messages:[{role:'system',content:'Eres experto contador boliviano.'},{role:'user',content:ctx},...msgs]})});
+      const d=await r.json();resp=d.choices?.[0]?.message?.content||d.error?.message||'Error';
+    } else {
+      const r=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${key}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({contents:[{parts:[{text:ctx+'
+'+msgs.map(m=>m.role+': '+m.content).join('
+')}]}]})});
+      const d=await r.json();resp=d.candidates?.[0]?.content?.parts?.[0]?.text||d.error?.message||'Error';
+    }
+    msgs.push({role:'assistant',content:resp});
+    localStorage.setItem('contax_ia_msgs',JSON.stringify(msgs));
+  }catch(e){msgs.push({role:'assistant',content:'Error al conectar: '+e.message});localStorage.setItem('contax_ia_msgs',JSON.stringify(msgs));}
+  input.value='';re();
+  setTimeout(()=>{const ch=document.getElementById('ia-chat');if(ch)ch.scrollTop=ch.scrollHeight;},100);
+}
+
+// ─── FIX 12: LISTA EEFF ──────────────────────────────────
+function getListaEEFF(){return JSON.parse(localStorage.getItem('contax_lista_eeff')||'[]');}
+function saveListaEEFF(l){localStorage.setItem('contax_lista_eeff',JSON.stringify(l));}
+function calcProgress(item){
+  let pts=0,total=10;
+  if(item.razonSocial) pts++;
+  if(item.nit) pts++;
+  if(item.gestion) pts++;
+  if(item.rcvOk) pts++;
+  if(item.ingresosOk) pts++;
+  if(item.activosOk) pts++;
+  if(item.bgOk) pts++;
+  if(item.ssOk) pts++;
+  if(item.flujoOk) pts++;
+  if(item.estado==='terminado') pts++;
+  return Math.round(pts/total*100);
+}
+function syncCurrentEmpresa(lista){
+  const c=calcAll();const cfg=emp().cfg;
+  const idx=lista.findIndex(i=>i.empresaId===S.activeId);
+  const item={
+    empresaId:S.activeId,razonSocial:cfg.razonSocial,nit:cfg.nit,gestion:cfg.gestion,
+    usuario:getUser(),bgOk:c.bgOK,ssOk:c.ssOK,flujoOk:c.fOK,
+    utilidad:c.util,rcvOk:parseRCV(emp().rcvTxt||'').length>0,
+    ingresosOk:(emp().ingresos||[]).some(i=>pn(i.monto)>0),
+    activosOk:(emp().activos||[]).length>0||Object.keys(c.M).some(k=>k.startsWith('12')),
+    updatedAt:new Date().toISOString()
+  };
+  if(idx>=0){const old=lista[idx];lista[idx]={...old,...item,estado:old.estado||'en-curso'};}
+  else{lista.push({...item,estado:'en-curso',creadoAt:new Date().toISOString()});}
+  return lista;
+}
+function renderListaEEFF(){
+  let lista=getListaEEFF();
+  lista=syncCurrentEmpresa(lista);
+  saveListaEEFF(lista);
+  const estadoColors={pendiente:'#F59E0B',terminado:'#059669','en-curso':'#3B82F6'};
+  const estadoLabels={pendiente:'⏳ Pendiente',terminado:'✅ Terminado','en-curso':'🔄 En Curso'};
+  const rows=lista.map((item,i)=>{
+    const prog=calcProgress(item);
+    const isActive=item.empresaId===S.activeId;
+    return`<div style="background:#fff;border:${isActive?'2px solid #3B82F6':'1px solid #E2E8F0'};border-radius:8px;padding:12px;margin-bottom:8px">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:8px">
+        <div>
+          <div style="font-weight:700;font-size:13px;color:#1C2B4B">${item.razonSocial||'(Sin nombre)'} ${isActive?'<span style="background:#3B82F6;color:#fff;padding:1px 6px;border-radius:10px;font-size:10px">ACTIVO</span>':''}</div>
+          <div style="font-size:11px;color:#888">NIT: ${item.nit||'—'} | Gestión: ${item.gestion} | Usuario: <strong>${item.usuario||'—'}</strong></div>
+          <div style="font-size:11px;color:#888">Últ. actualización: ${item.updatedAt?new Date(item.updatedAt).toLocaleDateString('es-BO'):''}</div>
+        </div>
+        <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
+          <span style="background:${estadoColors[item.estado]||'#888'};color:#fff;padding:3px 10px;border-radius:10px;font-size:11px;font-weight:600">${estadoLabels[item.estado]||item.estado}</span>
+          ${item.bgOk&&item.flujoOk?'<span class="badge-ok">✓ Cuadrado</span>':'<span class="badge-warn">⚠ Pendiente</span>'}
+          ${item.estado!=='terminado'&&item.bgOk&&item.flujoOk?`<button class="btn-green" onclick="markDone(${i})" style="font-size:10px;padding:4px 8px">Marcar Terminado</button>`:''}
+          ${item.estado==='terminado'?`<button onclick="markInProgress(${i})" style="background:#3B82F6;color:#fff;border:none;border-radius:4px;padding:4px 8px;font-size:10px;cursor:pointer">Reabrir</button>`:''}
+          <button class="btn-del" style="font-size:10px;padding:4px 8px" onclick="if(confirm('¿Eliminar de la lista?')){const l=getListaEEFF();l.splice(${i},1);saveListaEEFF(l);re()}">✕</button>
+        </div>
+      </div>
+      <div style="margin-top:10px">
+        <div style="display:flex;justify-content:space-between;font-size:10px;color:#888;margin-bottom:3px">
+          <span>Progreso</span><span style="font-weight:700;color:#1C2B4B">${prog}%</span>
+        </div>
+        <div style="background:#E8EAED;border-radius:10px;height:8px;overflow:hidden">
+          <div style="background:${prog===100?'#059669':prog>70?'#3B82F6':prog>40?'#F59E0B':'#94A3B8'};height:100%;width:${prog}%;border-radius:10px;transition:width .3s"></div>
+        </div>
+        <div style="display:flex;gap:8px;margin-top:6px;flex-wrap:wrap">
+          ${[['RCV',item.rcvOk],['Ingresos',item.ingresosOk],['Activos',item.activosOk],['BG',item.bgOk],['S&S',item.ssOk],['Flujo',item.flujoOk]].map(([l,ok])=>`<span style="font-size:10px;color:${ok?'#059669':'#94A3B8'}">${ok?'✓':'○'} ${l}</span>`).join('')}
+        </div>
+        ${item.estado==='terminado'&&item.utilidad!=null?`<div style="margin-top:4px;font-size:11px"><strong style="color:${item.utilidad>=0?'#059669':'#DC2626'}">${item.utilidad>=0?'Utilidad':'Pérdida'}: ${fmt(Math.abs(item.utilidad))} Bs</strong></div>`:''}
+        ${item.estado!=='terminado'&&item.utilidad!=null?`<div style="margin-top:4px;font-size:10px;color:#888">Resultado preliminar: <strong style="color:${item.utilidad>=0?'#059669':'#DC2626'}">${fmt(item.utilidad)} Bs</strong></div>`:''}
+      </div>
+    </div>`;
+  }).join('');
+  const pendientes=lista.filter(i=>i.estado==='pendiente').length;
+  const enCurso=lista.filter(i=>i.estado==='en-curso').length;
+  const terminados=lista.filter(i=>i.estado==='terminado').length;
+  return`<div class="card">
+    <div class="h2">📁 Lista de Estados Financieros</div>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px">
+      <div style="background:#FEF3C7;border-radius:8px;padding:12px;text-align:center"><div style="font-size:24px;font-weight:700;color:#92400E">${pendientes}</div><div style="font-size:11px;color:#92400E">Pendientes</div></div>
+      <div style="background:#EFF6FF;border-radius:8px;padding:12px;text-align:center"><div style="font-size:24px;font-weight:700;color:#1E40AF">${enCurso}</div><div style="font-size:11px;color:#1E40AF">En Curso</div></div>
+      <div style="background:#F0FDF4;border-radius:8px;padding:12px;text-align:center"><div style="font-size:24px;font-weight:700;color:#065F46">${terminados}</div><div style="font-size:11px;color:#065F46">Terminados</div></div>
+    </div>
+    ${rows||'<div class="info iy">No hay balances en la lista. Los balances se agregan automáticamente al trabajar en ellos.</div>'}
+  </div>`;
+}
+function markDone(i){const l=getListaEEFF();l[i].estado='terminado';saveListaEEFF(l);re();}
+function markInProgress(i){const l=getListaEEFF();l[i].estado='en-curso';saveListaEEFF(l);re();}
+
+// ─── FIX 13: DASHBOARD ───────────────────────────────────
+function renderDashboard(c){
+  const{util,tI,tG,tA,tP,tPT,gs,bgOK,fOK}=c;
+  const cfg=emp().cfg;
+  const lista=getListaEEFF();
+  const terminados=lista.filter(i=>i.estado==='terminado').length;
+  const enCurso=lista.filter(i=>i.estado==='en-curso').length;
+  const user=getUser();
+  const misEmpresas=S.empresas.length;
+  const nits=S.nits.length;
+  const audit=getAudit();
+  const hoy=new Date().toLocaleDateString('es-BO',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+  const kard=(val,sub,icon,bg,color)=>`<div style="background:${bg};border-radius:10px;padding:16px;color:${color}">
+    <div style="font-size:28px;margin-bottom:4px">${icon}</div>
+    <div style="font-size:22px;font-weight:700">${val}</div>
+    <div style="font-size:11px;opacity:.8;margin-top:2px">${sub}</div>
+  </div>`;
+  const NAVY='#1C2B4B';
+  return`<div>
+    <div class="card" style="background:linear-gradient(135deg,${NAVY},#3B82F6);color:#fff;padding:20px">
+      <div style="font-size:11px;opacity:.7">${hoy}</div>
+      <div style="font-size:20px;font-weight:700;margin:6px 0">Hola, ${user} 👋</div>
+      <div style="font-size:13px;opacity:.9">Empresa activa: <strong>${cfg.razonSocial||'(Sin empresa)'}</strong> | Gestión ${cfg.gestion}</div>
+      <div style="display:flex;gap:12px;margin-top:10px;flex-wrap:wrap">
+        <span style="background:rgba(255,255,255,.15);padding:4px 12px;border-radius:20px;font-size:11px">BG: ${bgOK?'✓ OK':'✗ Error'}</span>
+        <span style="background:rgba(255,255,255,.15);padding:4px 12px;border-radius:20px;font-size:11px">Flujo: ${fOK?'✓ OK':'✗ Error'}</span>
+        <span style="background:rgba(255,255,255,.15);padding:4px 12px;border-radius:20px;font-size:11px">${util>=0?'📈 Utilidad':'📉 Pérdida'}: ${fmt(util)} Bs</span>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:12px">
+      ${kard(misEmpresas,'Empresas en sistema','🏢','#EEF2FF','#1C2B4B')}
+      ${kard(enCurso,'En curso','🔄','#DBEAFE','#1E40AF')}
+      ${kard(terminados,'Terminados','✅','#D1FAE5','#065F46')}
+      ${kard(nits,'NITs registrados','🔍','#FFFBEB','#92400E')}
+    </div>
+    <div class="g2">
+      <div class="card">
+        <div class="h3">EMPRESA ACTIVA — ${cfg.razonSocial||'Sin nombre'}</div>
+        <table><thead><tr><th>Estado Financiero</th><th class="r">Estado</th><th class="r">Valor</th></tr></thead><tbody>
+          <tr><td>Ingresos</td><td class="r">${tI>0?'✅':'⭕'}</td><td class="r">${fmt(tI)} Bs</td></tr>
+          <tr><td>Gastos</td><td class="r">${tG>0?'✅':'⭕'}</td><td class="r">${fmt(tG)} Bs</td></tr>
+          <tr class="tr-t"><td>Utilidad/Pérdida</td><td class="r">${bgOK?'✅':'❌'}</td><td class="r" style="color:${util>=0?'#059669':'#DC2626'}">${fmt(util)} Bs</td></tr>
+          <tr><td>Total Activo</td><td class="r">✅</td><td class="r">${fmt(tA)} Bs</td></tr>
+          <tr><td>Total Pasivo</td><td class="r">✅</td><td class="r">${fmt(tP)} Bs</td></tr>
+          <tr><td>Patrimonio</td><td class="r">✅</td><td class="r">${fmt(tPT)} Bs</td></tr>
+        </tbody></table>
+      </div>
+      <div class="card">
+        <div class="h3">ACTIVIDAD RECIENTE</div>
+        ${audit.slice(0,8).map(l=>`<div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid #F0F2F5;font-size:11px"><span>👤 <strong>${l.user}</strong>: ${l.action}</span><span style="color:#888;font-size:10px">${new Date(l.ts).toLocaleTimeString('es-BO')}</span></div>`).join('')||'<div style="color:#888;font-size:11px;padding:8px 0">Sin actividad reciente</div>'}
+        <div style="margin-top:10px">
+          <div class="h3">PROGRESO TOTAL</div>
+          ${lista.slice(0,5).map(item=>{const p=calcProgress(item);return`<div style="margin-bottom:6px"><div style="display:flex;justify-content:space-between;font-size:10px"><span>${item.razonSocial||'Sin nombre'}</span><span>${p}%</span></div><div style="background:#E8EAED;border-radius:4px;height:6px"><div style="background:${p===100?'#059669':'#3B82F6'};height:100%;width:${p}%;border-radius:4px"></div></div></div>`;}).join('')}
+        </div>
+      </div>
+    </div>
+  </div>`;
+}
+
+
+// ─── MAIN RENDER ─────────────────────────────────────────
 function re(){
-  const c=calcAll(emp());
-  const{bgOK,ssOK,fOK,util,rcv}=c;
-  const e=emp(),cfg=e.cfg;
-  const totCob=r2((e.ings||[]).reduce((s,x)=>r2(s+(x.monto||0)),0));
-  const t=new Date();
+  const c=calcAll();
+  const{bgOK,ssOK,fOK,util}=c;
+  const cfg=emp().cfg;
+  const totCob=r2((emp().ingresos||[]).reduce((s,x)=>r2(s+pn(x.monto)),0));
+
+  const navItems=[
+    {sec:'Datos de Entrada',items:[
+      {id:'config',icon:'🏢',label:'Configuración'},
+      {id:'apertura',icon:'📂',label:'Asiento de Apertura'},
+      {id:'rcv',icon:'🧾',label:'RCV Compras'},
+      {id:'ingresos',icon:'💰',label:'Ingresos'},
+      {id:'activos',icon:'🏗️',label:'Activos Fijos'},
+    ]},
+    {sec:'Configuración',items:[
+      {id:'ufvs',icon:'📈',label:"UFV's"},
+      {id:'nits',icon:'🔍',label:"NIT's"},
+      {id:'plan',icon:'📋',label:'Plan de Cuentas'},
+      {id:'otros',icon:'📝',label:'Otros Asientos'},
+    ]},
+    {sec:'Resultados',items:[
+      {id:'comprobantes',icon:'🗂️',label:'Comprobantes'},
+      {id:'cuadroaf',icon:'🏭',label:'Cuadro Activos Fijos'},
+      {id:'formatoss',icon:'📄',label:'Formato S&S'},
+      {id:'ee',icon:'📊',label:'Estados Financieros'},
+    ]},
+    {sec:'Análisis',items:[
+      {id:'graficos',icon:'📈',label:'Gráficos'},
+      {id:'reporte',icon:'📋',label:'Reporte'},
+      {id:'dashboard',icon:'🚀',label:'Dashboard'},
+    ]},
+    {sec:'Sistema',items:[
+      {id:'listaeeff',icon:'📁',label:'Lista EEFF'},
+      {id:'usuarios',icon:'👤',label:'Usuarios'},
+      {id:'iaapi',icon:'🤖',label:'IA Asistente'},
+    ]},
+  ];
+
+  const navHTML=navItems.map(sec=>`
+    <div class="ns">${sec.sec}</div>
+    ${sec.items.map(i=>`<div class="ni${S.tab===i.id?' a':''}" onclick="S.tab='${i.id}';re()">${i.icon} ${i.label}</div>`).join('')}
+  `).join('');
+
+  let main='';
+  if(S.tab==='config') main=renderConfig(c);
+  else if(S.tab==='apertura') main=renderApertura();
+  else if(S.tab==='rcv') main=renderRCV();
+  else if(S.tab==='ingresos') main=renderIngresos(c);
+  else if(S.tab==='activos') main=renderActivos();
+  else if(S.tab==='ufvs') main=renderUFVs();
+  else if(S.tab==='nits') main=renderNITs();
+  else if(S.tab==='plan') main=renderPlanCuentas();
+  else if(S.tab==='otros') main=renderOtrosAsientos(c);
+  else if(S.tab==='comprobantes') main=renderComprobantes(c);
+  else if(S.tab==='cuadroaf') main=renderCuadroAF();
+  else if(S.tab==='formatoss') main=renderFormatoSS(c);
+  else if(S.tab==='graficos') main=renderGraficos(c);
+  else if(S.tab==='reporte') main=renderReporte(c);
+  else if(S.tab==='dashboard') main=renderDashboard(c);
+  else if(S.tab==='listaeeff') main=renderListaEEFF();
+  else if(S.tab==='usuarios') main=renderUsuarios();
+  else if(S.tab==='iaapi') main=renderIAApi(c);
+  else if(S.tab==='ee') main=renderEE(c);
+
   document.getElementById('root').innerHTML=`
-  ${S.showEmpModal?renderEmpModal():''}
-  <div class="hdr">
-    <div class="logo">CX</div>
-    <div><div style="font-size:14px;font-weight:700">CONTAX — Sistema Contable</div>
-    <div style="font-size:10px;opacity:.7">${cfg.razonSocial?cfg.razonSocial+' | NIT: '+cfg.nit+' | Gestión '+cfg.gestion:'Configure los datos del cliente'}</div></div>
-    <div class="hdr-right">
-      <div class="spill">BG:<span class="${bgOK?'ok':'err'}">${bgOK?'✓':'✗'}</span> S&S:<span class="${ssOK?'ok':'err'}">${ssOK?'✓':'✗'}</span> Flujo:<span class="${fOK?'ok':'err'}">${fOK?'✓':'✗'}</span></div>
-      <button class="btn" onclick="S.showEmpModal=true;re()">🏢 ${cfg.razonSocial||'Empresas'} ▾</button>
-      <button class="btn-orange" onclick="exportJSON()" style="background:#F59E0B">📤 Guardar JSON</button>
-      <button class="btn-green" onclick="exportXL()">📊 Excel</button>
+    ${S.showEmpModal?renderEmpModal():''}
+    <div class="hdr">
+      <div class="logo" onclick="S.showEmpModal=true;re()">CX</div>
+      <div>
+        <div style="font-size:14px;font-weight:700">CONTAX — Sistema Contable v2</div>
+        <div style="font-size:10px;opacity:.7">${cfg.razonSocial||'Configure los datos del cliente'} ${cfg.razonSocial?' | NIT: '+cfg.nit+' | '+cfg.fechaInicio+' → '+cfg.fechaFin:''}</div>
+      </div>
+      <div class="hdr-r">
+        <div style="font-size:10px;display:flex;gap:8px">
+          BG:<span class="${bgOK?'ok':'err'}">${bgOK?'✓':'✗'}</span>
+          S&S:<span class="${ssOK?'ok':'err'}">${ssOK?'✓':'✗'}</span>
+          Flujo:<span class="${fOK?'ok':'err'}">${fOK?'✓':'✗'}</span>
+        </div>
+        <button class="btn" onclick="S.showEmpModal=true;re()">🏢 ${cfg.razonSocial||'Empresas'} ▾</button>
+        <button class="btn-orange" onclick="exportJSON()" style="background:#F59E0B">📤 Guardar JSON</button>
+        <button class="btn-green" onclick="exportXL()">📊 Exportar Excel</button>
+      </div>
     </div>
-  </div>
-  <div class="layout">
-    <div class="nav">
-      <div class="ns">Datos de Entrada</div>
-      ${ni('config','🏢','Configuración')}${ni('traspaso','📂','C.Traspaso')}${ni('rcv','🧾','RCV Compras')}${ni('ingresos','💰','Ingresos')}${ni('activos','🏗️','Activos Fijos')}
-      <div class="ns">Estados Financieros</div>${ni('ee','📊','Ver Estados')}
-      <div class="nsumm"><div>Resumen rápido</div><div>${rcv.filter(r=>r.estado==='CONSOLIDADO').length} comprobantes</div><div>Ingresos: ${fmt(totCob)} Bs</div><div>Utilidad: <span style="color:${util>=0?'#4ADE80':'#F87171'}">${fmt(util)}</span></div><div style="margin-top:4px;color:rgba(255,255,255,.35)">Autoguardado ✓</div></div>
-    </div>
-    <div class="cnt">${renderMain()}</div>
-  </div>`;
+    <div class="layout">
+      <div class="nav">
+        ${navHTML}
+        <div class="nsumm">
+          <div>${(parseRCV(emp().rcvTxt||'')).filter(r=>r.estado==='CONSOLIDADO').length} facturas</div>
+          <div>Cobrado: ${fmt(totCob)} Bs</div>
+          <div>Utilidad: <span style="color:${util>=0?'#4ADE80':'#F87171'}">${fmt(util)}</span></div>
+          <div style="margin-top:4px;color:rgba(255,255,255,.3)">💾 Autoguardado</div>
+        </div>
+      </div>
+      <div class="cnt">${main}</div>
+    </div>`;
 }
+
 re();
 </script>
 </body>
