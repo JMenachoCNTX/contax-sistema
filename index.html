@@ -165,7 +165,11 @@ let S={
   activeId:loaded?.activeId||'emp_1',
 };
 function emp(){return S.empresas.find(e=>e.id===S.activeId)||S.empresas[0];}
+// setEmp: actualiza estado Y re-renderiza (para campos numéricos que afectan cálculos)
 function setEmp(k,v){const e=emp();const keys=k.split('.');let obj=e;keys.slice(0,-1).forEach(key=>obj=obj[key]);obj[keys[keys.length-1]]=v;e.updatedAt=new Date().toISOString();saveData();re();}
+// setEmpTxt: solo actualiza estado SIN re-renderizar (para campos de texto libres)
+// El re-render ocurre al salir del campo (onblur)
+function setEmpTxt(k,v){const e=emp();const keys=k.split('.');let obj=e;keys.slice(0,-1).forEach(key=>obj=obj[key]);obj[keys[keys.length-1]]=v;e.updatedAt=new Date().toISOString();saveData();}
 function utr(k,v){emp().tr[k]=+v||0;emp().updatedAt=new Date().toISOString();saveData();re();}
 
 // ─── EXPORT ───────────────────────────────────────────────────────────
@@ -176,7 +180,7 @@ function exportXL(){
   const add=(nm,data)=>XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(data),nm);
   add('Balance General',[['BALANCE GENERAL'],['Empresa: '+cfg.razonSocial,'NIT: '+cfg.nit],['Gestión '+cfg.gestion],[],['CUENTA','MONTO'],['ACTIVO CORRIENTE',''],...['111001001','111003001','116001001','116006001'].map(k=>[ACC[k]?.n,gs(k)]),['TOTAL ACTIVO CORRIENTE',aC],['ACTIVO NO CORRIENTE',''],...Object.entries(ACC).filter(([,v])=>v.t==='A'&&v.g==='BIENES DE USO').map(([k,v])=>[v.n,gs(k)]),['TOTAL ACTIVO NO CORRIENTE',aNC],['TOTAL ACTIVO',tA],[],['PASIVO',''],...Object.entries(ACC).filter(([,v])=>v.t==='P').map(([k,v])=>[v.n,gs(k)]),['TOTAL PASIVO',tP],[],['PATRIMONIO',''],['Capital Social',gs('311001001')],['Ajuste Capital',gs('311002001')],['Resultados Acumulados',gs('313001001')],['Utilidad de la Gestión',util],['TOTAL PATRIMONIO',tPT],['DIFERENCIA BG',difBG]]);
   add('Estado de Resultados',[['ESTADO DE RESULTADOS'],['Gestión '+cfg.gestion],[],['INGRESOS',''],...Object.entries(ACC).filter(([,v])=>v.t==='I').map(([k,v])=>[v.n,gs(k)]),['TOTAL INGRESOS',tI],[],['GASTOS',''],...Object.entries(ACC).filter(([,v])=>v.t==='G').map(([k,v])=>[v.n,gs(k)]),['TOTAL GASTOS',tG],[],['UTILIDAD DE LA GESTIÓN',util]]);
-  add('Sumas y Saldos',[['BALANCE DE COMPROBACIÓN'],['Gestión '+cfg.gestion],[],['CUENTA','NOMBRE','SUMAS DEBE','SUMAS HABER','SALDO DEUDOR','SALDO ACREEDOR'],...ssA.map(k=>[k,ACC[k]?.n||k,r2(M[k].debe),r2(M[k].haber),r2(M[k].sD||0),r2(M[k].sH||0)]),['','TOTALES',ssTD,ssTH,ssTSD,ssTSH]]);
+  add('Sumas y Saldos',(()=>{const rows=[['BALANCE DE COMPROBACION DE SUMAS Y SALDOS'],['(EXPRESADO EN BOLIVIANOS)'],[],['CODIFICACION DE LA CUENTA',null,null,null,null,'NOMBRE DE LA CUENTA','SUMAS',null,'SALDOS'],['CLASE','GRUPO','SUBGRUPO','CUENTA PRINCIPAL','CUENTA ANALITICA',null,'DEBE','HABER',null,'DEUDOR','ACREEDOR']];ssA.forEach(k=>{rows.push([k.slice(0,1),k.slice(0,2),k.slice(0,3),k.slice(0,6),k,ACC[k]?.n||k,r2(M[k].debe),r2(M[k].haber),null,r2(M[k].sD||0),r2(M[k].sH||0)]);});rows.push([]);rows.push([null,null,null,null,'TOTALES',null,ssTD,ssTH,null,ssTSD,ssTSH]);return rows;})());
   add('Flujo de Efectivo',[['ESTADO DE FLUJO DE EFECTIVO'],['Gestión '+cfg.gestion],[],['OPERACIÓN',''],['Utilidad',util],['+Depreciaciones',dep],['+Gasto UFV',gUFV],['-Ingreso UFV',-iUFV],['Var CF IVA',-vCF],['Var IUE Comp',-vIC],['Var DF IVA',vDF],['Var IT Pagar',vIT],['Var IUE Pagar',vIUE],['TOTAL OPERACIÓN',fOp],[],['INVERSIÓN',''],['Compras activos',inv],['TOTAL INVERSIÓN',inv],[],['FINANCIAMIENTO',''],['Var Préstamos',-vPr],['TOTAL FINANCIAMIENTO',fFin],[],['DIFERENCIA',difF],['Saldo Inicio',sI],['Saldo Final (Flujo)',sF],['Caja M/N (BG)',cajaMN],['Diferencia',r2(sF-cajaMN)]]);
   XLSX.writeFile(wb,'CONTAX_'+cfg.razonSocial+'_'+cfg.gestion+'.xlsx');
 }
@@ -216,12 +220,12 @@ function renderMain(){
 
   if(S.tab==='config')return`<div class="card"><div class="ch2">🏢 Datos del Cliente</div>
     <div class="g2">
-      <div><label>Razón Social</label><input value="${cfg.razonSocial||''}" oninput="setEmp('cfg.razonSocial',this.value)"/></div>
-      <div><label>Actividad Económica</label><input value="${cfg.actividad||''}" oninput="setEmp('cfg.actividad',this.value)"/></div>
-      <div><label>C.I.</label><input value="${cfg.ci||''}" oninput="setEmp('cfg.ci',this.value)"/></div>
-      <div><label>NIT</label><input value="${cfg.nit||''}" oninput="setEmp('cfg.nit',this.value)"/></div>
-      <div><label>Gestión</label><input value="${cfg.gestion||'2025'}" oninput="setEmp('cfg.gestion',this.value)"/></div>
-      <div><label>Ciudad</label><input value="${cfg.ciudad||'SANTA CRUZ DE LA SIERRA'}" oninput="setEmp('cfg.ciudad',this.value)"/></div>
+      <div><label>Razón Social</label><input value="${cfg.razonSocial||''}" oninput="setEmpTxt('cfg.razonSocial',this.value)" onblur="re()"/></div>
+      <div><label>Actividad Económica</label><input value="${cfg.actividad||''}" oninput="setEmpTxt('cfg.actividad',this.value)" onblur="re()"/></div>
+      <div><label>C.I.</label><input value="${cfg.ci||''}" oninput="setEmpTxt('cfg.ci',this.value)" onblur="re()"/></div>
+      <div><label>NIT</label><input value="${cfg.nit||''}" oninput="setEmpTxt('cfg.nit',this.value)" onblur="re()"/></div>
+      <div><label>Gestión</label><input value="${cfg.gestion||'2025'}" oninput="setEmpTxt('cfg.gestion',this.value)" onblur="re()"/></div>
+      <div><label>Ciudad</label><input value="${cfg.ciudad||'SANTA CRUZ DE LA SIERRA'}" oninput="setEmpTxt('cfg.ciudad',this.value)" onblur="re()"/></div>
     </div>
     <div class="sep"></div>
     <div class="ch3">📈 Valores UFV del Período</div>
@@ -246,7 +250,7 @@ function renderMain(){
   if(S.tab==='rcv'){const valid=rcv.filter(r=>r.estado==='CONSOLIDADO');const rows=rcv.slice(0,80).map(r=>`<tr style="background:${r.estado==='CONSOLIDADO'?'':'#FFF5F5'}"><td>${r.nro}</td><td style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${r.razon||''}</td><td>${r.fecha||''}</td><td class="r">${fmt(r.total)}</td><td class="r">${fmt(r.cf)}</td><td>${r.cat||''}</td><td><span class="${r.estado==='CONSOLIDADO'?'badge-ok':'badge-err'}">${r.estado||''}</span></td></tr>`).join('');
   return`<div class="card"><div class="ch2">🧾 RCV — Registro de Compras (Egresos)</div>
     <p class="nota">Pega aquí los datos del RCV descargado del SIAT (columnas A:Y desde fila 3). Solo facturas CONSOLIDADAS son procesadas automáticamente.</p>
-    <textarea placeholder="Pegar datos del RCV aquí (Tab-separado)..." oninput="setEmp('rcvTxt',this.value)">${e.rcvTxt||''}</textarea>
+    <textarea placeholder="Pegar datos del RCV aquí (Tab-separado)..." oninput="setEmpTxt('rcvTxt',this.value)" onblur="re()">${e.rcvTxt||''}</textarea>
     ${rcv.length?`<div class="info ig">✓ <strong>${rcv.length}</strong> filas — <strong>${valid.length}</strong> consolidadas — CF total: <strong>${fmt(r2(valid.reduce((s,r)=>r2(s+r.cf),0)))}</strong> Bs — Compras netas: <strong>${fmt(r2(valid.reduce((s,r)=>r2(s+r.baseCF+r.noSujeto+r.exentos),0)))}</strong> Bs</div>`:''}
     ${rcv.length?`<div class="tbl-wrap" style="margin-top:8px"><table><thead><tr><th>Nº</th><th>Razón Social</th><th>Fecha</th><th class="r">Total</th><th class="r">CF</th><th>Categoría</th><th>Estado</th></tr></thead><tbody>${rows}</tbody></table></div>`:''}
   </div>`;}
