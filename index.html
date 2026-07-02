@@ -226,7 +226,7 @@ function saveLS(){
 }
 
 const saved=loadLS();
-let S={tab:'dashboard',sub:'bg',showEmp:false,showLogin:!getCurrentUser(),
+let S={tab:'dashboard',sub:'bg',showEmp:false,showLogin:true,
   empresas:saved&&saved.empresas?saved.empresas:[newEmp('emp_1')],
   activeId:saved&&saved.activeId?saved.activeId:'emp_1',
   planCuentas:saved&&saved.planCuentas?saved.planCuentas:[...PLAN_DEFAULT],
@@ -307,19 +307,16 @@ function genEntries(){
 
   // RCV EGRESOS — 87%/13%, combustible 30/70
   const rcv=parseRCV(e.rcvTxt||'');
+  const rcvFull=rcv;
   const valid=rcv.filter(r=>r.estado==='CONSOLIDADO');
   if(valid.length){
     const con={};
     const add2=(c,d,h)=>{if(!con[c])con[c]={d:0,h:0};con[c].d=r2(con[c].d+(d||0));con[c].h=r2(con[c].h+(h||0));};
     valid.forEach(r=>{
-      const rcvIdx=parseRCV(e.rcvTxt||'').indexOf(r); // get index
       const overrides=e.rcvOverrides||{};
-      const rowIdx=valid.indexOf(r)+( rcvRows.findIndex(x=>x===r) - valid.findIndex(x=>x===r) ); // approximate
+      const fullIdx=rcvFull.indexOf(r);
       const lk=nitLookup(r.nit);
       const autoCode=lk?lk.cuenta:(CAT_MAP[r.cat?.trim()]||'526002001');
-      // Find override by matching NIT+fecha+total
-      const fullRCV=parseRCV(e.rcvTxt||'');
-      const fullIdx=fullRCV.findIndex(x=>x.nit===r.nit&&x.fecha===r.fecha&&x.total===r.total&&x.nro===r.nro);
       const code=overrides[fullIdx]||autoCode;
       const totalN=r2(r.total-r.ice-r.iehd-r.ipj-r.tasas);
       let gastoAmt,cfAmt;
@@ -1603,6 +1600,16 @@ async function sendFloatIA(){
 }
 
 function re(){
+  // Check login FIRST before any calculations
+  try{
+    if(S.showLogin||!getCurrentUser()){
+      document.getElementById('root').innerHTML=renderLogin();
+      return;
+    }
+  }catch(e){
+    document.getElementById('root').innerHTML=renderLogin();
+    return;
+  }
   const c=calcAll();const{bgOK,ssOK,fOK,util}=c;const cfg=emp().cfg;
   const totCob=r2((emp().ingresos||[]).reduce((s,x)=>r2(s+pn(x.monto)),0));
   const navSecs=[
@@ -1649,8 +1656,6 @@ function re(){
   else if(S.tab==='listaeeff')main=renderListaEEFF();
   else if(S.tab==='usuarios')main=renderUsuarios();
   else if(S.tab==='iaapi')main=renderIAApi(c);
-  // Show login if needed
-  if(S.showLogin||!getCurrentUser()){document.getElementById('root').innerHTML=renderLogin();return;}
   document.getElementById('root').innerHTML=
     (S.showEmp?renderEmpModal():'')+
     '<div class="hdr">'+
