@@ -6,13 +6,16 @@
 <title>CONTAX Sistema Contable v2</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
-body{font-family:'Segoe UI',sans-serif;background:#F0F2F5;color:#1a1a2e;font-size:13px}
-.hdr{background:#1C2B4B;color:#fff;padding:10px 18px;display:flex;align-items:center;gap:12px;border-bottom:3px solid #3B82F6;position:sticky;top:0;z-index:100}
+body{background:#F2F2F2;font-family:'Segoe UI',sans-serif;background:#F2F2F2;color:#0D0D0D;font-size:13px}
+.hdr{background:#031740;color:#fff;padding:10px 18px;display:flex;align-items:center;gap:12px;border-bottom:3px solid #3B82F6;position:sticky;top:0;z-index:100}
 .logo{background:#3B82F6;border-radius:6px;width:30px;height:30px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12px;flex-shrink:0;cursor:pointer}
 .hdr-r{margin-left:auto;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
 .ok{color:#4ADE80;font-weight:700}.err{color:#F87171;font-weight:700}
 .layout{display:flex;height:calc(100vh - 50px)}
-.nav{width:185px;background:#1C2B4B;overflow-y:auto;flex-shrink:0;padding:6px 0}
+.nav{width:185px;background:#031740;overflow-y:auto;flex-shrink:0;padding:6px 0;transition:width .25s ease,padding .25s ease}
+.nav.collapsed{width:0;padding:0;overflow:hidden}
+.nav-toggle{background:none;border:none;color:rgba(255,255,255,.7);cursor:pointer;font-size:18px;padding:0;line-height:1;flex-shrink:0}
+.nav-toggle:hover{color:#fff}
 .ns{padding:10px 14px 3px;font-size:9px;font-weight:700;color:rgba(255,255,255,.3);text-transform:uppercase;letter-spacing:.08em}
 .ni{padding:8px 14px;cursor:pointer;font-size:12px;color:rgba(255,255,255,.55);border-left:3px solid transparent;display:flex;align-items:center;gap:7px}
 .ni.a{background:rgba(59,130,246,.25);color:#fff;border-left-color:#3B82F6;font-weight:600}
@@ -24,14 +27,14 @@ body{font-family:'Segoe UI',sans-serif;background:#F0F2F5;color:#1a1a2e;font-siz
 .h2{font-size:14px;font-weight:700;color:#1C2B4B;margin-bottom:12px;padding-bottom:6px;border-bottom:2px solid #E8EAED}
 .h3{font-size:11px;font-weight:700;color:#1C2B4B;margin:12px 0 7px;background:#EEF2FF;padding:4px 8px;border-radius:4px;text-transform:uppercase}
 label{font-size:11px;font-weight:600;color:#555;display:block;margin-bottom:3px}
-input,select,textarea{background:#FFFDE7;border:1.5px solid #F9A825;border-radius:5px;padding:5px 8px;font-size:12px;width:100%;outline:none;font-family:inherit;color:#1a1a2e}
+input,select,textarea{background:#FFFDE7;border:1.5px solid #F9A825;border-radius:5px;padding:5px 8px;font-size:12px;width:100%;outline:none;font-family:inherit;color:#0D0D0D}
 input:focus,select:focus,textarea:focus{border-color:#3B82F6}
 .ro{background:#F5F5F5!important;border-color:#DDD!important;color:#777;pointer-events:none}
 textarea{height:150px;resize:vertical;font-family:monospace;font-size:11px}
 .g2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
 .g4{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:10px}
-.btn{background:#1C2B4B;color:#fff;border:none;border-radius:6px;padding:7px 14px;font-size:12px;font-weight:600;cursor:pointer}
+.btn{background:#031740;color:#fff;border:none;border-radius:6px;padding:7px 14px;font-size:12px;font-weight:600;cursor:pointer}
 .btn-blue{background:#3B82F6;color:#fff;border:none;border-radius:5px;padding:5px 11px;font-size:11px;cursor:pointer}
 .btn-del{background:#EF4444;color:#fff;border:none;border-radius:4px;padding:4px 8px;font-size:11px;cursor:pointer}
 .btn-green{background:#10B981;color:#fff;border:none;border-radius:6px;padding:7px 14px;font-size:12px;font-weight:600;cursor:pointer}
@@ -47,14 +50,14 @@ textarea{height:150px;resize:vertical;font-family:monospace;font-size:11px}
 .tab-btn{padding:5px 12px;border-radius:5px;font-size:11px;cursor:pointer;border:none;background:transparent;color:#666;font-weight:500}
 .tab-btn.a{background:#fff;color:#1C2B4B;font-weight:700;box-shadow:0 1px 3px rgba(0,0,0,.1)}
 table{width:100%;border-collapse:collapse;font-size:11px}
-th{background:#1C2B4B;color:#fff;padding:6px 8px;font-size:10px;font-weight:600;text-align:left;white-space:nowrap}
+th{background:#031740;color:#fff;padding:6px 8px;font-size:10px;font-weight:600;text-align:left;white-space:nowrap}
 th.r{text-align:right}
 td{padding:5px 8px;border-bottom:1px solid #F0F2F5}
 td.r{font-family:'Courier New',monospace;text-align:right;white-space:nowrap}
 td.mono{font-family:monospace;font-size:10px}
 .tr-g{background:#EEF2FF;font-weight:600;color:#1C2B4B}
 .tr-t{background:#E8F4FD;font-weight:700}
-.tr-f{background:#1C2B4B;color:#fff;font-weight:700}
+.tr-f{background:#031740;color:#fff;font-weight:700}
 .tr-f td{border:none;color:#fff}
 .tr-i{background:#D1FAE5}.tr-i td{color:#065F46;font-weight:700}
 .tr-e{background:#FEE2E2}.tr-e td{color:#991B1B;font-weight:700}
@@ -84,8 +87,8 @@ input.g:focus{border-color:#059669!important;box-shadow:0 0 0 2px rgba(16,185,12
 .prog-bar{background:#E8EAED;border-radius:10px;height:8px;overflow:hidden;margin-top:4px}
 .prog-fill{height:100%;border-radius:10px;transition:width .3s}
 /* Dark charts */
-.dark-card{background:#0D1B2A;border-radius:12px;padding:16px;color:#fff;margin-bottom:12px}
-.dark-chart-title{font-size:12px;font-weight:700;color:#94A3B8;margin-bottom:12px;text-transform:uppercase;letter-spacing:.06em}
+.dark-card{background:#031740;border-radius:12px;padding:16px;color:#fff;margin-bottom:12px}
+.dark-chart-title{font-size:11px;font-weight:700;color:#94A3B8;margin-bottom:12px;text-transform:uppercase;letter-spacing:.06em}
 .kpi-circle{display:flex;flex-direction:column;align-items:center;justify-content:center;width:90px;height:90px;border-radius:50%;border:3px solid;position:relative}
 .kpi-value{font-size:20px;font-weight:700}
 .kpi-label{font-size:9px;opacity:.7;margin-top:2px;text-align:center}
@@ -101,12 +104,23 @@ input.g:focus{border-color:#059669!important;box-shadow:0 0 0 2px rgba(16,185,12
 /* Floating chat */
 .chat-fab{position:fixed;bottom:24px;right:24px;width:52px;height:52px;background:linear-gradient(135deg,#3B82F6,#7C3AED);border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;z-index:500;box-shadow:0 4px 20px rgba(59,130,246,.5);font-size:22px;border:none;color:#fff;transition:transform .2s}
 .chat-fab:hover{transform:scale(1.1)}
-.chat-float{position:fixed;bottom:86px;right:24px;width:360px;height:480px;background:#1C2B4B;border-radius:16px;z-index:500;display:flex;flex-direction:column;box-shadow:0 20px 60px rgba(0,0,0,.5);border:1px solid rgba(59,130,246,.3);overflow:hidden}
+.chat-float{position:fixed;bottom:86px;right:24px;width:360px;height:480px;background:#031740;border-radius:16px;z-index:500;display:flex;flex-direction:column;box-shadow:0 20px 60px rgba(0,0,0,.5);border:1px solid rgba(59,130,246,.3);overflow:hidden}
 .chat-float-hdr{background:linear-gradient(135deg,#1C2B4B,#3B82F6);padding:12px 16px;display:flex;align-items:center;justify-content:space-between;color:#fff;font-weight:700;font-size:13px}
-.chat-float-body{flex:1;overflow-y:auto;padding:12px;background:#0D1B2A}
-.chat-float-inp{display:flex;gap:6px;padding:10px;background:#1C2B4B;border-top:1px solid rgba(255,255,255,.1)}
+.chat-float-body{flex:1;overflow-y:auto;padding:12px;background:#031740}
+.chat-float-inp{display:flex;gap:6px;padding:10px;background:#031740;border-top:1px solid rgba(255,255,255,.1)}
 .chat-float-inp input{flex:1;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);border-radius:6px;padding:7px 10px;font-size:12px;color:#fff;outline:none}
 .chat-float-inp input::placeholder{color:rgba(255,255,255,.4)}
+
+/* Searchable dropdown */
+.sd-wrap{position:relative;width:100%}
+.sd-input{width:100%;background:#F0FDF4;border:1.5px solid #10B981;border-radius:5px;padding:5px 8px;font-size:12px;color:#0D0D0D;outline:none;font-family:inherit}
+.sd-input.yellow{background:#FFFDE7!important;border-color:#F9A825!important}
+.sd-list{position:absolute;top:100%;left:0;right:0;background:#fff;border:1.5px solid #031740;border-radius:5px;z-index:300;max-height:200px;overflow-y:auto;box-shadow:0 4px 12px rgba(0,0,0,.15);margin-top:2px}
+.sd-item{padding:6px 10px;cursor:pointer;font-size:11px;display:flex;gap:8px;align-items:center;border-bottom:1px solid #F2F2F2}
+.sd-item:hover{background:#EEF2FF}
+.sd-code{font-family:monospace;font-size:10px;color:#77888C;flex-shrink:0;min-width:80px}
+.sd-name{color:#0D0D0D}
+
 /* Print */
 @media print{
   .nav,.hdr,.chat-fab,.chat-float,.login-overlay,.hdr-r,.btn,.btn-blue,.btn-green,.btn-orange,.btn-del,.btn-purple{display:none!important}
@@ -215,7 +229,7 @@ const ACCT_HIER={"111001001": {"C": 1, "G": 1, "SG": 1, "CP": "001", "CA": "001"
 
 function newEmp(id){
   return{id,cfg:{razonSocial:'',ci:'',nit:'',actividad:'',gestion:'2025',fechaInicio:'2025-01-01',fechaFin:'2025-12-31',ciudad:'SANTA CRUZ DE LA SIERRA',ufvInicio:'',ufvFin:'',contadorNombre:'',contadorCI:''},
-    traspaso:{...DEF_TR},rcvTxt:'',rcvOverrides:{},ingresos:[{mes:1,cuenta:'411002004',monto:''}],
+    traspaso:{...DEF_TR},rcvTxt:'',rcvData:[],rcvOverrides:{},ventasData:[],ventasOverrides:{},ingresos:[{mes:1,cuenta:'411002004',monto:''}],
     activos:[],otrosAsientos:JSON.parse(JSON.stringify(DEF_OA)),updatedAt:new Date().toISOString()};
 }
 
@@ -226,7 +240,7 @@ function saveLS(){
 }
 
 const saved=loadLS();
-let S={tab:'dashboard',sub:'bg',showEmp:false,showLogin:true,
+let S={tab:'config',sub:'bg',showEmp:false,showLogin:true,navOpen:true,subComp:'all',
   empresas:saved&&saved.empresas?saved.empresas:[newEmp('emp_1')],
   activeId:saved&&saved.activeId?saved.activeId:'emp_1',
   planCuentas:saved&&saved.planCuentas?saved.planCuentas:[...PLAN_DEFAULT],
@@ -305,10 +319,12 @@ function genEntries(){
     if(lines.length)E.push({id:'OA'+i,tipo:'T',desc:oa.nombre,lines});
   });
 
-  // RCV EGRESOS — 87%/13%, combustible 30/70
-  const rcv=parseRCV(e.rcvTxt||'');
-  const rcvFull=rcv;
-  const valid=rcv.filter(r=>r.estado==='CONSOLIDADO');
+  // RCV EGRESOS — usa archivo cargado O datos pegados
+  // rcvData (XLSX, filtrado INTERNO/GRAVADAS) tiene prioridad sobre rcvTxt (paste)
+  const rcvFromXLSX=(e.rcvData||[]);
+  const rcvFromPaste=parseRCV(e.rcvTxt||'').filter(r=>r.estado==='CONSOLIDADO');
+  const rcvFull=rcvFromXLSX.length>0?rcvFromXLSX:rcvFromPaste;
+  const valid=rcvFull;
   if(valid.length){
     const con={};
     const add2=(c,d,h)=>{if(!con[c])con[c]={d:0,h:0};con[c].d=r2(con[c].d+(d||0));con[c].h=r2(con[c].h+(h||0));};
@@ -344,7 +360,30 @@ function genEntries(){
     E.push({id:'RCVE',tipo:'E',desc:'COMPROBANTE DE EGRESOS — RCV COMPRAS',lines:Object.entries(con).map(([c,v])=>({c,d:v.d,h:v.h}))});
   }
 
-  // INGRESOS — 87% ingreso, 13% DF, 3% IT sobre total
+  // INGRESOS XLSX (ventas cargadas)
+  const ventasXLSX=e.ventasData||[];
+  if(ventasXLSX.length>0){
+    const conV={};
+    ventasXLSX.forEach((v,i)=>{
+      const cuenta=(e.ventasOverrides&&e.ventasOverrides[i])||'411002004';
+      const tot=r2(v.total);
+      const ingNeto=r2(tot*0.87);
+      const dfIva=r2(tot*0.13);
+      const it=r2(tot*0.03);
+      if(!conV['111001001'])conV['111001001']={d:0,h:0};conV['111001001'].d=r2(conV['111001001'].d+tot);
+      if(!conV[cuenta])conV[cuenta]={d:0,h:0};conV[cuenta].h=r2(conV[cuenta].h+ingNeto);
+      if(!conV['214001001'])conV['214001001']={d:0,h:0};conV['214001001'].h=r2(conV['214001001'].h+dfIva);
+      if(!conV['525002001'])conV['525002001']={d:0,h:0};conV['525002001'].d=r2(conV['525002001'].d+it);
+      if(!conV['214004001'])conV['214004001']={d:0,h:0};conV['214004001'].h=r2(conV['214004001'].h+it);
+    });
+    const tdV=r2(Object.values(conV).reduce((s,v)=>r2(s+v.d),0));
+    const thV=r2(Object.values(conV).reduce((s,v)=>r2(s+v.h),0));
+    const diffV=r2(tdV-thV);
+    if(Math.abs(diffV)>0.001){if(diffV>0){if(!conV['561004001'])conV['561004001']={d:0,h:0};conV['561004001'].h=r2((conV['561004001'].h||0)+diffV);}else{if(!conV['441004001'])conV['441004001']={d:0,h:0};conV['441004001'].d=r2((conV['441004001'].d||0)-diffV);}}
+    E.push({id:'VXLS',tipo:'I',desc:'COMPROBANTE DE INGRESOS — VENTAS (XLSX)',lines:Object.entries(conV).map(([c,v])=>({c,d:v.d,h:v.h}))});
+  }
+
+  // INGRESOS MANUALES — 87% ingreso, 13% DF, 3% IT sobre total
   (e.ingresos||[]).forEach((ing,i)=>{
     const tot=r2(pn(ing.monto));if(!tot)return;
     const ingNeto=r2(tot*0.87);
@@ -543,69 +582,152 @@ function renderApertura(){
 }
 
 function renderRCV(){
-  const rcv=parseRCV(emp().rcvTxt||'');const valid=rcv.filter(r=>r.estado==='CONSOLIDADO');
+  const rcvFromFile=emp().rcvData||[];
+  const rcvFromPaste=parseRCV(emp().rcvTxt||'').filter(r=>r.estado==='CONSOLIDADO');
+  const usingFile=rcvFromFile.length>0;
+  const allRCV=usingFile?rcvFromFile:rcvFromPaste;
   const overrides=emp().rcvOverrides||{};
-  const planOpts='<option value="">— Auto —</option>'+S.planCuentas.map(a=>'<option value="'+a.c+'">'+a.c+' — '+a.n+'</option>').join('');
-  const rows=rcv.slice(0,100).map((r,idx)=>{
+  const totCF=r2(allRCV.reduce((s,r)=>r2(s+r.cf),0));
+  const totCompras=r2(allRCV.reduce((s,r)=>r2(s+r.total),0));
+
+  const rows=allRCV.slice(0,200).map((r,idx)=>{
     const lk=nitLookup(r.nit);
     const autoCode=lk?lk.cuenta:(CAT_MAP[r.cat?.trim()]||'526002001');
-    const overCode=overrides[idx]||'';
-    const finalCode=overCode||autoCode;
-    const finalNombre=finalCode?acctName(finalCode):'Sin asignar';
-    const isOverridden=!!overCode;
-    return '<tr style="background:'+(r.estado==='CONSOLIDADO'?'':'#FFF5F5')+'">'+
-      '<td>'+r.nro+'</td>'+
-      '<td style="max-width:130px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis">'+(r.razon||'')+'</td>'+
-      '<td style="font-size:10px">'+(r.nit||'')+'</td>'+
-      '<td style="font-size:10px">'+(r.fecha||'')+'</td>'+
-      '<td class="r">'+fmt(r.total)+'</td><td class="r">'+fmt(r.cf)+'</td>'+
-      '<td style="padding:2px 4px">'+
-        '<select onchange="setRCVOverride('+idx+',this.value)" style="font-size:10px;padding:2px;background:'+(isOverridden?'#FFF7ED':'#F8FAFC')+';border:1px solid '+(isOverridden?'#F59E0B':'#E2E8F0')+';border-radius:3px;width:100%">'+
-          '<option value="">'+finalNombre+(isOverridden?' ✏️':'')+'</option>'+
-          S.planCuentas.filter(a=>a.c&&a.c.length===9).map(a=>'<option value="'+a.c+'"'+(overCode===a.c?' selected':'')+'>'+a.c+' — '+a.n+'</option>').join('')+
-        '</select>'+
-      '</td>'+
-      '<td><span class="'+(r.estado==='CONSOLIDADO'?'badge-ok':'badge-err')+'">'+(r.estado||'')+'</span></td>'+
-    '</tr>';
+    const finalCode=overrides[idx]||autoCode;
+    const isOver=!!overrides[idx];
+    const sdId='rc'+idx;
+    return `<tr style="background:${idx%2?'#F8FAFC':'#fff'}">
+      <td>${r.nro||''}</td>
+      <td style="max-width:130px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;font-size:11px">${r.razon||''}</td>
+      <td style="font-size:10px">${r.nit||''}</td>
+      <td style="font-size:10px">${r.fecha||''}</td>
+      <td class="r">${fmt(r.total)}</td>
+      <td class="r">${fmt(r.cf)}</td>
+      <td style="min-width:200px;padding:2px 4px">${sdMake(sdId,finalCode,'rcSet',false)}</td>
+      ${!usingFile?`<td><span class="badge-ok">CONSOLIDADO</span></td>`:''}
+    </tr>`;
   }).join('');
-  return '<div class="card"><div class="h2">🧾 RCV — Registro de Compras</div>'+
-    '<p class="nota">Pega los datos del RCV del SIAT. La cuenta se asigna por NIT automáticamente. Puedes cambiarla en la columna "Cuenta" sin modificar la base de datos de NITs.</p>'+
-    '<textarea placeholder="Pegar datos del RCV aquí (Tab-separado)..." onblur="emp().rcvTxt=this.value;saveLS();re()">'+(emp().rcvTxt||'')+'</textarea>'+
-    (rcv.length?'<div class="info ig" style="margin-top:6px">✓ <strong>'+rcv.length+'</strong> filas — <strong>'+valid.length+'</strong> consolidadas — CF total: <strong>'+fmt(r2(valid.reduce((s,r)=>r2(s+r.cf),0)))+'</strong> Bs'+
-      (Object.keys(overrides).length?' — <span style="color:#F59E0B">✏️ '+Object.keys(overrides).length+' cuentas modificadas manualmente</span>':'')+
-    '</div>':'')+
-    (rcv.length?'<div class="tbl-wrap" style="margin-top:8px">'+
-    '<table><thead><tr><th>Nº</th><th>Razón Social</th><th>NIT</th><th>Fecha</th><th class="r">Total</th><th class="r">CF</th><th style="min-width:200px">Cuenta Contable <span style="font-weight:400;font-size:9px">(editable)</span></th><th>Estado</th></tr></thead>'+
-    '<tbody>'+rows+'</tbody></table></div>':'')+
-    (Object.keys(overrides).length?'<button onclick="clearRCVOverrides()" class="btn-del" style="margin-top:8px;font-size:11px">🗑 Limpiar todas las modificaciones manuales</button>':'')+
-    '</div>';
+
+  const uploadBtn=`<label style="display:inline-flex;align-items:center;gap:8px;background:#031740;color:#fff;padding:8px 16px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600">
+    📂 Cargar archivo RCV (XLSX)
+    <input type="file" accept=".xlsx,.xls" style="display:none" onchange="uploadRCV(this.files[0])"/>
+  </label>`;
+
+  return `<div class="card"><div class="h2">🧾 RCV — Registro de Compras</div>
+    <div style="margin-bottom:12px">
+      <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:8px">
+        ${uploadBtn}
+        ${usingFile?`<button class="btn-del" style="font-size:11px;padding:4px 10px" onclick="emp().rcvData=[];emp().rcvOverrides={};saveLS();re()">🗑 Quitar archivo</button>`:''}
+        ${Object.keys(overrides).length?`<button onclick="emp().rcvOverrides={};saveLS();re()" class="btn-del" style="font-size:11px;padding:4px 10px">🗑 Limpiar overrides</button>`:''}
+      </div>
+      ${!usingFile?`<div class="sep" style="margin:8px 0"></div>
+        <p class="nota">O pega datos del RCV (Tab-separado, incluye solo CONSOLIDADOS):</p>
+        <textarea placeholder="Pegar datos del RCV aquí..." onblur="emp().rcvTxt=this.value;saveLS();re()" style="height:100px;font-family:monospace;font-size:11px;background:#FFFDE7;border:1.5px solid #F9A825;border-radius:5px;padding:6px;width:100%;resize:vertical">${emp().rcvTxt||''}</textarea>`:''}
+    </div>
+    ${allRCV.length>0?`<div class="info ig" style="margin-bottom:8px">
+      ${usingFile?`📁 Archivo cargado: `:`📋 Datos pegados: `}
+      <strong>${allRCV.length}</strong> registros ${usingFile?'INTERNO/ACTIVIDADES GRAVADAS':'CONSOLIDADAS'} — 
+      CF total: <strong>${fmt(totCF)}</strong> Bs — Total compras: <strong>${fmt(totCompras)}</strong> Bs
+      ${Object.keys(overrides).length?`— <span style="color:#F59E0B">✏️ ${Object.keys(overrides).length} cuentas editadas manualmente</span>`:''}
+    </div>`:'<div class="info iy">Carga un archivo XLSX o pega los datos del RCV.</div>'}
+    ${allRCV.length?`<div class="tbl-wrap" style="max-height:400px">
+    <table><thead><tr><th>Nº</th><th>Razón Social</th><th>NIT</th><th>Fecha</th><th class="r">Total</th><th class="r">CF</th><th>Cuenta Contable <span style="font-weight:400;font-size:9px">(editable)</span></th>${!usingFile?'<th>Estado</th>':''}</tr></thead>
+    <tbody>${rows}</tbody></table></div>`:''}
+  </div>`;
 }
-function setRCVOverride(idx,code){
+function rcSet(code,sdId){
+  const i=parseInt(sdId.replace('rc',''));
   if(!emp().rcvOverrides)emp().rcvOverrides={};
-  if(code){emp().rcvOverrides[idx]=code;}else{delete emp().rcvOverrides[idx];}
-  saveLS();re();
+  emp().rcvOverrides[i]=code;saveLS();
+  sdSet(code,sdId);
 }
-function clearRCVOverrides(){emp().rcvOverrides={};saveLS();re();}
 
 function renderIngresos(){
+  const ventas=emp().ventasData||[];
+  const vOvr=emp().ventasOverrides||{};
   const incc=[{c:'411002001',n:'SERVICIOS DE DELIVERY'},{c:'411002002',n:'SERVICIOS DE TRANSPORTE'},{c:'411002003',n:'SERVICIOS DE PUBLICIDAD'},{c:'411002004',n:'INGRESOS POR SERVICIOS'},{c:'431012001',n:'OTROS INGRESOS'}];
-  const rows=(emp().ingresos||[]).map((ing,i)=>{
+  const totVentas=r2(ventas.reduce((s,v)=>r2(s+v.total),0));
+  const totManuales=r2((emp().ingresos||[]).reduce((s,x)=>r2(s+pn(x.monto)),0));
+
+  // Ventas XLSX section
+  let ventasSection='';
+  if(ventas.length>0){
+    const ventasRows=ventas.slice(0,200).map((v,i)=>{
+      const cuenta=vOvr[i]||'411002004';
+      const tot=r2(v.total),df=r2(tot*0.13),ing=r2(tot*0.87),it=r2(tot*0.03);
+      const sdId='vo'+i;
+      return `<tr style="background:${i%2?'#F8FAFC':'#fff'}">
+        <td>${v.nro||''}</td>
+        <td style="font-size:10px">${v.fecha||''}</td>
+        <td style="font-size:10px">${v.nroFact||''}</td>
+        <td style="max-width:150px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;font-size:11px">${v.razon||''}</td>
+        <td class="r">${fmt(tot)}</td>
+        <td class="r" style="color:#059669">${fmt(ing)}</td>
+        <td class="r" style="color:#DC2626">${fmt(df)}</td>
+        <td class="r" style="color:#F59E0B">${fmt(it)}</td>
+        <td style="min-width:200px;padding:2px 4px">${sdMake(sdId,cuenta,'voSet',true)}</td>
+      </tr>`;
+    }).join('');
+    ventasSection=`<div class="h3">📁 FACTURAS DE VENTAS (XLSX) — Solo VÁLIDAS</div>
+      <div style="display:flex;gap:8px;margin-bottom:8px;align-items:center;flex-wrap:wrap">
+        <span class="badge-ok">✓ ${ventas.length} facturas válidas cargadas</span>
+        <span>Total: <strong>${fmt(totVentas)}</strong> Bs | Ingreso neto (87%): <strong>${fmt(r2(totVentas*0.87))}</strong> | DF IVA (13%): <strong>${fmt(r2(totVentas*0.13))}</strong> | IT (3%): <strong>${fmt(r2(totVentas*0.03))}</strong></span>
+        <button class="btn-del" style="font-size:11px;padding:4px 10px" onclick="emp().ventasData=[];emp().ventasOverrides={};saveLS();re()">🗑 Limpiar ventas</button>
+      </div>
+      <div class="tbl-wrap" style="max-height:350px">
+      <table><thead><tr><th>Nº</th><th>Fecha</th><th>Factura</th><th>Cliente</th><th class="r">Total</th><th class="r">Ingreso (87%)</th><th class="r">DF IVA (13%)</th><th class="r">IT (3%)</th><th>Cuenta Contable</th></tr></thead>
+      <tbody>${ventasRows}</tbody></table></div>`;
+  } else {
+    ventasSection=`<div class="h3">📁 CARGAR FACTURAS DE VENTAS (XLSX)</div>
+      <div class="info iy" style="margin-bottom:8px">Sube tu archivo de ventas del SIAT. Solo se procesarán las facturas con estado <strong>VÁLIDA</strong>.</div>`;
+  }
+
+  // File upload input
+  const uploadBtn=`<div style="margin-bottom:12px">
+    <label style="display:inline-flex;align-items:center;gap:8px;background:#031740;color:#fff;padding:8px 16px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600">
+      📂 Cargar archivo de Ventas (XLSX)
+      <input type="file" accept=".xlsx,.xls" style="display:none" onchange="uploadVentas(this.files[0])"/>
+    </label>
+    <span class="nota" style="margin-left:8px">Formato: SIAT Bolivia. Solo facturas VÁLIDAS.</span>
+  </div>`;
+
+  // Manual ingresos
+  const meses=['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+  const manualRows=(emp().ingresos||[]).map((ing,i)=>{
     const tot=r2(pn(ing.monto)),neto=r2(tot*0.87),df=r2(tot*0.13),it=r2(tot*0.03);
     const disp=tot?tot.toString().replace('.',','):'';
-    return '<div style="padding:10px;background:#F8FAFC;border-radius:7px;border:1px solid #E2E8F0;margin-bottom:8px;display:flex;gap:8px;align-items:flex-end">'+
-      '<div style="flex:.7"><label>Mes</label><select onchange="emp().ingresos['+i+'].mes=+this.value;saveLS();re()">'+MESES.map((m,j)=>'<option value="'+(j+1)+'"'+(+(ing.mes||1)===(j+1)?' selected':'')+'>'+m+'</option>').join('')+'</select></div>'+
-      '<div style="flex:2"><label>Cuenta</label><select onchange="emp().ingresos['+i+'].cuenta=this.value;saveLS()">'+incc.map(a=>'<option value="'+a.c+'"'+(ing.cuenta===a.c?' selected':'')+'>'+a.n+'</option>').join('')+'</select></div>'+
-      '<div style="flex:1.5"><label>Monto cobrado (con IVA)</label><input type="text" class="n" value="'+disp+'" oninput="" onblur="emp().ingresos['+i+'].monto=pn(this.value);saveLS();reLazy()"/></div>'+
-      '<div style="flex:.8;font-size:10px;color:#555;padding-bottom:4px"><div>Neto (87%): <strong>'+fmt(neto)+'</strong></div><div>DF IVA (13%): <strong>'+fmt(df)+'</strong></div><div>IT (3%): <strong>'+fmt(it)+'</strong></div></div>'+
-      '<button class="btn-del" onclick="emp().ingresos.splice('+i+',1);saveLS();re()">✕</button></div>';
+    return `<div style="padding:10px;background:#F8FAFC;border-radius:7px;border:1px solid #E2E8F0;margin-bottom:8px;display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap">
+      <div style="flex:.7;min-width:100px"><label>Mes</label><select onchange="emp().ingresos[${i}].mes=+this.value;saveLS();re()" style="background:#FFFDE7;border:1.5px solid #F9A825;border-radius:5px;padding:5px 8px;font-size:12px;width:100%">${meses.map((m,j)=>`<option value="${j+1}"${+(ing.mes||1)===j+1?' selected':''}>${m}</option>`).join('')}</select></div>
+      <div style="flex:2;min-width:200px"><label>Cuenta</label>${sdMake('mi'+i,ing.cuenta||'411002004','miSet',true)}</div>
+      <div style="flex:1.5;min-width:140px"><label>Monto cobrado (con IVA)</label><input type="text" class="n" value="${disp}" style="background:#FFFDE7;border:1.5px solid #F9A825;border-radius:5px;padding:5px 8px;font-size:12px;width:100%;text-align:right" oninput="" onblur="emp().ingresos[${i}].monto=pn(this.value);saveLS();reLazy()"/></div>
+      <div style="flex:.8;font-size:10px;color:#555;padding-bottom:4px"><div>Neto (87%): <strong>${fmt(neto)}</strong></div><div>DF IVA (13%): <strong>${fmt(df)}</strong></div><div>IT (3%): <strong>${fmt(it)}</strong></div></div>
+      <button class="btn-del" onclick="emp().ingresos.splice(${i},1);saveLS();re()">✕</button>
+    </div>`;
   }).join('');
-  const tot=r2((emp().ingresos||[]).reduce((s,x)=>r2(s+pn(x.monto)),0));
-  return '<div class="card"><div class="h2">💰 Ingresos del Período</div>'+
-    '<p class="nota">87% → Ingreso Neto | 13% → Débito Fiscal IVA | 3% del total → IT. Estos son los porcentajes correctos para Bolivia.</p>'+
-    rows+
-    '<button class="btn-blue" onclick="emp().ingresos.push({mes:1,cuenta:\'411002004\',monto:\'\'});saveLS();re()">+ Agregar Ingreso</button>'+
-    (tot>0?'<div class="info ib" style="margin-top:8px">Total cobrado: <strong>'+fmt(tot)+'</strong> | Ingreso neto (87%): <strong>'+fmt(r2(tot*0.87))+'</strong> | DF IVA (13%): <strong>'+fmt(r2(tot*0.13))+'</strong> | IT (3%): <strong>'+fmt(r2(tot*0.03))+'</strong></div>':'')+
-    '</div>';
+
+  return `<div class="card"><div class="h2">💰 Ingresos del Período</div>
+    ${uploadBtn}
+    ${ventasSection}
+    <div class="sep"></div>
+    <div class="h3">✏️ INGRESOS MANUALES (por si acaso)</div>
+    <p class="nota">87% → Ingreso Neto | 13% → Débito Fiscal IVA | 3% del total → IT</p>
+    ${manualRows}
+    <button class="btn-blue" onclick="emp().ingresos.push({mes:1,cuenta:'411002004',monto:''});saveLS();re()">+ Agregar Ingreso Manual</button>
+    ${totManuales>0?`<div class="info ib" style="margin-top:8px">Manual: <strong>${fmt(totManuales)}</strong> Bs</div>`:''}
+  </div>`;
+}
+// Callback for ventas override via searchable dropdown
+function voSet(code,sdId){
+  const i=parseInt(sdId.replace('vo',''));
+  if(!emp().ventasOverrides)emp().ventasOverrides={};
+  emp().ventasOverrides[i]=code;saveLS();
+  sdSet(code,sdId);
+}
+// Callback for manual ingreso cuenta
+function miSet(code,sdId){
+  const i=parseInt(sdId.replace('mi',''));
+  if(emp().ingresos[i])emp().ingresos[i].cuenta=code;saveLS();
+  sdSet(code,sdId);
 }
 
 function renderActivos(){
@@ -756,6 +878,76 @@ function getHier(code){
   }
   return{C:s[0]||'',G:'',SG:'',CP:'',CA:''};
 }
+
+// ═══ SEARCHABLE DROPDOWN ════════════════════════════════════
+let _sdTimer=null;
+function sdOpen(id){const el=document.getElementById('sd-list-'+id);if(el)el.style.display='block';}
+function sdClose(id){_sdTimer=setTimeout(()=>{const el=document.getElementById('sd-list-'+id);if(el)el.style.display='none';},180);}
+function sdCancel(){clearTimeout(_sdTimer);}
+function sdFilter(id,query,onSelect){
+  const list=document.getElementById('sd-list-'+id);if(!list)return;
+  const q=(query||'').toLowerCase();
+  const matches=S.planCuentas.filter(a=>a.c&&a.c.length===9&&(a.c.includes(q)||a.n.toLowerCase().includes(q))).slice(0,20);
+  list.innerHTML=matches.map(a=>`<div class="sd-item" onmousedown="sdCancel();${onSelect}('${a.c}','${id}');"><span class="sd-code">${a.c}</span><span class="sd-name">${a.n}</span></div>`).join('')
+    ||(q?'<div class="sd-item" style="color:#888">Sin resultados</div>':'');
+}
+function sdMake(id,value,onSelect,yellow){
+  const name=value?acctName(value):'— Seleccionar cuenta —';
+  const display=value?value+' — '+name:'';
+  return `<div class="sd-wrap"><input type="text" class="sd-input${yellow?' yellow':''}" id="sd-${id}" placeholder="Busca por código o nombre..." value="${display}" autocomplete="off"
+    onfocus="sdOpen('${id}');sdFilter('${id}',this.value.split('—')[0].trim(),'${onSelect}')" 
+    oninput="sdFilter('${id}',this.value,'${onSelect}')"
+    onblur="sdClose('${id}')"/>
+    <div class="sd-list" id="sd-list-${id}" style="display:none"></div></div>`;
+}
+function sdSet(code,id){
+  // Called when user selects from dropdown
+  const inp=document.getElementById('sd-'+id);
+  if(inp)inp.value=code+' — '+acctName(code);
+  const list=document.getElementById('sd-list-'+id);
+  if(list)list.style.display='none';
+}
+
+
+// ═══ XLSX PARSERS ════════════════════════════════════════════
+function uploadVentas(file){
+  const reader=new FileReader();
+  reader.onload=e=>{
+    const wb=XLSX.read(e.target.result,{type:'binary'});
+    const ws=wb.Sheets[wb.SheetNames[0]];
+    const data=XLSX.utils.sheet_to_json(ws,{header:1});
+    const rows=data.slice(1).map(r=>({
+      nro:r[0],fecha:String(r[1]||''),nroFact:r[2],
+      nit:String(r[4]||''),razon:r[6],
+      total:parseFloat(r[7])||0,baseDf:parseFloat(r[18])||0,
+      df:parseFloat(r[19])||0,estado:r[20],tipoVenta:r[22],
+    })).filter(r=>r.estado==='VALIDA');
+    emp().ventasData=rows;emp().ventasOverrides={};saveLS();re();
+    alert('✓ '+rows.length+' facturas VÁLIDAS cargadas de '+data.length+' total');
+  };
+  reader.readAsBinaryString(file);
+}
+function uploadRCV(file){
+  const reader=new FileReader();
+  reader.onload=e=>{
+    const wb=XLSX.read(e.target.result,{type:'binary'});
+    const ws=wb.Sheets[wb.SheetNames[0]];
+    const data=XLSX.utils.sheet_to_json(ws,{header:1});
+    const rows=data.slice(1).map(r=>({
+      nro:r[0],nit:String(r[1]||''),razon:r[2],nroFact:r[4],
+      fecha:String(r[6]||''),total:parseFloat(r[7])||0,
+      ice:parseFloat(r[8])||0,iehd:parseFloat(r[9])||0,
+      ipj:parseFloat(r[10])||0,tasas:parseFloat(r[11])||0,
+      noSujeto:parseFloat(r[12])||0,exentos:parseFloat(r[13])||0,
+      baseCF:parseFloat(r[18])||0,cf:parseFloat(r[19])||0,
+      tipoCompra:r[20],derechoCF:r[22],estado:r[23]
+    })).filter(r=>r.tipoCompra==='INTERNO/ACTIVIDADES GRAVADAS');
+    emp().rcvData=rows;emp().rcvOverrides={};saveLS();re();
+    alert('✓ '+rows.length+' compras INTERNAS/GRAVADAS cargadas de '+data.length+' total');
+  };
+  reader.readAsBinaryString(file);
+}
+
 function calcAutoOA(){
   const tr=emp().traspaso;
   const ui=pn(emp().cfg.ufvInicio),uf=pn(emp().cfg.ufvFin);
@@ -918,21 +1110,41 @@ function clrAllOA(){(emp().otrosAsientos||[]).filter(oa=>oa.fixed).forEach(oa=>{
 function addFreeOA(){emp().otrosAsientos.push({nombre:'Asiento Libre',fixed:false,activo:false,lines:[{c:'',t:'D',v:0},{c:'',t:'H',v:0}]});saveLS();re();}
 
 function renderComprobantes(c){
-  const cards=c.E.map(e=>{
+  const E=c.E;
+  const subC=S.subComp||'all';
+  const filteredE=E.filter(e=>subC==='all'||(subC==='I'&&e.tipo==='I')||(subC==='E'&&e.tipo==='E')||(subC==='T'&&e.tipo==='T'));
+  const totI=E.filter(e=>e.tipo==='I').length;
+  const totE=E.filter(e=>e.tipo==='E').length;
+  const totT=E.filter(e=>e.tipo==='T').length;
+  const cTab=(id,lb,cnt,col)=>{const a=subC===id||(id==='all'&&subC==='all');return '<button onclick="S.subComp=\''+id+'\';re()" style="padding:6px 14px;border-radius:6px;font-size:11px;cursor:pointer;border:none;background:'+(a?col:'transparent')+';color:'+(a?'#fff':'#666')+';font-weight:'+(a?700:500)+'">'+lb+' <span style="background:'+(a?'rgba(255,255,255,.25)':'#E2E8F0')+';padding:1px 6px;border-radius:10px;font-size:10px;color:'+(a?'#fff':'#555')+'">'+cnt+'</span></button>';};
+  const cards=filteredE.map(e=>{
     const totD=r2((e.lines||[]).reduce((s,l)=>r2(s+r2(l.d)),0));
     const totH=r2((e.lines||[]).reduce((s,l)=>r2(s+r2(l.h)),0));
-    const col={I:'#059669',E:'#DC2626',T:'#1C2B4B'}[e.tipo]||'#555';
+    const diff=r2(totD-totH);const cuad=diff===0;
+    const col={I:'#059669',E:'#7C3AED',T:'#031740'}[e.tipo]||'#555';
     const tl={I:'COMPROBANTE DE INGRESO',E:'COMPROBANTE DE EGRESO',T:'COMPROBANTE DE TRASPASO'}[e.tipo]||e.tipo;
-    const lsHTML=(e.lines||[]).filter(l=>l.d||l.h).map(l=>'<tr><td class="mono">'+l.c+'</td><td>'+acctName(l.c)+'</td><td class="r">'+(l.d?fmt(r2(l.d)):'')+'</td><td class="r">'+(l.h?fmt(r2(l.h)):'')+'</td></tr>').join('');
-    return '<div style="border:1px solid #E2E8F0;border-radius:8px;margin-bottom:12px;overflow:hidden">'+
-      '<div style="background:'+col+';color:#fff;padding:8px 12px;display:flex;justify-content:space-between;font-size:12px;font-weight:600">'+
-      '<span>'+tl+'</span><span style="font-weight:400;font-size:11px">'+e.id+' — '+e.desc+'</span></div>'+
-      '<table><thead><tr><th>CUENTA</th><th>NOMBRE</th><th class="r">DEBE</th><th class="r">HABER</th></tr></thead>'+
+    const lsHTML=(e.lines||[]).filter(l=>l.d||l.h).map(l=>'<tr><td class="mono" style="font-size:10px">'+l.c+'</td><td><span style="font-family:monospace;font-size:10px;color:#77888C;margin-right:4px">'+l.c+'</span>'+acctName(l.c)+'</td><td class="r">'+(l.d?fmt(r2(l.d)):'')+'</td><td class="r">'+(l.h?fmt(r2(l.h)):'')+'</td></tr>').join('');
+    return '<div style="border:1px solid '+(cuad?'#E2E8F0':'#FCA5A5')+';border-radius:8px;margin-bottom:12px;overflow:hidden">'+
+      '<div style="background:'+col+';color:#fff;padding:8px 12px;display:flex;justify-content:space-between;align-items:center">'+
+      '<div><span style="font-size:12px;font-weight:700">'+tl+'</span><span style="margin-left:10px;font-weight:400;font-size:11px;opacity:.8">'+e.id+' — '+e.desc+'</span></div>'+
+      '<div>'+
+      (cuad?'<span style="background:rgba(255,255,255,.2);padding:2px 10px;border-radius:10px;font-size:11px;font-weight:700">✓ CUADRADO</span>':
+            '<span style="background:#EF4444;padding:2px 10px;border-radius:10px;font-size:11px;font-weight:700">✗ DIFERENCIA: '+fmt(diff)+'</span>')+
+      '</div></div>'+
+      '<table style="margin:0"><thead><tr><th>CUENTA</th><th>NOMBRE</th><th class="r">DEBE</th><th class="r">HABER</th></tr></thead>'+
       '<tbody>'+lsHTML+'</tbody>'+
-      '<tfoot><tr class="tr-f"><td colspan="2">TOTALES</td><td class="r">'+fmt(totD)+'</td><td class="r">'+fmt(totH)+'</td></tr></tfoot></table></div>';
+      '<tfoot><tr style="background:#031740;color:#fff;font-weight:700"><td colspan="2" style="padding:6px 8px;border:none;color:#fff">TOTALES</td><td class="r" style="border:none;color:#fff">'+fmt(totD)+'</td><td class="r" style="border:none;color:#fff">'+fmt(totH)+'</td></tr></tfoot>'+
+      '</table></div>';
   }).join('');
-  return '<div class="card"><div class="h2">🗂️ Comprobantes</div>'+
-    (cards||'<div class="info iy">No hay comprobantes generados aún.</div>')+
+  return '<div class="card"><div class="h2">Comprobantes</div>'+
+    '<div style="display:flex;gap:4px;margin-bottom:12px;background:#F2F2F2;padding:4px;border-radius:8px;flex-wrap:wrap">'+
+    cTab('all','Todos',E.length,'#031740')+
+    cTab('I','Ingresos',totI,'#059669')+
+    cTab('E','Egresos',totE,'#7C3AED')+
+    cTab('T','Traspasos',totT,'#142740')+
+    '</div>'+
+    (filteredE.length>0?'<div class="info iy" style="margin-bottom:8px;font-size:11px">Mostrando '+filteredE.length+' comprobantes. Los marcados con ✗ tienen diferencia y deben revisarse.</div>':'')+
+    (cards||'<div class="info iy">No hay comprobantes.</div>')+
     '</div>';
 }
 
@@ -1000,14 +1212,14 @@ function renderFormatoSS(c){
     '<div class="ee-hdr"><div class="ee-title">BALANCE DE COMPROBACIÓN DE SUMAS Y SALDOS</div>'+
     '<div class="ee-sub">'+cfg.razonSocial+' | NIT: '+cfg.nit+' | Gestión '+cfg.gestion+' | (Expresado en Bolivianos)</div></div>'+
     '<div class="tbl-wrap"><table><thead>'+
-    '<tr style="background:#1C2B4B;color:#fff">'+
+    '<tr style="background:#031740;color:#fff">'+
     '<th colspan="5" style="text-align:center;padding:6px">CODIFICACIÓN DE LA CUENTA (NEWPUCTCNTX)</th>'+
     '<th rowspan="2" style="padding:6px">NOMBRE DE LA CUENTA</th>'+
     '<th colspan="2" style="text-align:center;padding:6px">SUMAS</th>'+
     '<th style="width:8px" rowspan="2"></th>'+
     '<th colspan="2" style="text-align:center;padding:6px">SALDOS</th>'+
     '</tr>'+
-    '<tr style="background:#2D3748;color:#fff">'+
+    '<tr style="background:#142740;color:#fff">'+
     '<th style="text-align:center;padding:5px">C</th>'+
     '<th style="text-align:center;padding:5px">G</th>'+
     '<th style="text-align:center;padding:5px">SG</th>'+
@@ -1120,8 +1332,8 @@ function renderEE(c){
 function renderGraficos(c){
   const{util,tI,tG,gs,M,tA,tP,tPT}=c;
   const cfg=emp().cfg;
-  const PAL=['#60A5FA','#34D399','#F472B6','#FBBF24','#A78BFA','#FB923C','#38BDF8','#4ADE80','#E879F9','#FCD34D'];
-  const GLOW=['rgba(96,165,250,.6)','rgba(52,211,153,.6)','rgba(244,114,182,.6)','rgba(251,191,36,.6)','rgba(167,139,250,.6)'];
+  const PAL=['#031740','#142740','#77888C','#A8B8C0','#C5CED1','#4A6274','#1E3A5F','#2B4A6F','#8FA3AC','#D0D8DC'];
+  const GLOW=['rgba(3,23,64,.5)','rgba(20,39,64,.5)','rgba(119,136,140,.5)','rgba(168,184,192,.5)','rgba(74,98,116,.5)'];
 
   function kpi(val,label,icon,col,pct){
     const r=32,cx=38,cy=38,circ=2*Math.PI*r;
@@ -1131,7 +1343,7 @@ function renderGraficos(c){
       '<circle cx="'+cx+'" cy="'+cy+'" r="'+r+'" fill="none" stroke="rgba(255,255,255,.1)" stroke-width="4"/>'+
       (pct?'<circle cx="'+cx+'" cy="'+cy+'" r="'+r+'" fill="none" stroke="'+col+'" stroke-width="4" stroke-dasharray="'+dash+' '+(circ-dash)+'" stroke-dashoffset="'+r2(circ*0.25)+'" stroke-linecap="round" filter="url(#glow'+col.replace('#','')+')"/>':'')+
       '<text x="38" y="34" text-anchor="middle" font-size="13" font-weight="700" fill="'+col+'">'+val+'</text>'+
-      '<text x="38" y="47" text-anchor="middle" font-size="8" fill="rgba(255,255,255,.5)">'+label+'</text>'+
+      '<text x="38" y="47" text-anchor="middle" font-size="7" fill="rgba(255,255,255,.5)">'+label+'</text>'+
       '<text x="38" y="58" text-anchor="middle" font-size="14">'+icon+'</text>'+
       '</svg></div>';
   }
@@ -1139,15 +1351,15 @@ function renderGraficos(c){
   function barChart(items,title,vert){
     if(!items.length)return '';
     const max=Math.max(...items.map(x=>x.v));
-    const W=460,H=120,pad=40;
-    const bw=vert?Math.floor((W-pad*2)/items.length)-6:16;
+    const W=500,H=110,pad=30;
+    const bw=vert?Math.max(8,Math.floor((W-pad*2)/items.length)-4):14;
     let bars='';
     items.forEach((item,i)=>{
       if(vert){
         const bh=max>0?Math.round(item.v/max*(H-20)):0;
         const x=pad+i*(bw+6);
         bars+='<rect x="'+x+'" y="'+(H-bh)+'" width="'+bw+'" height="'+bh+'" fill="'+PAL[i%PAL.length]+'" rx="3" opacity=".9"><title>'+item.n+': '+fmt(item.v)+'</title></rect>';
-        bars+='<text x="'+(x+bw/2)+'" y="'+(H+12)+'" text-anchor="middle" font-size="8" fill="rgba(255,255,255,.5)">'+item.n.substring(0,10)+'</text>';
+        bars+='<text x="'+(x+bw/2)+'" y="'+(H+12)+'" text-anchor="middle" font-size="7" fill="rgba(255,255,255,.5)">'+item.n.substring(0,10)+'</text>';
         bars+='<text x="'+(x+bw/2)+'" y="'+(H-bh-4)+'" text-anchor="middle" font-size="9" fill="'+PAL[i%PAL.length]+'">'+fmt(item.v)+'</text>';
       } else {
         const bw2=max>0?Math.round(item.v/max*(W-120)):0;
@@ -1213,7 +1425,7 @@ function renderGraficos(c){
   const margen=tI>0?r2(util/tI*100):0;
   const endeudam=tA>0?r2(tP/tA*100):0;
 
-  return '<div style="background:#0D1B2A;min-height:100%;padding:2px">'+
+  return '<div style="background:#031740;min-height:100%;padding:2px">'+
     '<div style="font-size:14px;font-weight:700;color:#fff;margin-bottom:14px;display:flex;align-items:center;gap:10px">'+
     '📊 Dashboard Financiero <span style="font-size:11px;font-weight:400;color:rgba(255,255,255,.4)">'+cfg.razonSocial+' | Gestión '+cfg.gestion+'</span>'+
     '<button onclick="window.print()" class="btn-orange" style="margin-left:auto;font-size:11px;padding:5px 12px">🖨️ PDF</button>'+
@@ -1253,14 +1465,14 @@ function renderReporte(c){
     '<div style="font-size:11px;color:#888;margin-bottom:14px">'+cfg.fechaInicio+' al '+cfg.fechaFin+' | NIT: '+(cfg.nit||'—')+' | Gestión '+cfg.gestion+' | '+(cfg.actividad||'')+'</div>'+
     '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px">'+
     kard(fmt(tI)+' Bs','Total Ingresos','💰','#059669')+kard(fmt(tG)+' Bs','Total Gastos','📤','#DC2626')+
-    kard(fmt(util)+' Bs',util>=0?'Utilidad':'Pérdida',util>=0?'📈':'📉',util>=0?'#1C2B4B':'#DC2626')+
+    kard(fmt(util)+' Bs',util>=0?'Utilidad':'Pérdida',util>=0?'📈':'📉',util>=0?'#031740':'#DC2626')+
     kard(margen+'%','Margen',margen>10?'🎯':'⚠️',margen>10?'#059669':margen>0?'#F59E0B':'#DC2626')+
-    kard(fmt(tA)+' Bs','Total Activo','🏛️','#1C2B4B')+kard(fmt(tP)+' Bs','Total Pasivo','📊','#7C3AED')+
+    kard(fmt(tA)+' Bs','Total Activo','🏛️','#031740')+kard(fmt(tP)+' Bs','Total Pasivo','📊','#7C3AED')+
     kard(fmt(tPT)+' Bs','Patrimonio','🏦','#0891B2')+kard(end+'%','Endeudamiento',end<50?'✅':'⚠️',end<50?'#059669':'#F59E0B')+
     '</div><div class="h3">ALERTAS</div>'+
     alerts.map(a=>'<div class="info '+(a.t==='err'?'ir':a.t==='warn'?'iy':'ig')+'" style="margin-bottom:6px">'+(a.t==='err'?'❌':a.t==='warn'?'⚠️':'✅')+' '+a.m+'</div>').join('')+
     '<div class="sep"></div>'+
-    '<div style="padding:12px;background:#1C2B4B;border-radius:8px;color:#fff">'+
+    '<div style="padding:12px;background:#031740;border-radius:8px;color:#fff">'+
     '<div style="font-weight:700;margin-bottom:8px">CONTAX — Firma Profesional</div>'+
     '<div style="font-size:11px;opacity:.85">Elaborado por: <strong>'+(cfg.contadorNombre||'—')+'</strong> | C.I.: '+(cfg.contadorCI||'—')+'</div>'+
     '<div style="font-size:11px;opacity:.85">Cliente: <strong>'+(cfg.razonSocial||'—')+'</strong> | C.I.: '+(cfg.ci||'—')+' | NIT: '+(cfg.nit||'—')+'</div>'+
@@ -1292,7 +1504,7 @@ function renderIAApi(c){
   const key=localStorage.getItem('ia_key')||'';const prov=localStorage.getItem('ia_prov')||'claude';
   const msgs=JSON.parse(localStorage.getItem('ia_msgs')||'[]');
   const cfg=emp().cfg;
-  const chat=msgs.map(m=>'<div style="margin-bottom:8px;display:flex;gap:8px;'+(m.role==='user'?'flex-direction:row-reverse':'')+'"><div style="background:'+(m.role==='user'?'#1C2B4B':'#F0F2F5')+';color:'+(m.role==='user'?'#fff':'#1a1a2e')+';padding:8px 12px;border-radius:8px;max-width:80%;font-size:12px;white-space:pre-wrap">'+m.content+'</div></div>').join('');
+  const chat=msgs.map(m=>'<div style="margin-bottom:8px;display:flex;gap:8px;'+(m.role==='user'?'flex-direction:row-reverse':'')+'"><div style="background:'+(m.role==='user'?'#031740':'#F0F2F5')+';color:'+(m.role==='user'?'#fff':'#1a1a2e')+';padding:8px 12px;border-radius:8px;max-width:80%;font-size:12px;white-space:pre-wrap">'+m.content+'</div></div>').join('');
   return '<div class="card"><div class="h2">🤖 IA Asistente Contable</div>'+
     '<p class="nota">Conecta tu API de IA para analizar el balance. La IA recibe todos los datos contables automáticamente.</p>'+
     '<div class="g2" style="margin-bottom:12px">'+
@@ -1415,7 +1627,7 @@ function renderDashboard(c){
     '<span style="background:rgba(255,255,255,.15);padding:4px 12px;border-radius:20px;font-size:11px">'+(util>=0?'📈 Utilidad':'📉 Pérdida')+': '+fmt(util)+' Bs</span>'+
     '</div></div>'+
     '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:12px">'+
-    kard(S.empresas.length,'Empresas','🏢','#EEF2FF','#1C2B4B')+
+    kard(S.empresas.length,'Empresas','🏢','#EEF2FF','#031740')+
     kard(enc,'En curso','🔄','#DBEAFE','#1E40AF')+
     kard(term,'Terminados','✅','#D1FAE5','#065F46')+
     kard(S.nits.length,'NITs registrados','🔍','#FFFBEB','#92400E')+
@@ -1522,7 +1734,7 @@ function renderLogin(){
   </div>`;
 }
 let selectedAvatar='🦁';
-const BG_COLORS=['#3B82F6','#7C3AED','#059669','#DC2626','#F59E0B','#0891B2','#1C2B4B'];
+const BG_COLORS=['#3B82F6','#7C3AED','#059669','#DC2626','#F59E0B','#0891B2','#031740'];
 function selectAvatar(av,el){
   selectedAvatar=av;
   document.querySelectorAll('#avatar-picker div').forEach(d=>{d.style.border='2px solid transparent';d.style.background='rgba(255,255,255,.1)';});
@@ -1636,29 +1848,34 @@ function re(){
     ]},
   ];
   const navHTML=navSecs.map(sec=>'<div class="ns">'+sec.sec+'</div>'+sec.items.map(i=>ni(i.id,i.ic,i.lb)).join('')).join('');
-  let main='<div class="card" style="text-align:center;padding:40px;color:#888">Selecciona una sección</div>';
-  if(S.tab==='config')main=renderConfig(c);
-  else if(S.tab==='apertura')main=renderApertura();
-  else if(S.tab==='rcv')main=renderRCV();
-  else if(S.tab==='ingresos')main=renderIngresos();
-  else if(S.tab==='activos')main=renderActivos();
-  else if(S.tab==='ufvs')main=renderUFVs();
-  else if(S.tab==='nits')main=renderNITs();
-  else if(S.tab==='plan')main=renderPlan();
-  else if(S.tab==='otros')main=renderOtrosAsientos();
-  else if(S.tab==='comprobantes')main=renderComprobantes(c);
-  else if(S.tab==='cuadroaf')main=renderCuadroAF();
-  else if(S.tab==='formatoss')main=renderFormatoSS(c);
-  else if(S.tab==='ee')main=renderEE(c);
-  else if(S.tab==='graficos')main=renderGraficos(c);
-  else if(S.tab==='reporte')main=renderReporte(c);
-  else if(S.tab==='dashboard')main=renderDashboard(c);
-  else if(S.tab==='listaeeff')main=renderListaEEFF();
-  else if(S.tab==='usuarios')main=renderUsuarios();
-  else if(S.tab==='iaapi')main=renderIAApi(c);
+  let main='<div class="card" style="text-align:center;padding:40px;color:#888">Selecciona una sección del menú</div>';
+  try{
+    if(S.tab==='config')main=renderConfig(c);
+    else if(S.tab==='apertura')main=renderApertura();
+    else if(S.tab==='rcv')main=renderRCV();
+    else if(S.tab==='ingresos')main=renderIngresos();
+    else if(S.tab==='activos')main=renderActivos();
+    else if(S.tab==='ufvs')main=renderUFVs();
+    else if(S.tab==='nits')main=renderNITs();
+    else if(S.tab==='plan')main=renderPlan();
+    else if(S.tab==='otros')main=renderOtrosAsientos();
+    else if(S.tab==='comprobantes')main=renderComprobantes(c);
+    else if(S.tab==='cuadroaf')main=renderCuadroAF();
+    else if(S.tab==='formatoss')main=renderFormatoSS(c);
+    else if(S.tab==='ee')main=renderEE(c);
+    else if(S.tab==='graficos')main=renderGraficos(c);
+    else if(S.tab==='reporte')main=renderReporte(c);
+    else if(S.tab==='dashboard')main=renderDashboard(c);
+    else if(S.tab==='listaeeff')main=renderListaEEFF();
+    else if(S.tab==='usuarios')main=renderUsuarios();
+    else if(S.tab==='iaapi')main=renderIAApi(c);
+  }catch(tabErr){
+    main='<div class="card ir"><strong>Error en '+S.tab+':</strong><br><code>'+tabErr.message+'</code><br><button class="btn" style="margin-top:8px" onclick="S.tab=\'config\';re()">Ir a Configuracion</button></div>';
+  }
   document.getElementById('root').innerHTML=
     (S.showEmp?renderEmpModal():'')+
     '<div class="hdr">'+
+    '<button class="nav-toggle" onclick="S.navOpen=!S.navOpen;re()" title="Ocultar/mostrar menú">'+(S.navOpen?'☰':'▶')+'</button>'+
     '<div class="logo" onclick="S.showEmp=true;re()">CX</div>'+
     '<div><div style="font-size:14px;font-weight:700">CONTAX — Sistema Contable v2</div>'+
     '<div style="font-size:10px;opacity:.7">'+(cfg.razonSocial||'Configure los datos del cliente')+(cfg.razonSocial?' | NIT: '+cfg.nit+' | '+cfg.fechaInicio+' → '+cfg.fechaFin:'')+'</div></div>'+
@@ -1671,11 +1888,13 @@ function re(){
     '<button class="btn-green" onclick="exportXL()">📊 Excel</button>'+
     '</div></div>'+
     '<div class="layout">'+
-    '<div class="nav">'+navHTML+
+    '<div class="nav'+(S.navOpen?'':' collapsed')+'">'+
+    (S.navOpen? navHTML+
     '<div class="nsumm"><div>'+parseRCV(emp().rcvTxt||'').filter(r=>r.estado==='CONSOLIDADO').length+' comprobantes</div>'+
     '<div>Cobrado: '+fmt(totCob)+' Bs</div>'+
     '<div>Utilidad: <span style="color:'+(util>=0?'#4ADE80':'#F87171')+'">'+fmt(util)+'</span></div>'+
-    '<div style="margin-top:4px;color:rgba(255,255,255,.3)">💾 Auto</div></div>'+
+    '<div style="margin-top:4px;color:rgba(255,255,255,.3)">💾 Auto</div></div>'
+    : '')+
     '</div>'+
     '<div class="cnt">'+main+'</div></div>'+renderFloatChat();
 }
