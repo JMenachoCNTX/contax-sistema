@@ -210,7 +210,25 @@ const PLAN_DEFAULT=[
   {c:'526002002',n:'OTROS GASTOS',t:'G'},{c:'532021001',n:'COMBUSTIBLES',t:'G'},
   {c:'533003001',n:'PUBLICIDAD Y PROPAGANDA',t:'G'},{c:'534002001',n:'SERVICIOS PROFESIONALES',t:'G'},
   {c:'541005001',n:'COMISIÓN BANCARIA',t:'G'},
-  {c:'561001001',n:'AJUSTE POR INFLACIÓN Y TENENCIA DE BIENES (Gasto)',t:'G'},{c:'561004001',n:'DIF. REDONDEO (GASTO)',t:'G'},
+  {c:'561001001',n:'AJUSTE POR INFLACIÓN Y TENENCIA DE BIENES (Gasto)',t:'G'},
+  // ─ Cuentas adicionales de Pasivo ─────────────────────
+  {c:'299001001',n:'RETENCIONES POR PAGAR (01)',t:'P'},
+  {c:'299003001',n:'RETENCIONES POR PAGAR (03)',t:'P'},
+  {c:'299005001',n:'RETENCIONES POR PAGAR (05)',t:'P'},
+  {c:'299007001',n:'RETENCIONES POR PAGAR (07)',t:'P'},
+  {c:'299009001',n:'RETENCIONES POR PAGAR (09)',t:'P'},
+  {c:'299011001',n:'RETENCIONES POR PAGAR (11)',t:'P'},
+  {c:'299013001',n:'RETENCIONES POR PAGAR (13)',t:'P'},
+  {c:'299015001',n:'RETENCIONES POR PAGAR (15)',t:'P'},
+  {c:'299017001',n:'RETENCIONES POR PAGAR (17)',t:'P'},
+  {c:'299019001',n:'RETENCIONES POR PAGAR (19)',t:'P'},
+  {c:'213004001',n:'DÉBITO FISCAL IVA',t:'P'},
+  {c:'213005001',n:'IT POR PAGAR',t:'P'},
+  {c:'213006001',n:'IUE POR PAGAR',t:'P'},
+  {c:'213007001',n:'RC-IVA POR PAGAR',t:'P'},
+  {c:'213008001',n:'RETENCIONES IT POR PAGAR',t:'P'},
+  {c:'213009001',n:'RETENCIONES IUE POR PAGAR',t:'P'},
+  {c:'213010001',n:'MULTAS E INTERESES POR PAGAR',t:'P'},{c:'561004001',n:'DIF. REDONDEO (GASTO)',t:'G'},
 ];
 
 const CAT_MAP={
@@ -319,7 +337,7 @@ if(saved&&saved.planCuentas)S.planCuentas=saved.planCuentas;
 })();
 
 function emp(){return S.empresas.find(e=>e.id===S.activeId)||S.empresas[0];}
-function acctName(c){const f=S.planCuentas.find(a=>a.c===c);return f?f.n:(PLAN_DEFAULT.find(a=>a.c===c)||{n:c}).n;}
+function acctName(c){const f=S.planCuentas.find(a=>a.c===c);if(f&&f.n&&f.n!==c)return f.n;const d=PLAN_DEFAULT.find(a=>a.c===c);return d?d.n:c;}
 function acctTipo(c){if(!c)return'?';const d=c[0];return d==='1'?'A':d==='2'?'P':d==='3'?'PT':d==='4'?'I':d==='5'?'G':'?';}
 function getUser(){return localStorage.getItem('cu')||'Usuario';}
 function logAudit(action){
@@ -853,8 +871,12 @@ function renderRCV(){
       '</div>':
       '<div class="info iy">Carga un archivo XLSX o pega los datos del RCV.</div>'+
     '')+
+    '<div style="margin-bottom:10px;display:flex;align-items:center;gap:8px;background:#EEF2FF;border:1.5px solid #818CF8;border-radius:8px;padding:6px 10px">'+
+      '<span style="font-size:15px">🔍</span>'+
+      '<input type="text" placeholder="Buscar por razón social, NIT o Nº factura..." value="'+(_rcvFilter||'')+'" oninput="_rcvFilter=this.value;re()" style="flex:1;border:none;background:transparent;font-size:12px;outline:none;color:#031740"/>'+
+      (_rcvFilter?'<button onclick="_rcvFilter=\'\';re()" style="background:none;border:none;font-size:14px;cursor:pointer;color:#818CF8">✕</button>':'')+
+    '</div>'+
     (allRCV.length?
-      '<div style="margin-bottom:6px"><input type="text" placeholder="🔍 Filtrar por razón social, NIT o factura..." value="'+(_rcvFilter||'')+'" oninput="_rcvFilter=this.value;re()" style="width:100%;padding:6px 10px;border:1px solid #E2E8F0;border-radius:6px;font-size:12px;outline:none"/></div>'+
       '<div class="tbl-wrap" style="max-height:400px">'+
       '<table><thead><tr><th>Nº</th><th>Razón Social</th><th>NIT</th><th>Fecha</th><th class="r">Total</th><th class="r">CF</th>'+
       '<th>Cuenta <span style="font-weight:400;font-size:9px">verde=auto|naranja=manual</span></th>'+
@@ -914,7 +936,11 @@ function renderRCV(){
           '<button onclick="applyBulkVentas()" class="btn-blue" style="font-size:11px;padding:5px 12px">✓ Aplicar a seleccionadas</button>'+
         '</div>'+
       '</div>'+
-      '<div style="margin-bottom:6px"><input type="text" placeholder="🔍 Filtrar por cliente o factura..." value="'+(_venFilter||'')+'" oninput="_venFilter=this.value;re()" style="width:100%;padding:6px 10px;border:1px solid #E2E8F0;border-radius:6px;font-size:12px;outline:none"/></div>'+
+      '<div style="margin-bottom:10px;display:flex;align-items:center;gap:8px;background:#F0FDF4;border:1.5px solid #4ADE80;border-radius:8px;padding:6px 10px">'+
+        '<span style="font-size:15px">🔍</span>'+
+        '<input type="text" placeholder="Buscar por cliente o Nº factura..." value="'+(_venFilter||'')+'" oninput="_venFilter=this.value;re()" style="flex:1;border:none;background:transparent;font-size:12px;outline:none;color:#031740"/>'+
+        (_venFilter?'<button onclick="_venFilter=\'\';re()" style="background:none;border:none;font-size:14px;cursor:pointer;color:#4ADE80">✕</button>':'')+
+      '</div>'+
       '<div class="info ig" style="margin-bottom:6px;font-size:11px">Total: <strong>'+fmt(totVentas)+'</strong> Bs | Neto 87%: <strong>'+fmt(r2(totVentas*0.87))+'</strong> | DF 13%: <strong>'+fmt(r2(totVentas*0.13))+'</strong> | IT 3%: <strong>'+fmt(r2(totVentas*0.03))+'</strong>'+
         (Object.keys(vOvr).length?' — <span style="color:#F97316">✏️ '+Object.keys(vOvr).length+' cuentas editadas manualmente</span>':'')+
         ' <button onclick="emp().ventasData=[];emp().ventasOverrides={};saveLS();re()" class="btn-del" style="font-size:10px;padding:3px 8px;margin-left:8px">🗑 Limpiar</button></div>'+
@@ -1826,11 +1852,11 @@ function renderFormatoSS(c){
 
 function renderEE(c){
   const{M,gs,util,tI,tG,aC,aNC,tA,tP,tPT,difBG,dep,gUFV,iUFV,vCF,vIC,vDF,vIT,vIUE,vPr,inv,fOp,fFin,difF,sI,sF,cajaMN,ajC,ssA,ssTD,ssTH,ssTSD,ssTSH,bgOK,ssOK,fOK}=c;
-  const cfg=emp().cfg;const tr=emp().traspaso;let ee='';const st=S.sub;
+  const cfg=emp().cfg;const tr=emp().traspaso;let ee='';const st=S.sub||'bg';if(!S.sub)S.sub='bg';
   if(st==='bg'){
     const acR=['111001001','111002001','116001001','116006001'].filter(k=>gs(k)!==0).map(k=>'<tr><td style="padding-left:18px"><span style="font-family:monospace;font-size:10px;color:#aaa;margin-right:5px">'+k+'</span>'+acctName(k)+'</td><td class="r">'+fmt(gs(k))+'</td></tr>').join('');
     const ancR=Object.keys(M).filter(k=>acctTipo(k)==='A'&&k.startsWith('12')&&gs(k)!==0).map(k=>'<tr><td style="padding-left:18px"><span style="font-family:monospace;font-size:10px;color:#aaa;margin-right:5px">'+k+'</span>'+acctName(k)+'</td><td class="r">'+fmt(gs(k))+'</td></tr>').join('');
-    const pasR=Object.keys(M).filter(k=>acctTipo(k)==='P'&&gs(k)!==0).map(k=>'<tr><td style="padding-left:18px"><span style="font-family:monospace;font-size:10px;color:#aaa;margin-right:5px">'+k+'</span>'+acctName(k)+'</td><td class="r">'+fmt(gs(k))+'</td></tr>').join('');
+    const pasR=Object.keys(M).filter(k=>acctTipo(k)==='P'&&gs(k)!==0).map(k=>{var nm=acctName(k);return '<tr><td style="padding-left:18px"><span style="font-family:monospace;font-size:10px;color:#aaa;margin-right:5px">'+k+'</span>'+nm+'</td><td class="r">'+fmt(gs(k))+'</td></tr>';}).join('');
     const patR=Object.keys(M).filter(k=>acctTipo(k)==='PT'&&gs(k)!==0).map(k=>'<tr><td style="padding-left:18px"><span style="font-family:monospace;font-size:10px;color:#aaa;margin-right:5px">'+k+'</span>'+acctName(k)+'</td><td class="r">'+fmt(gs(k))+'</td></tr>').join('');
     ee='<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">'+
       '<table><thead><tr><th colspan="2">ACTIVO</th></tr></thead><tbody>'+
@@ -2037,7 +2063,16 @@ function renderEE(c){
     }).join('')+
     '</div>';
   }
-  return '<div class="card" style="padding:0">'+ee+'</div>';
+    // ── Sub-nav tabs ────────────────────────────────────
+  function tabBtn(id,lbl){
+    var active=st===id;
+    return '<button onclick="S.sub=\''+id+'\';re()" style="padding:6px 14px;border:none;border-bottom:'+(active?'2px solid #031740;font-weight:700;color:#031740':'2px solid transparent;color:#77888C')+';background:transparent;font-size:11px;cursor:pointer;white-space:nowrap">'+lbl+'</button>';
+  }
+  var tabs=tabBtn('bg','Balance General')+tabBtn('er','Est. Resultados')+tabBtn('ss','Sumas y Saldos')+tabBtn('flujo','Flujo')+tabBtn('patrimonio','Patrimonio')+tabBtn('mayor','Mayor General');
+  return '<div class="card" style="padding:0">'+
+    '<div style="display:flex;gap:0;border-bottom:1px solid #E2E8F0;padding:0 16px;overflow-x:auto;background:#FAFAFA;border-radius:12px 12px 0 0">'+tabs+'</div>'+
+    '<div style="padding:16px">'+ee+'</div>'+
+  '</div>';
 }
 
 function renderGraficos(c){
@@ -2537,27 +2572,33 @@ function switchPlan(planId){
 // ─── ER Account Group Names (from PlanCONTAX) ────────────
 const ER_GROUPS={
   // ─ INGRESOS ─
-  '411':'INGRESOS ORDINARIOS',
-  '412':'INGRESOS ORDINARIOS',
+  '411':'INGRESOS POR VENTAS',
+  '412':'INGRESOS POR VENTAS',
   '413':'SERVICIOS PRESTADOS',
-  '414':'SERVICIOS DE TRANSPORTE',
-  '415':'SERVICIOS DE PUBLICIDAD',
   '431':'INGRESOS NO OPERATIVOS',
   '432':'AJUSTE POR INFLACIÓN Y TENENCIA',
-  '441':'AJUSTE POR INFLACIÓN (Ingreso)',
+  '441':'AJUSTES Y DIFERENCIAS DE CAMBIO',
   // ─ GASTOS OPERATIVOS ─
-  '521':'GASTOS DE PERSONAL',
-  '522':'GASTOS DE PERSONAL',
-  '523':'GASTOS POR SERVICIOS',
+  '521':'GASTOS DE PERSONAL Y BENEFICIOS SOCIALES',
+  '522':'GASTOS GENERALES DE OFICINA',
+  '523':'GASTOS POR SERVICIOS PROFESIONALES',
   '524':'DEPRECIACIONES Y AMORTIZACIONES',
   '525':'GASTOS IMPOSITIVOS Y MULTAS',
   '526':'OTROS GASTOS OPERATIVOS',
-  '527':'GASTOS DE COMERCIALIZACIÓN',
-  '528':'GASTOS FINANCIEROS E INTERESES',
-  '529':'GASTOS VARIOS',
-  // ─ AJUSTES ─
-  '561':'AJUSTE POR INFLACIÓN (Gasto)',
-  '562':'AJUSTE POR INFLACIÓN (Gasto)',
+  '531':'GASTOS ADMINISTRATIVOS',
+  '532':'OTROS GASTOS',
+  '533':'GASTOS POR MANTENIMIENTO DE VEHÍCULOS',
+  '534':'GASTOS MATERIALES',
+  '535':'GASTOS IMPOSITIVOS',
+  '536':'GASTOS PUBLICITARIOS',
+  '537':'GASTOS POR SERVICIOS',
+  '538':'GASTOS MÉDICOS Y SEGUROS',
+  '539':'DEPRECIACIONES',
+  '540':'GASTOS FINANCIEROS',
+  '541':'GASTOS FINANCIEROS',
+  '550':'GASTOS POR MANTENIMIENTO DE OFICINA',
+  '560':'GASTOS NO OPERATIVOS',
+  '561':'AJUSTE POR INFLACIÓN Y TENENCIA DE BIENES',
 };
 function erGroupName(code){
   if(!code||code.length<3)return '';
