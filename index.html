@@ -172,63 +172,206 @@ function reLazy(ms){clearTimeout(_rt);_rt=setTimeout(re,ms||500);}
 
 // PLAN DE CUENTAS DEFAULT
 const PLAN_DEFAULT=[
-  {c:'111001001',n:'CAJA M/N',t:'A'},{c:'111002001',n:'BANCO',t:'A'},
-  {c:'116001001',n:'CRÉDITO FISCAL IVA',t:'A'},{c:'116006001',n:'IUE A COMPENSAR',t:'A'},
-  {c:'123003001',n:'VEHÍCULO',t:'A'},{c:'124001001',n:'DEP.ACUM. VEHÍCULOS',t:'A'},
-  {c:'123004001',n:'MUEBLES Y ENSERES',t:'A'},{c:'124001002',n:'DEP.ACUM. MUEBLES Y ENSERES',t:'A'},
-  {c:'123006001',n:'EQUIPOS DE COMPUTACIÓN',t:'A'},{c:'124001003',n:'DEP.ACUM. EQUIPOS COMPUTACIÓN',t:'A'},
-  {c:'123007001',n:'EQUIPOS DE COMUNICACIONES',t:'A'},{c:'124001004',n:'DEP.ACUM. EQUIPOS COMUNICACIONES',t:'A'},
-  {c:'123009001',n:'EQUIPO DE OFICINA',t:'A'},{c:'124001005',n:'DEP.ACUM. EQUIPO DE OFICINA',t:'A'},
-  {c:'123010001',n:'EQUIPO ELECTRÓNICO',t:'A'},{c:'124001006',n:'DEP.ACUM. EQUIPO ELECTRÓNICO',t:'A'},
-  {c:'212003001',n:'PRÉSTAMOS RECIBIDOS',t:'P'},{c:'214001001',n:'DÉBITO FISCAL IVA',t:'P'},
-  {c:'214004001',n:'IT POR PAGAR',t:'P'},{c:'214006001',n:'IUE POR PAGAR',t:'P'},
-  {c:'214026001',n:'MULTAS E INTERESES POR PAGAR',t:'P'},
-  {c:'311001001',n:'CAPITAL SOCIAL',t:'PT'},{c:'311002001',n:'AJUSTE DEL CAPITAL',t:'PT'},
-  {c:'313001001',n:'RESULTADOS ACUMULADOS',t:'PT'},{c:'314001001',n:'UTILIDAD DE LA GESTIÓN',t:'PT'},
-  {c:'314002001',n:'PÉRDIDA DE LA GESTIÓN',t:'PT'},
-  {c:'411002001',n:'SERVICIOS DE DELIVERY',t:'I'},{c:'411002002',n:'SERVICIOS DE TRANSPORTE',t:'I'},
-  {c:'411002003',n:'SERVICIOS DE PUBLICIDAD',t:'I'},{c:'411002004',n:'INGRESOS POR SERVICIOS',t:'I'},
-  {c:'431012001',n:'OTROS INGRESOS',t:'I'},{c:'441001001',n:'AJUSTE POR INFLACIÓN Y TENENCIA DE BIENES (Ingreso)',t:'I'},
-  {c:'441004001',n:'DIF. REDONDEO (INGRESO)',t:'I'},
-  {c:'522001001',n:'CRE - ENERGÍA ELÉCTRICA',t:'G'},{c:'522002001',n:'SAGUAPAC - AGUA',t:'G'},
-  {c:'522003001',n:'TELEFONÍA',t:'G'},{c:'522003002',n:'INTERNET',t:'G'},
-  {c:'522005001',n:'UNIFORMES',t:'G'},{c:'522005002',n:'MATERIALES DE LIMPIEZA',t:'G'},
-  {c:'522005003',n:'MATERIALES DE PUBLICIDAD',t:'G'},{c:'522005004',n:'ACCESORIOS ELECTRÓNICOS',t:'G'},
-  {c:'522005005',n:'SUMINISTROS DE OFICINA',t:'G'},{c:'522006001',n:'ENVÍOS',t:'G'},
-  {c:'522008001',n:'REPARACIONES Y MANTENIMIENTO',t:'G'},{c:'522008002',n:'LUBRICANTES Y PIEZAS',t:'G'},
-  {c:'522009001',n:'REPUESTOS',t:'G'},{c:'522009002',n:'ACCESORIOS',t:'G'},
-  {c:'522017001',n:'TRÁMITES LEGALES',t:'G'},{c:'522018001',n:'MATERIAL DE ESCRITORIO',t:'G'},
-  {c:'522022001',n:'GASTOS DE VIAJE Y TRANSPORTE',t:'G'},{c:'522023001',n:'SEGUROS DE VEHÍCULOS',t:'G'},
-  {c:'522023003',n:'MEDICAMENTOS',t:'G'},{c:'522029001',n:'REFRIGERIOS Y ALIMENTACIÓN',t:'G'},
-  {c:'523002001',n:'SERVICIOS CONTABLES',t:'G'},{c:'523003001',n:'GASTOS LEGALES Y NOTARIALES',t:'G'},
-  {c:'523005001',n:'SERVICIOS BANCARIOS Y COMISIONES',t:'G'},
-  {c:'524001001',n:'DEP. EQUIPOS COMUNICACIONES',t:'G'},{c:'524001002',n:'DEP. EQUIPOS COMPUTACIÓN',t:'G'},
-  {c:'524001003',n:'DEP. EQUIPO ELECTRÓNICO',t:'G'},{c:'524001004',n:'DEP. MUEBLES Y ENSERES',t:'G'},
-  {c:'524001005',n:'DEP. VEHÍCULOS',t:'G'},{c:'524001006',n:'DEP. EQUIPO DE OFICINA',t:'G'},
-  {c:'525002001',n:'IMPUESTO A LAS TRANSACCIONES',t:'G'},{c:'525004001',n:'IUE NO COMPENSADO',t:'G'},
-  {c:'525019001',n:'MULTAS E INTERESES',t:'G'},{c:'526002001',n:'GASTOS VARIOS',t:'G'},
-  {c:'526002002',n:'OTROS GASTOS',t:'G'},{c:'532021001',n:'COMBUSTIBLES',t:'G'},
-  {c:'533003001',n:'PUBLICIDAD Y PROPAGANDA',t:'G'},{c:'534002001',n:'SERVICIOS PROFESIONALES',t:'G'},
-  {c:'541005001',n:'COMISIÓN BANCARIA',t:'G'},
-  {c:'561001001',n:'AJUSTE POR INFLACIÓN Y TENENCIA DE BIENES (Gasto)',t:'G'},
-  // ─ Cuentas adicionales de Pasivo ─────────────────────
-  {c:'299001001',n:'RETENCIONES POR PAGAR (01)',t:'P'},
-  {c:'299003001',n:'RETENCIONES POR PAGAR (03)',t:'P'},
-  {c:'299005001',n:'RETENCIONES POR PAGAR (05)',t:'P'},
-  {c:'299007001',n:'RETENCIONES POR PAGAR (07)',t:'P'},
-  {c:'299009001',n:'RETENCIONES POR PAGAR (09)',t:'P'},
-  {c:'299011001',n:'RETENCIONES POR PAGAR (11)',t:'P'},
-  {c:'299013001',n:'RETENCIONES POR PAGAR (13)',t:'P'},
-  {c:'299015001',n:'RETENCIONES POR PAGAR (15)',t:'P'},
-  {c:'299017001',n:'RETENCIONES POR PAGAR (17)',t:'P'},
-  {c:'299019001',n:'RETENCIONES POR PAGAR (19)',t:'P'},
-  {c:'213004001',n:'DÉBITO FISCAL IVA',t:'P'},
-  {c:'213005001',n:'IT POR PAGAR',t:'P'},
-  {c:'213006001',n:'IUE POR PAGAR',t:'P'},
-  {c:'213007001',n:'RC-IVA POR PAGAR',t:'P'},
-  {c:'213008001',n:'RETENCIONES IT POR PAGAR',t:'P'},
-  {c:'213009001',n:'RETENCIONES IUE POR PAGAR',t:'P'},
-  {c:'213010001',n:'MULTAS E INTERESES POR PAGAR',t:'P'},{c:'561004001',n:'DIF. REDONDEO (GASTO)',t:'G'},
+  {a:'1',b:'1',c:'',d:'',e:'',f:'',g:'ACTIVO',l:'CUENTA',t:'A'},
+  {a:'11',b:'1',c:'1',d:'',e:'',f:'',g:'ACTIVO CORRIENTE',l:'GRUPO',t:'A'},
+  {a:'111',b:'1',c:'1',d:'1',e:'',f:'',g:'EFECTIVO Y EQUIVALENTES DE EFECTIVO',l:'SUB GRUPO',t:'A'},
+  {a:'111001',b:'1',c:'1',d:'1',e:'001',f:'',g:'CAJA',l:'CUENTA PRINCIPAL',t:'A'},
+  {a:'111001001',b:'1',c:'1',d:'1',e:'001',f:'001',g:'CAJA M/N',l:'CUENTA ANALITICA',t:'A'},
+  {a:'111002',b:'1',c:'1',d:'1',e:'002',f:'',g:'BANCOS',l:'CUENTA PRINCIPAL',t:'A'},
+  {a:'111002001',b:'1',c:'1',d:'1',e:'002',f:'001',g:'BANCO',l:'CUENTA ANALITICA',t:'A'},
+  {a:'113',b:'1',c:'3',d:'',e:'',f:'',g:'CUENTAS POR COBRAR',l:'SUB GRUPO',t:'A'},
+  {a:'113001',b:'1',c:'3',d:'3',e:'001',f:'',g:'CUENTAS POR COBRAR CLIENTES',l:'CUENTA PRINCIPAL',t:'A'},
+  {a:'113001001',b:'1',c:'3',d:'3',e:'001',f:'001',g:'CUENTAS POR COBRAR CLIENTES',l:'CUENTA ANALITICA',t:'A'},
+  {a:'116',b:'1',c:'1',d:'6',e:'',f:'',g:'CUENTAS FISCALES',l:'SUB GRUPO',t:'A'},
+  {a:'116001',b:'1',c:'1',d:'6',e:'001',f:'',g:'IVA CRÉDITO FISCAL',l:'CUENTA PRINCIPAL',t:'A'},
+  {a:'116001001',b:'1',c:'1',d:'6',e:'001',f:'001',g:'CRÉDITO FISCAL IVA',l:'CUENTA ANALITICA',t:'A'},
+  {a:'116006',b:'1',c:'1',d:'6',e:'006',f:'',g:'IUE POR COMPENSAR',l:'CUENTA PRINCIPAL',t:'A'},
+  {a:'116006001',b:'1',c:'1',d:'6',e:'006',f:'001',g:'IUE A COMPENSAR',l:'CUENTA ANALITICA',t:'A'},
+  {a:'12',b:'1',c:'2',d:'',e:'',f:'',g:'ACTIVO NO CORRIENTE',l:'GRUPO',t:'A'},
+  {a:'123',b:'1',c:'2',d:'3',e:'',f:'',g:'PROPIEDADES, PLANTA y EQUIPO',l:'SUB GRUPO',t:'A'},
+  {a:'123003',b:'1',c:'2',d:'3',e:'003',f:'',g:'VEHÍCULOS',l:'CUENTA PRINCIPAL',t:'A'},
+  {a:'123003001',b:'1',c:'2',d:'3',e:'003',f:'001',g:'VEHÍCULO',l:'CUENTA ANALITICA',t:'A'},
+  {a:'123004',b:'1',c:'2',d:'3',e:'004',f:'',g:'MUEBLES Y ENSERES DE OFICINA',l:'CUENTA PRINCIPAL',t:'A'},
+  {a:'123004001',b:'1',c:'2',d:'3',e:'004',f:'001',g:'MUEBLES Y ENSERES',l:'CUENTA ANALITICA',t:'A'},
+  {a:'123006',b:'1',c:'2',d:'3',e:'006',f:'',g:'EQUIPO DE COMPUTACIÓN',l:'CUENTA PRINCIPAL',t:'A'},
+  {a:'123006001',b:'1',c:'2',d:'3',e:'006',f:'001',g:'EQUIPOS DE COMPUTACIÓN',l:'CUENTA ANALITICA',t:'A'},
+  {a:'123007',b:'1',c:'2',d:'3',e:'007',f:'',g:'EQUIPOS DE COMUNICACIÓN',l:'CUENTA PRINCIPAL',t:'A'},
+  {a:'123007001',b:'1',c:'2',d:'3',e:'007',f:'001',g:'EQUIPOS DE COMUNICACIONES',l:'CUENTA ANALITICA',t:'A'},
+  {a:'123009',b:'1',c:'2',d:'3',e:'009',f:'',g:'EQUIPOS DE OFICINA',l:'CUENTA PRINCIPAL',t:'A'},
+  {a:'123009001',b:'1',c:'2',d:'3',e:'009',f:'001',g:'EQUIPO DE OFICINA',l:'CUENTA ANALITICA',t:'A'},
+  {a:'123010',b:'1',c:'2',d:'3',e:'010',f:'',g:'EQUIPOS ELECTRÓNICOS',l:'CUENTA PRINCIPAL',t:'A'},
+  {a:'123010001',b:'1',c:'2',d:'3',e:'010',f:'001',g:'EQUIPO ELECTRÓNICO',l:'CUENTA ANALITICA',t:'A'},
+  {a:'124',b:'1',c:'2',d:'4',e:'',f:'',g:'DEPRECIACIÓN ACUMULADA',l:'SUB GRUPO',t:'A'},
+  {a:'124001',b:'1',c:'2',d:'4',e:'001',f:'',g:'DEPRECIACIÓN ACUMULADA BIENES DE USO',l:'CUENTA PRINCIPAL',t:'A'},
+  {a:'124001001',b:'1',c:'2',d:'4',e:'001',f:'001',g:'DEPRECIACIÓN ACUMULADA VEHÍCULOS',l:'CUENTA ANALITICA',t:'A'},
+  {a:'124001002',b:'1',c:'2',d:'4',e:'001',f:'002',g:'DEPRECIACIÓN ACUMULADA MUEBLES Y ENSERES',l:'CUENTA ANALITICA',t:'A'},
+  {a:'124001003',b:'1',c:'2',d:'4',e:'001',f:'003',g:'DEPRECIACIÓN ACUMULADA EQUIPOS DE COMPUTACIÓN',l:'CUENTA ANALITICA',t:'A'},
+  {a:'124001004',b:'1',c:'2',d:'4',e:'001',f:'004',g:'DEPRECIACIÓN ACUMULADA EQUIPOS DE COMUNICACIONES',l:'CUENTA ANALITICA',t:'A'},
+  {a:'124001005',b:'1',c:'2',d:'4',e:'001',f:'005',g:'DEPRECIACIÓN ACUMULADA EQUIPOS DE OFICINA',l:'CUENTA ANALITICA',t:'A'},
+  {a:'124001006',b:'1',c:'2',d:'4',e:'001',f:'006',g:'DEPRECIACIÓN ACUMULADA EQUIPOS ELECTRÓNICOS',l:'CUENTA ANALITICA',t:'A'},
+  {a:'2',b:'2',c:'',d:'',e:'',f:'',g:'PASIVO',l:'CUENTA',t:'P'},
+  {a:'21',b:'2',c:'1',d:'',e:'',f:'',g:'PASIVO CORRIENTE',l:'GRUPO',t:'P'},
+  {a:'212',b:'2',c:'1',d:'2',e:'',f:'',g:'CUENTAS POR PAGAR A CORTO PLAZO',l:'SUB GRUPO',t:'P'},
+  {a:'212003',b:'2',c:'1',d:'2',e:'003',f:'',g:'PRÉSTAMOS POR PAGAR',l:'CUENTA PRINCIPAL',t:'P'},
+  {a:'212003001',b:'2',c:'1',d:'2',e:'003',f:'001',g:'PRÉSTAMOS RECIBIDOS',l:'CUENTA ANALITICA',t:'P'},
+  {a:'212004',b:'2',c:'1',d:'2',e:'004',f:'',g:'CUENTAS POR PAGAR PROVEEDORES',l:'CUENTA PRINCIPAL',t:'P'},
+  {a:'212004001',b:'2',c:'1',d:'2',e:'004',f:'001',g:'CUENTAS POR PAGAR PROVEEDORES VARIOS',l:'CUENTA ANALITICA',t:'P'},
+  {a:'214',b:'2',c:'1',d:'4',e:'',f:'',g:'OBLIGACIONES FISCALES',l:'SUB GRUPO',t:'P'},
+  {a:'214001',b:'2',c:'1',d:'4',e:'001',f:'',g:'IVA DÉBITO FISCAL',l:'CUENTA PRINCIPAL',t:'P'},
+  {a:'214001001',b:'2',c:'1',d:'4',e:'001',f:'001',g:'DÉBITO FISCAL IVA',l:'CUENTA ANALITICA',t:'P'},
+  {a:'214004',b:'2',c:'1',d:'4',e:'004',f:'',g:'IMPUESTO A LAS TRANSACCIONES POR PAGAR',l:'CUENTA PRINCIPAL',t:'P'},
+  {a:'214004001',b:'2',c:'1',d:'4',e:'004',f:'001',g:'IT POR PAGAR',l:'CUENTA ANALITICA',t:'P'},
+  {a:'214006',b:'2',c:'1',d:'4',e:'006',f:'',g:'IMPUESTO SOBRE LAS UTILIDADES DE LAS EMPRESAS POR PAGAR',l:'CUENTA PRINCIPAL',t:'P'},
+  {a:'214006001',b:'2',c:'1',d:'4',e:'006',f:'001',g:'IUE POR PAGAR',l:'CUENTA ANALITICA',t:'P'},
+  {a:'214026',b:'2',c:'1',d:'4',e:'026',f:'',g:'OTRAS MULTAS Y SANCIONES POR PAGAR',l:'CUENTA PRINCIPAL',t:'P'},
+  {a:'214026001',b:'2',c:'1',d:'4',e:'026',f:'001',g:'MULTAS E INTERESES POR PAGAR',l:'CUENTA ANALITICA',t:'P'},
+  {a:'3',b:'3',c:'',d:'',e:'',f:'',g:'PATRIMONIO',l:'CUENTA',t:'PT'},
+  {a:'31',b:'3',c:'1',d:'',e:'',f:'',g:'PATRIMONIO',l:'GRUPO',t:'PT'},
+  {a:'311',b:'3',c:'1',d:'1',e:'',f:'',g:'CAPITAL',l:'SUB GRUPO',t:'PT'},
+  {a:'311001',b:'3',c:'1',d:'1',e:'001',f:'',g:'CAPITAL',l:'CUENTA PRINCIPAL',t:'PT'},
+  {a:'311001001',b:'3',c:'1',d:'1',e:'001',f:'001',g:'CAPITAL SOCIAL',l:'CUENTA ANALITICA',t:'PT'},
+  {a:'311002',b:'3',c:'1',d:'1',e:'002',f:'',g:'AJUSTE DE CAPITAL',l:'CUENTA PRINCIPAL',t:'PT'},
+  {a:'311002001',b:'3',c:'1',d:'1',e:'002',f:'001',g:'AJUSTE DEL CAPITAL',l:'CUENTA ANALITICA',t:'PT'},
+  {a:'313',b:'3',c:'1',d:'3',e:'',f:'',g:'RESULTADOS ACUMULADOS',l:'SUB GRUPO',t:'PT'},
+  {a:'313001',b:'3',c:'1',d:'3',e:'001',f:'',g:'RESULTADOS ACUMULADOS',l:'CUENTA PRINCIPAL',t:'PT'},
+  {a:'313001001',b:'3',c:'1',d:'3',e:'001',f:'001',g:'RESULTADOS ACUMULADOS',l:'CUENTA ANALITICA',t:'PT'},
+  {a:'314',b:'3',c:'1',d:'4',e:'',f:'',g:'RESULTADOS DEL EJERCICIO',l:'SUB GRUPO',t:'PT'},
+  {a:'314001',b:'3',c:'1',d:'4',e:'001',f:'',g:'UTILIDAD DE LA GESTIÓN',l:'CUENTA PRINCIPAL',t:'PT'},
+  {a:'314001001',b:'3',c:'1',d:'4',e:'001',f:'001',g:'UTILIDAD DE LA GESTIÓN',l:'CUENTA ANALITICA',t:'PT'},
+  {a:'314002',b:'3',c:'1',d:'4',e:'002',f:'',g:'PÉRDIDA DE LA GESTIÓN',l:'CUENTA PRINCIPAL',t:'PT'},
+  {a:'314002001',b:'3',c:'1',d:'4',e:'002',f:'001',g:'PÉRDIDA DE LA GESTIÓN',l:'CUENTA ANALITICA',t:'PT'},
+  {a:'4',b:'4',c:'',d:'',e:'',f:'',g:'INGRESOS',l:'CUENTA',t:'I'},
+  {a:'41',b:'4',c:'1',d:'',e:'',f:'',g:'INGRESOS OPERATIVOS',l:'GRUPO',t:'I'},
+  {a:'411',b:'4',c:'1',d:'1',e:'',f:'',g:'INGRESOS POR VENTAS',l:'SUB GRUPO',t:'I'},
+  {a:'411002',b:'4',c:'1',d:'1',e:'002',f:'',g:'INGRESOS POR SERVICIOS',l:'CUENTA PRINCIPAL',t:'I'},
+  {a:'411002001',b:'4',c:'1',d:'1',e:'002',f:'001',g:'SERVICIOS DE DELIVERY',l:'CUENTA ANALITICA',t:'I'},
+  {a:'411002002',b:'4',c:'1',d:'1',e:'002',f:'002',g:'SERVICIOS DE TRANSPORTE',l:'CUENTA ANALITICA',t:'I'},
+  {a:'411002003',b:'4',c:'1',d:'1',e:'002',f:'003',g:'SERVICIOS DE PUBLICIDAD',l:'CUENTA ANALITICA',t:'I'},
+  {a:'411002004',b:'4',c:'1',d:'1',e:'002',f:'004',g:'INGRESOS POR SERVICIOS DE ENFERMERIA',l:'CUENTA ANALITICA',t:'I'},
+  {a:'411009',b:'4',c:'1',d:'1',e:'009',f:'',g:'DESCUENTOS REBAJAS Y BONIFICACIONES OBTENIDAS',l:'CUENTA PRINCIPAL',t:'I'},
+  {a:'411009001',b:'4',c:'1',d:'1',e:'009',f:'001',g:'DESCUENTO SOBRE COMPRAS',l:'CUENTA ANALITICA',t:'I'},
+  {a:'431012',b:'4',c:'3',d:'1',e:'012',f:'',g:'OTROS INGRESOS',l:'CUENTA PRINCIPAL',t:'I'},
+  {a:'431012001',b:'4',c:'3',d:'1',e:'012',f:'001',g:'OTROS INGRESOS',l:'CUENTA ANALITICA',t:'I'},
+  {a:'44',b:'4',c:'4',d:'',e:'',f:'',g:'AJUSTES Y DIFERENCIAS DE CAMBIO',l:'GRUPO',t:'I'},
+  {a:'441',b:'4',c:'4',d:'1',e:'',f:'',g:'AJUSTES Y DIFERENCIAS DE CAMBIO',l:'SUB GRUPO',t:'I'},
+  {a:'441001',b:'4',c:'4',d:'1',e:'001',f:'',g:'AJUSTE POR INFLACIÓN Y TENENCIA DE BIENES',l:'CUENTA PRINCIPAL',t:'I'},
+  {a:'441001001',b:'4',c:'4',d:'1',e:'001',f:'001',g:'AJUSTE POR INFLACIÓN Y TENENCIA DE BIENES',l:'CUENTA ANALITICA',t:'I'},
+  {a:'441002',b:'4',c:'4',d:'1',e:'002',f:'',g:'MANTENIMIENTO DE VALOR',l:'CUENTA PRINCIPAL',t:'I'},
+  {a:'441002001',b:'4',c:'4',d:'1',e:'002',f:'001',g:'MANTENIMIENTO DE VALOR',l:'CUENTA ANALITICA',t:'I'},
+  {a:'441003',b:'4',c:'4',d:'1',e:'003',f:'',g:'DIFERENCIA DE CAMBIO',l:'CUENTA PRINCIPAL',t:'I'},
+  {a:'441003001',b:'4',c:'4',d:'1',e:'003',f:'001',g:'DIFERENCIA DE CAMBIO',l:'CUENTA ANALITICA',t:'I'},
+  {a:'441004',b:'4',c:'4',d:'1',e:'004',f:'',g:'DIFERENCIA POR REDONDEO',l:'CUENTA PRINCIPAL',t:'I'},
+  {a:'441004001',b:'4',c:'4',d:'1',e:'004',f:'001',g:'DIFERENCIA POR REDONDEO',l:'CUENTA ANALITICA',t:'I'},
+  {a:'5',b:'5',c:'',d:'',e:'',f:'',g:'EGRESOS',l:'CUENTA',t:'G'},
+  {a:'52',b:'5',c:'2',d:'',e:'',f:'',g:'GASTOS DE ADMINISTRACIÓN',l:'GRUPO',t:'G'},
+  {a:'522',b:'5',c:'2',d:'2',e:'',f:'',g:'GASTOS GENERALES DE OFICINA',l:'SUB GRUPO',t:'G'},
+  {a:'522001',b:'5',c:'2',d:'2',e:'001',f:'',g:'SERVICIO DE ENERGÍA ELÉCTRICA',l:'CUENTA PRINCIPAL',t:'G'},
+  {a:'522001001',b:'5',c:'2',d:'2',e:'001',f:'001',g:'SERVICIOS BÁSICOS - CRE',l:'CUENTA ANALITICA',t:'G'},
+  {a:'522002',b:'5',c:'2',d:'2',e:'002',f:'',g:'SERVICIO DE AGUA Y ALCANTARILLADO',l:'CUENTA PRINCIPAL',t:'G'},
+  {a:'522002001',b:'5',c:'2',d:'2',e:'002',f:'001',g:'SERVICIOS BÁSICOS - SAGUAPAC',l:'CUENTA ANALITICA',t:'G'},
+  {a:'522003',b:'5',c:'2',d:'2',e:'003',f:'',g:'SERVICIO DE TELEFONÍA Y TELECOMUNICACIÓN',l:'CUENTA PRINCIPAL',t:'G'},
+  {a:'522003001',b:'5',c:'2',d:'2',e:'003',f:'001',g:'TELEFONÍA',l:'CUENTA ANALITICA',t:'G'},
+  {a:'522003002',b:'5',c:'2',d:'2',e:'003',f:'002',g:'INTERNET',l:'CUENTA ANALITICA',t:'G'},
+  {a:'522005',b:'5',c:'2',d:'2',e:'005',f:'',g:'MATERIALES Y SUMINISTROS',l:'CUENTA PRINCIPAL',t:'G'},
+  {a:'522005001',b:'5',c:'2',d:'2',e:'005',f:'001',g:'UNIFORMES',l:'CUENTA ANALITICA',t:'G'},
+  {a:'522005002',b:'5',c:'2',d:'2',e:'005',f:'002',g:'MATERIALES DE LIMPIEZA',l:'CUENTA ANALITICA',t:'G'},
+  {a:'522005003',b:'5',c:'2',d:'2',e:'005',f:'003',g:'MATERIALES DE PUBLICIDAD',l:'CUENTA ANALITICA',t:'G'},
+  {a:'522005004',b:'5',c:'2',d:'2',e:'005',f:'004',g:'ACCESORIOS ELECTRÓNICOS',l:'CUENTA ANALITICA',t:'G'},
+  {a:'522005005',b:'5',c:'2',d:'2',e:'005',f:'005',g:'SUMINISTROS DE OFICINA',l:'CUENTA ANALITICA',t:'G'},
+  {a:'522006',b:'5',c:'2',d:'2',e:'006',f:'',g:'FLETES Y TRANSPORTE',l:'CUENTA PRINCIPAL',t:'G'},
+  {a:'522006001',b:'5',c:'2',d:'2',e:'006',f:'001',g:'ENVÍOS',l:'CUENTA ANALITICA',t:'G'},
+  {a:'522008',b:'5',c:'2',d:'2',e:'008',f:'',g:'MANTENIMIENTO Y REPARACIONES',l:'CUENTA PRINCIPAL',t:'G'},
+  {a:'522008001',b:'5',c:'2',d:'2',e:'008',f:'001',g:'REPARACIONES Y MANTENIMIENTO',l:'CUENTA ANALITICA',t:'G'},
+  {a:'522008002',b:'5',c:'2',d:'2',e:'008',f:'002',g:'LUBRICANTES Y PIEZAS',l:'CUENTA ANALITICA',t:'G'},
+  {a:'522009',b:'5',c:'2',d:'2',e:'009',f:'',g:'REPUESTOS Y ACCESORIOS',l:'CUENTA PRINCIPAL',t:'G'},
+  {a:'522009001',b:'5',c:'2',d:'2',e:'009',f:'001',g:'REPUESTOS',l:'CUENTA ANALITICA',t:'G'},
+  {a:'522009002',b:'5',c:'2',d:'2',e:'009',f:'002',g:'ACCESORIOS',l:'CUENTA ANALITICA',t:'G'},
+  {a:'522011',b:'5',c:'2',d:'2',e:'011',f:'',g:'ADECUACIONES E INSTALACIONES',l:'CUENTA PRINCIPAL',t:'G'},
+  {a:'522011001',b:'5',c:'2',d:'2',e:'011',f:'001',g:'GASTOS POR MANTENIMIENTO DE EQUIPOS DE OFICINA',l:'CUENTA ANALITICA',t:'G'},
+  {a:'522011002',b:'5',c:'2',d:'2',e:'011',f:'002',g:'REPARACIONES DE MOBILIARIO DE OFICINA',l:'CUENTA ANALITICA',t:'G'},
+  {a:'522011003',b:'5',c:'2',d:'2',e:'011',f:'003',g:'GASTOS DE MANTENIMIENTO DE INSTALACIONES',l:'CUENTA ANALITICA',t:'G'},
+  {a:'522017',b:'5',c:'2',d:'2',e:'017',f:'',g:'GASTOS LEGALES Y TRÁMITES',l:'CUENTA PRINCIPAL',t:'G'},
+  {a:'522017001',b:'5',c:'2',d:'2',e:'017',f:'001',g:'TRÁMITES LEGALES',l:'CUENTA ANALITICA',t:'G'},
+  {a:'522018',b:'5',c:'2',d:'2',e:'018',f:'',g:'MATERIAL DE ESCRITORIO',l:'CUENTA PRINCIPAL',t:'G'},
+  {a:'522018001',b:'5',c:'2',d:'2',e:'018',f:'001',g:'MATERIAL DE ESCRITORIO',l:'CUENTA ANALITICA',t:'G'},
+  {a:'522022',b:'5',c:'2',d:'2',e:'022',f:'',g:'VIAJE Y REPRESENTACIONES',l:'CUENTA PRINCIPAL',t:'G'},
+  {a:'522022001',b:'5',c:'2',d:'2',e:'022',f:'001',g:'GASTOS DE VIAJE Y TRANSPORTE',l:'CUENTA ANALITICA',t:'G'},
+  {a:'522023',b:'5',c:'2',d:'2',e:'023',f:'',g:'SEGUROS',l:'CUENTA PRINCIPAL',t:'G'},
+  {a:'522023001',b:'5',c:'2',d:'2',e:'023',f:'001',g:'SEGUROS DE VEHÍCULOS',l:'CUENTA ANALITICA',t:'G'},
+  {a:'522023002',b:'5',c:'2',d:'2',e:'023',f:'002',g:'GASTOS MÉDICOS Y FARMACIAS',l:'CUENTA ANALITICA',t:'G'},
+  {a:'522023003',b:'5',c:'2',d:'2',e:'023',f:'003',g:'MEDICAMENTOS',l:'CUENTA ANALITICA',t:'G'},
+  {a:'522029',b:'5',c:'2',d:'2',e:'029',f:'',g:'OTROS GASTOS DIVERSOS',l:'CUENTA PRINCIPAL',t:'G'},
+  {a:'522029001',b:'5',c:'2',d:'2',e:'029',f:'001',g:'REFRIGERIOS Y ALIMENTACIÓN',l:'CUENTA ANALITICA',t:'G'},
+  {a:'523002',b:'5',c:'2',d:'3',e:'002',f:'',g:'SERVICIOS DE AUDITORÍA',l:'CUENTA PRINCIPAL',t:'G'},
+  {a:'523002001',b:'5',c:'2',d:'3',e:'002',f:'001',g:'SERVICIOS CONTABLES',l:'CUENTA ANALITICA',t:'G'},
+  {a:'523003',b:'5',c:'2',d:'3',e:'003',f:'',g:'SERVICIOS PROFESIONALES',l:'CUENTA PRINCIPAL',t:'G'},
+  {a:'523003001',b:'5',c:'2',d:'3',e:'003',f:'001',g:'GASTOS LEGALES Y NOTARIALES',l:'CUENTA ANALITICA',t:'G'},
+  {a:'523005',b:'5',c:'2',d:'3',e:'005',f:'',g:'OTROS SERVICIOS PROFESIONALES Y DE OFICIOS',l:'CUENTA PRINCIPAL',t:'G'},
+  {a:'523005001',b:'5',c:'2',d:'3',e:'005',f:'001',g:'SERVICIOS DE COBRANZA EN LINEA',l:'CUENTA ANALITICA',t:'G'},
+  {a:'524',b:'5',c:'2',d:'4',e:'',f:'',g:'DEPRECIACIONES BIENES DE USO Y AMORTIZACIONES',l:'SUB GRUPO',t:'G'},
+  {a:'524001',b:'5',c:'2',d:'4',e:'001',f:'',g:'DEPRECIACIONES BIENES DE USO',l:'CUENTA PRINCIPAL',t:'G'},
+  {a:'524001001',b:'5',c:'2',d:'4',e:'001',f:'001',g:'DEPRECIACIÓN DE EQUIPOS DE COMUNICACIÓN',l:'CUENTA ANALITICA',t:'G'},
+  {a:'524001002',b:'5',c:'2',d:'4',e:'001',f:'002',g:'DEPRECIACIÓN DE EQUIPOS DE COMPUTACIÓN',l:'CUENTA ANALITICA',t:'G'},
+  {a:'524001003',b:'5',c:'2',d:'4',e:'001',f:'003',g:'DEPRECIACIÓN DE EQUIPOS ELECTRÓNICOS',l:'CUENTA ANALITICA',t:'G'},
+  {a:'524001004',b:'5',c:'2',d:'4',e:'001',f:'004',g:'DEPRECIACIÓN DE MUEBLES Y ENSERES',l:'CUENTA ANALITICA',t:'G'},
+  {a:'524001005',b:'5',c:'2',d:'4',e:'001',f:'005',g:'DEPRECIACIÓN DE VEHÍCULOS',l:'CUENTA ANALITICA',t:'G'},
+  {a:'524001006',b:'5',c:'2',d:'4',e:'001',f:'006',g:'DEPRECIACIÓN DE EQUIPOS DE OFICINA',l:'CUENTA ANALITICA',t:'G'},
+  {a:'525',b:'5',c:'2',d:'5',e:'',f:'',g:'IMPUESTOS, TASAS Y PATENTES',l:'SUB GRUPO',t:'G'},
+  {a:'525001',b:'5',c:'2',d:'5',e:'001',f:'',g:'CRÉDITO FISCAL - IVA NO UTILIZADO',l:'CUENTA PRINCIPAL',t:'G'},
+  {a:'525001001',b:'5',c:'2',d:'5',e:'001',f:'001',g:'CRÉDITO FISCAL NO UTILIZADO',l:'CUENTA ANALITICA',t:'G'},
+  {a:'525002',b:'5',c:'2',d:'5',e:'002',f:'',g:'IMPUESTO A LAS TRANSACCIONES',l:'CUENTA PRINCIPAL',t:'G'},
+  {a:'525002001',b:'5',c:'2',d:'5',e:'002',f:'001',g:'IMPUESTO A LAS TRANSACCIONES',l:'CUENTA ANALITICA',t:'G'},
+  {a:'525003',b:'5',c:'2',d:'5',e:'003',f:'',g:'IMPUESTO SOBRE LAS UTILIDADES DE LAS EMPRESAS',l:'CUENTA PRINCIPAL',t:'G'},
+  {a:'525003001',b:'5',c:'2',d:'5',e:'003',f:'001',g:'IMPUESTO SOBRE LAS UTILIDADES DE LAS EMPRESAS',l:'CUENTA ANALITICA',t:'G'},
+  {a:'525004',b:'5',c:'2',d:'5',e:'004',f:'',g:'IUE NO COMPENSADO',l:'CUENTA PRINCIPAL',t:'G'},
+  {a:'525004001',b:'5',c:'2',d:'5',e:'004',f:'001',g:'IUE NO COMPENSADO',l:'CUENTA ANALITICA',t:'G'},
+  {a:'525019',b:'5',c:'2',d:'5',e:'019',f:'',g:'MULTA POR INCUMPLIMIENTO A DEBERES FORMALES',l:'CUENTA PRINCIPAL',t:'G'},
+  {a:'525019001',b:'5',c:'2',d:'5',e:'019',f:'001',g:'MULTAS E INTERESES',l:'CUENTA ANALITICA',t:'G'},
+  {a:'526',b:'5',c:'2',d:'6',e:'',f:'',g:'OTROS GASTOS DE ADMINISTRACIÓN',l:'SUB GRUPO',t:'G'},
+  {a:'526002',b:'5',c:'2',d:'6',e:'002',f:'',g:'OTROS GASTOS',l:'CUENTA PRINCIPAL',t:'G'},
+  {a:'526002001',b:'5',c:'2',d:'6',e:'002',f:'001',g:'GASTOS VARIOS',l:'CUENTA ANALITICA',t:'G'},
+  {a:'526002002',b:'5',c:'2',d:'6',e:'002',f:'002',g:'OTROS GASTOS',l:'CUENTA ANALITICA',t:'G'},
+  {a:'53',b:'5',c:'3',d:'',e:'',f:'',g:'GASTOS DE COMERCIALIZACIÓN',l:'GRUPO',t:'G'},
+  {a:'532',b:'5',c:'3',d:'2',e:'',f:'',g:'GASTOS OPERACIONALES',l:'SUB GRUPO',t:'G'},
+  {a:'532021',b:'5',c:'3',d:'2',e:'021',f:'',g:'COMBUSTIBLE',l:'CUENTA PRINCIPAL',t:'G'},
+  {a:'532021001',b:'5',c:'3',d:'2',e:'021',f:'001',g:'COMBUSTIBLES',l:'CUENTA ANALITICA',t:'G'},
+  {a:'533',b:'5',c:'3',d:'3',e:'',f:'',g:'PUBLICIDAD, MARKETING Y PROPAGANDA',l:'SUB GRUPO',t:'G'},
+  {a:'533003',b:'5',c:'3',d:'3',e:'003',f:'',g:'PUBLICIDAD EN MEDIOS TRADICIONALES',l:'CUENTA PRINCIPAL',t:'G'},
+  {a:'533003001',b:'5',c:'3',d:'3',e:'003',f:'001',g:'PUBLICIDAD',l:'CUENTA ANALITICA',t:'G'},
+  {a:'533004',b:'5',c:'3',d:'3',e:'004',f:'',g:'PUBLICIDAD EN MEDIOS DIGITALES',l:'CUENTA PRINCIPAL',t:'G'},
+  {a:'533004001',b:'5',c:'3',d:'3',e:'004',f:'001',g:'FACEBOOK',l:'CUENTA ANALITICA',t:'G'},
+  {a:'533004002',b:'5',c:'3',d:'3',e:'004',f:'002',g:'GOOGLE',l:'CUENTA ANALITICA',t:'G'},
+  {a:'533004003',b:'5',c:'3',d:'3',e:'004',f:'003',g:'YOUTUBE',l:'CUENTA ANALITICA',t:'G'},
+  {a:'533005',b:'5',c:'3',d:'3',e:'005',f:'',g:'PROMOCIONES Y MERCADEO',l:'CUENTA PRINCIPAL',t:'G'},
+  {a:'533005001',b:'5',c:'3',d:'3',e:'005',f:'001',g:'BRANDEO',l:'CUENTA ANALITICA',t:'G'},
+  {a:'534',b:'5',c:'3',d:'4',e:'',f:'',g:'SERVICIOS ESPECIALIZADOS',l:'SUB GRUPO',t:'G'},
+  {a:'534002',b:'5',c:'3',d:'4',e:'002',f:'',g:'SERVICIOS PROFESIONALES',l:'CUENTA PRINCIPAL',t:'G'},
+  {a:'534002001',b:'5',c:'3',d:'4',e:'002',f:'001',g:'SERVICIOS PROFESIONALES',l:'CUENTA ANALITICA',t:'G'},
+  {a:'54',b:'5',c:'4',d:'',e:'',f:'',g:'GASTOS FINANCIEROS',l:'GRUPO',t:'G'},
+  {a:'541',b:'5',c:'4',d:'1',e:'',f:'',g:'GASTOS BANCARIOS',l:'SUB GRUPO',t:'G'},
+  {a:'541002',b:'5',c:'4',d:'1',e:'002',f:'',g:'INTERESES FINANCIEROS PAGADOS',l:'CUENTA PRINCIPAL',t:'G'},
+  {a:'541002001',b:'5',c:'4',d:'1',e:'002',f:'001',g:'INTERESES SOBRE PRÉSTAMOS BANCARIOS',l:'CUENTA ANALITICA',t:'G'},
+  {a:'541002002',b:'5',c:'4',d:'1',e:'002',f:'002',g:'INTERESES SOBRE OTRAS OBLIGACIONES FINANCIERAS',l:'CUENTA ANALITICA',t:'G'},
+  {a:'541005',b:'5',c:'4',d:'1',e:'005',f:'',g:'COMISIONES BANCARIAS',l:'CUENTA PRINCIPAL',t:'G'},
+  {a:'541005001',b:'5',c:'4',d:'1',e:'005',f:'001',g:'COMISIÓN BANCARIA',l:'CUENTA ANALITICA',t:'G'},
+  {a:'541005002',b:'5',c:'4',d:'1',e:'005',f:'002',g:'COMISIONES REMESAS DEL EXTERIOR',l:'CUENTA ANALITICA',t:'G'},
+  {a:'541006',b:'5',c:'4',d:'1',e:'006',f:'',g:'OTROS GASTOS FINANCIEROS',l:'CUENTA PRINCIPAL',t:'G'},
+  {a:'541006001',b:'5',c:'4',d:'1',e:'006',f:'001',g:'OTROS INTERESES',l:'CUENTA ANALITICA',t:'G'},
+  {a:'541006002',b:'5',c:'4',d:'1',e:'006',f:'002',g:'OTROS GASTOS FINANCIEROS',l:'CUENTA ANALITICA',t:'G'},
+  {a:'55',b:'5',c:'5',d:'',e:'',f:'',g:'OTROS GASTOS',l:'GRUPO',t:'G'},
+  {a:'551',b:'5',c:'5',d:'1',e:'',f:'',g:'OTROS GASTOS',l:'SUB GRUPO',t:'G'},
+  {a:'551009',b:'5',c:'5',d:'1',e:'009',f:'',g:'OTROS GASTOS',l:'CUENTA PRINCIPAL',t:'G'},
+  {a:'551009002',b:'5',c:'5',d:'1',e:'009',f:'002',g:'GASTOS DE AJUSTES',l:'CUENTA ANALITICA',t:'G'},
+  {a:'56',b:'5',c:'6',d:'',e:'',f:'',g:'AJUSTES Y DIFERENCIAS DE CAMBIO',l:'GRUPO',t:'G'},
+  {a:'561',b:'5',c:'6',d:'1',e:'',f:'',g:'AJUSTES Y DIFERENCIAS DE CAMBIO',l:'SUB GRUPO',t:'G'},
+  {a:'561001',b:'5',c:'6',d:'1',e:'001',f:'',g:'AJUSTE POR INFLACIÓN Y TENENCIA DE BIENES',l:'CUENTA PRINCIPAL',t:'G'},
+  {a:'561001001',b:'5',c:'6',d:'1',e:'001',f:'001',g:'AJUSTE POR INFLACIÓN Y TENENCIA DE BIENES',l:'CUENTA ANALITICA',t:'G'},
+  {a:'561002',b:'5',c:'6',d:'1',e:'002',f:'',g:'MANTENIMIENTO DE VALOR',l:'CUENTA PRINCIPAL',t:'G'},
+  {a:'561002001',b:'5',c:'6',d:'1',e:'002',f:'001',g:'MANTENIMIENTO DE VALOR',l:'CUENTA ANALITICA',t:'G'},
+  {a:'561003',b:'5',c:'6',d:'1',e:'003',f:'',g:'DIFERENCIA DE CAMBIO',l:'CUENTA PRINCIPAL',t:'G'},
+  {a:'561003001',b:'5',c:'6',d:'1',e:'003',f:'001',g:'DIFERENCIA DE CAMBIO',l:'CUENTA ANALITICA',t:'G'},
+  {a:'561004',b:'5',c:'6',d:'1',e:'004',f:'',g:'DIFERENCIA POR REDONDEO',l:'CUENTA PRINCIPAL',t:'G'},
+  {a:'561004001',b:'5',c:'6',d:'1',e:'004',f:'001',g:'DIFERENCIA POR REDONDEO',l:'CUENTA ANALITICA',t:'G'}
 ];
 
 const CAT_MAP={
@@ -337,8 +480,8 @@ if(saved&&saved.planCuentas)S.planCuentas=saved.planCuentas;
 })();
 
 function emp(){return S.empresas.find(e=>e.id===S.activeId)||S.empresas[0];}
-function acctName(c){const f=S.planCuentas.find(a=>a.c===c);if(f&&f.n&&f.n!==c)return f.n;const d=PLAN_DEFAULT.find(a=>a.c===c);return d?d.n:c;}
-function acctTipo(c){if(!c)return'?';const d=c[0];return d==='1'?'A':d==='2'?'P':d==='3'?'PT':d==='4'?'I':d==='5'?'G':'?';}
+function acctName(code){var cp=S.planCuentas||[];var cu=cp.find(function(x){return (x.a||x.c)===code;});if(cu){var nn=cu.n||cu.g||'';if(nn&&nn!==code)return nn;}var df=PLAN_DEFAULT.find(function(x){return (x.a||x.c)===code;});return df?(df.g||df.n||code):code;}
+function acctTipo(code){if(!code)return'?';var df=PLAN_DEFAULT.find(function(x){return (x.a||x.c)===code;});if(df&&df.t)return df.t;var d=code[0];return d==='1'?'A':d==='2'?'P':d==='3'?'PT':d==='4'?'I':d==='5'?'G':'?';}
 function getUser(){return localStorage.getItem('cu')||'Usuario';}
 function logAudit(action){
   try{const logs=JSON.parse(localStorage.getItem('ca')||'[]');
@@ -436,7 +579,7 @@ function genEntries(){
       }
       add2(code,gastoAmt,0);
       if(cfAmt)add2('116001001',cfAmt,0);
-      add2('111001001',0,totalN);
+      var _pg=(getRCVPayments()[fullIdx])||'efectivo';var _cc=_pg==='transferencia'?'111002001':_pg==='porpagar'?'212004001':'111001001';add2(_cc,0,totalN);
     });
     // Balancear diferencia de redondeo
     const td=r2(Object.values(con).reduce((s,v)=>r2(s+v.d),0));
@@ -459,7 +602,7 @@ function genEntries(){
       const ingNeto=r2(tot*0.87);
       const dfIva=r2(tot*0.13);
       const it=r2(tot*0.03);
-      if(!conV['111001001'])conV['111001001']={d:0,h:0};conV['111001001'].d=r2(conV['111001001'].d+tot);
+      var _vp=(getVentasPayments()[i])||'efectivo';var _cd=_vp==='porcobrar'?'113001001':_vp==='banco'?'111002001':'111001001';if(!conV[_cd])conV[_cd]={d:0,h:0};conV[_cd].d=r2(conV[_cd].d+tot);
       if(!conV[cuenta])conV[cuenta]={d:0,h:0};conV[cuenta].h=r2(conV[cuenta].h+ingNeto);
       if(!conV['214001001'])conV['214001001']={d:0,h:0};conV['214001001'].h=r2(conV['214001001'].h+dfIva);
       if(!conV['525002001'])conV['525002001']={d:0,h:0};conV['525002001'].d=r2(conV['525002001'].d+it);
@@ -559,7 +702,7 @@ function calcAll(){
   const tI=r2(Object.entries(M).filter(([k])=>acctTipo(k)==='I').reduce((s,[,v])=>r2(s+v.saldo),0));
   const tG=r2(Object.entries(M).filter(([k])=>acctTipo(k)==='G').reduce((s,[,v])=>r2(s+v.saldo),0));
   const util=r2(tI-tG);
-  const aC=r2(['111001001','111002001','116001001','116006001'].reduce((s,c)=>r2(s+gs(c)),0));
+  const aC=r2(Object.keys(M).filter(function(k){return acctTipo(k)==='A'&&!k.startsWith('12');}).reduce(function(s,k){return r2(s+gs(k));},0));
   const aNC=r2(Object.keys(M).filter(k=>acctTipo(k)==='A'&&k.startsWith('12')).reduce((s,k)=>r2(s+gs(k)),0));
   const tA=r2(aC+aNC);
   const tP=r2(Object.keys(M).filter(k=>acctTipo(k)==='P').reduce((s,k)=>r2(s+gs(k)),0));
@@ -791,6 +934,9 @@ function renderApertura(){
 var _rcvFilter='';
 var _venFilter='';
 
+var _rcvFilter='';var _venFilter='';
+function filterRCVInPlace(v){_rcvFilter=v;var q=v.toLowerCase();Array.from(document.querySelectorAll('#rcv-tbody tr')).forEach(function(tr){tr.style.display=q&&!tr.textContent.toLowerCase().includes(q)?'none':'';});}
+function filterVentasInPlace(v){_venFilter=v;var q=v.toLowerCase();Array.from(document.querySelectorAll('#ven-tbody tr')).forEach(function(tr){tr.style.display=q&&!tr.textContent.toLowerCase().includes(q)?'none':'';});}
 function renderRCV(){
   const rcvFromFile=emp().rcvData||[];
   const rcvFromPaste=parseRCV(emp().rcvTxt||'').filter(r=>r.estado==='CONSOLIDADO');
@@ -803,7 +949,7 @@ function renderRCV(){
   const rcvQ=(_rcvFilter||'').toLowerCase();
   const rows=allRCV.filter(function(r){
     if(!rcvQ)return true;
-    return (r.razon||'').toLowerCase().includes(rcvQ)||(r.nit||'').includes(rcvQ)||(r.nroFact||'').includes(rcvQ);
+    return (r.razon||'').toLowerCase().includes(rcvQ)||String(r.nit||'').includes(rcvQ)||String(r.nroFact||'').includes(rcvQ);
   }).slice(0,300).map((r,idx)=>{
     const lk=nitLookup(r.nit);
     const autoCode=lk?lk.cuenta:(CAT_MAP[r.cat?.trim()]||'526002001');
@@ -871,12 +1017,8 @@ function renderRCV(){
       '</div>':
       '<div class="info iy">Carga un archivo XLSX o pega los datos del RCV.</div>'+
     '')+
-    '<div style="margin-bottom:10px;display:flex;align-items:center;gap:8px;background:#EEF2FF;border:1.5px solid #818CF8;border-radius:8px;padding:6px 10px">'+
-      '<span style="font-size:15px">🔍</span>'+
-      '<input type="text" placeholder="Buscar por razón social, NIT o Nº factura..." value="'+(_rcvFilter||'')+'" oninput="_rcvFilter=this.value;re()" style="flex:1;border:none;background:transparent;font-size:12px;outline:none;color:#031740"/>'+
-      (_rcvFilter?'<button onclick="_rcvFilter=\'\';re()" style="background:none;border:none;font-size:14px;cursor:pointer;color:#818CF8">✕</button>':'')+
-    '</div>'+
     (allRCV.length?
+      '<div style="margin-bottom:6px"><input type="text" placeholder="🔍 Filtrar por razón social, NIT o factura..." value="'+(_rcvFilter||'')+'" oninput="_rcvFilter=this.value;re()" style="width:100%;padding:6px 10px;border:1px solid #E2E8F0;border-radius:6px;font-size:12px;outline:none"/></div>'+
       '<div class="tbl-wrap" style="max-height:400px">'+
       '<table><thead><tr><th>Nº</th><th>Razón Social</th><th>NIT</th><th>Fecha</th><th class="r">Total</th><th class="r">CF</th>'+
       '<th>Cuenta <span style="font-weight:400;font-size:9px">verde=auto|naranja=manual</span></th>'+
@@ -936,11 +1078,7 @@ function renderRCV(){
           '<button onclick="applyBulkVentas()" class="btn-blue" style="font-size:11px;padding:5px 12px">✓ Aplicar a seleccionadas</button>'+
         '</div>'+
       '</div>'+
-      '<div style="margin-bottom:10px;display:flex;align-items:center;gap:8px;background:#F0FDF4;border:1.5px solid #4ADE80;border-radius:8px;padding:6px 10px">'+
-        '<span style="font-size:15px">🔍</span>'+
-        '<input type="text" placeholder="Buscar por cliente o Nº factura..." value="'+(_venFilter||'')+'" oninput="_venFilter=this.value;re()" style="flex:1;border:none;background:transparent;font-size:12px;outline:none;color:#031740"/>'+
-        (_venFilter?'<button onclick="_venFilter=\'\';re()" style="background:none;border:none;font-size:14px;cursor:pointer;color:#4ADE80">✕</button>':'')+
-      '</div>'+
+      '<div style="margin-bottom:6px"><input type="text" placeholder="🔍 Filtrar por cliente o factura..." value="'+(_venFilter||'')+'" oninput="_venFilter=this.value;re()" style="width:100%;padding:6px 10px;border:1px solid #E2E8F0;border-radius:6px;font-size:12px;outline:none"/></div>'+
       '<div class="info ig" style="margin-bottom:6px;font-size:11px">Total: <strong>'+fmt(totVentas)+'</strong> Bs | Neto 87%: <strong>'+fmt(r2(totVentas*0.87))+'</strong> | DF 13%: <strong>'+fmt(r2(totVentas*0.13))+'</strong> | IT 3%: <strong>'+fmt(r2(totVentas*0.03))+'</strong>'+
         (Object.keys(vOvr).length?' — <span style="color:#F97316">✏️ '+Object.keys(vOvr).length+' cuentas editadas manualmente</span>':'')+
         ' <button onclick="emp().ventasData=[];emp().ventasOverrides={};saveLS();re()" class="btn-del" style="font-size:10px;padding:3px 8px;margin-left:8px">🗑 Limpiar</button></div>'+
@@ -1169,19 +1307,220 @@ function pasteNITs(txt){
 }
 
 function renderPlan(){
-  const rows=S.planCuentas.map((a,i)=>
-    '<div style="display:grid;grid-template-columns:120px 1fr 70px;gap:6px;align-items:center;margin-bottom:3px">'+
-    '<span style="font-family:monospace;font-size:11px;color:#555">'+a.c+'</span>'+
-    '<input type="text" value="'+a.n+'" onblur="S.planCuentas['+i+'].n=this.value;saveLS()" style="font-size:11px"/>'+
-    '<span style="font-size:10px;color:#888">'+({A:'Activo',P:'Pasivo',PT:'Patrimonio',I:'Ingreso',G:'Gasto'}[a.t]||a.t)+'</span></div>'
-  ).join('');
-  return '<div class="card"><div class="h2">📋 Plan de Cuentas</div>'+
-    '<p class="nota">Edita los nombres de las cuentas. Los cambios se reflejan en todos los estados.</p>'+
-    '<div style="margin-bottom:10px;display:flex;gap:8px">'+
-    '<button class="btn-blue" onclick="if(confirm(\'¿Restaurar plan predeterminado?\')){S.planCuentas=[...PLAN_DEFAULT];saveLS();re()}">↺ Restaurar</button>'+
-    '<span style="font-size:11px;color:#888;line-height:32px">'+S.planCuentas.length+' cuentas</span></div>'+
-    '<div class="tbl-wrap" style="max-height:500px">'+rows+'</div></div>';
+  var plan=PLAN_DEFAULT;
+  var customPlan=S.planCuentas&&S.planCuentas.length?S.planCuentas:[];
+  var q=(S.planQ||'').toLowerCase();
+  function getRow(r){
+    var c=customPlan.find(function(x){return (x.a||x.c)===r.a;});
+    return c?Object.assign({},r,{g:c.n||c.g||r.g,_modified:true}):r;
+  }
+  var filtered=q?plan.filter(function(r){return r.a.includes(q)||(r.g||'').toLowerCase().includes(q);}):plan;
+  var editing=S.planEdit;
+  var creating=S.planCreate;
+
+  // ── Form EDITAR ──
+  var editForm='';
+  if(editing){
+    var eRow=plan.find(function(r){return r.a===editing;})||{};
+    var eCust=customPlan.find(function(c){return (c.a||c.c)===editing;})||{};
+    var eName=eCust.n||eCust.g||eRow.g||'';
+    editForm='<div style="background:#FFF8E1;border:2px solid #F59E0B;border-radius:8px;padding:12px;margin-bottom:12px">'+
+      '<div style="font-weight:700;font-size:12px;color:#92400E;margin-bottom:8px">✏️ Modificar: <span style="font-family:monospace">'+editing+'</span></div>'+
+      '<div style="display:flex;gap:10px;align-items:center">'+
+        '<div style="flex:1"><label style="font-size:11px">Nombre</label>'+
+          '<input id="ep-n" type="text" value="'+eName+'" style="width:100%;border:1px solid #F59E0B;border-radius:6px;padding:7px 10px;font-size:12px;margin-top:3px"/></div>'+
+        '<div style="padding-top:18px;display:flex;gap:6px">'+
+          '<button onclick="savePlanEdit()" style="background:#F59E0B;color:#fff;border:none;border-radius:6px;padding:8px 14px;cursor:pointer;font-weight:600;font-size:12px">💾 Guardar</button>'+
+          '<button onclick="S.planEdit=null;re()" style="background:#E5E7EB;border:none;border-radius:6px;padding:8px 12px;cursor:pointer;font-size:12px">✕</button>'+
+          (eCust.n||eCust.g?'<button onclick="resetPlanAcct(\''+editing+'\')" style="background:#FEF2F2;border:1px solid #FECACA;border-radius:6px;padding:8px 12px;cursor:pointer;font-size:12px;color:#DC2626">↺</button>':'')+
+        '</div>'+
+      '</div>'+
+    '</div>';
+  }
+
+  // ── Form CREAR CUENTA ──
+  var createForm='';
+  if(creating){
+    createForm='<div style="background:#F0FDF4;border:2px solid #4ADE80;border-radius:8px;padding:14px;margin-bottom:12px">'+
+      '<div style="font-weight:700;font-size:13px;color:#166534;margin-bottom:10px">➕ Crear Nueva Cuenta</div>'+
+      '<div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:10px">'+
+        '<div><label style="font-size:11px;color:#555">Código (Nro Cuenta)</label>'+
+          '<input id="nc-code" type="text" placeholder="ej: 522030001" style="width:100%;border:1px solid #4ADE80;border-radius:6px;padding:7px 10px;font-size:12px;margin-top:3px"/></div>'+
+        '<div><label style="font-size:11px;color:#555">Nombre</label>'+
+          '<input id="nc-name" type="text" placeholder="Nombre de la cuenta" style="width:100%;border:1px solid #4ADE80;border-radius:6px;padding:7px 10px;font-size:12px;margin-top:3px"/></div>'+
+        '<div><label style="font-size:11px;color:#555">Tipo de Cuenta</label>'+
+          '<select id="nc-nivel" style="width:100%;border:1px solid #4ADE80;border-radius:6px;padding:7px 10px;font-size:12px;margin-top:3px">'+
+            '<option value="CUENTA ANALITICA">CUENTA ANALITICA</option>'+
+            '<option value="CUENTA PRINCIPAL">CUENTA PRINCIPAL</option>'+
+            '<option value="SUB GRUPO">SUB GRUPO</option>'+
+            '<option value="GRUPO">GRUPO</option>'+
+            '<option value="CUENTA">CUENTA</option>'+
+          '</select></div>'+
+        '<div><label style="font-size:11px;color:#555">Tipo Contable</label>'+
+          '<select id="nc-tipo" style="width:100%;border:1px solid #4ADE80;border-radius:6px;padding:7px 10px;font-size:12px;margin-top:3px">'+
+            '<option value="A">Activo</option>'+
+            '<option value="P">Pasivo</option>'+
+            '<option value="PT">Patrimonio</option>'+
+            '<option value="I">Ingreso</option>'+
+            '<option value="G">Gasto / Egreso</option>'+
+          '</select></div>'+
+      '</div>'+
+      '<div style="margin-top:10px;display:flex;gap:8px">'+
+        '<button onclick="createPlanAcct()" style="background:#16A34A;color:#fff;border:none;border-radius:6px;padding:8px 16px;cursor:pointer;font-weight:600;font-size:12px">✓ Crear Cuenta</button>'+
+        '<button onclick="S.planCreate=false;re()" style="background:#E5E7EB;border:none;border-radius:6px;padding:8px 12px;cursor:pointer;font-size:12px">Cancelar</button>'+
+      '</div>'+
+    '</div>';
+  }
+
+  // ── Leyenda ──
+  var legend='<div style="display:flex;gap:10px;margin-bottom:8px;font-size:10px;flex-wrap:wrap">'+
+    '<span style="background:#DCFCE7;border-radius:3px;padding:2px 7px;color:#166534">● CUENTA ANALÍTICA — clic para editar</span>'+
+    '<span style="background:#FEF9C3;border-radius:3px;padding:2px 7px;color:#854D0E">● Modificada</span>'+
+    '<span style="background:#F3F4F6;border-radius:3px;padding:2px 7px;color:#6B7280">Otros niveles — solo lectura</span>'+
+  '</div>';
+
+  // ── Filas de la tabla ──
+  var rows=filtered.map(function(r){
+    var row=getRow(r);
+    var isAnal=r.l==='CUENTA ANALITICA';
+    var isMod=isAnal&&row._modified;
+    var bg=isMod?'#FEF9C3':isAnal?'#F0FDF4':'';
+    var col=isMod?'#92400E':isAnal?'#166534':'#374151';
+    var fw=r.l==='CUENTA'?'800':r.l==='GRUPO'?'700':r.l==='SUB GRUPO'?'600':r.l==='CUENTA PRINCIPAL'?'500':'400';
+    var click=isAnal?'onclick="S.planEdit=\''+r.a+'\';re()"':'';
+    var hover=isAnal?'onmouseover="this.style.background=\'#BBFBD0\'" onmouseout="this.style.background=\''+bg+'\'"':'';
+    var editBtn=isAnal?'<button onclick="event.stopPropagation();S.planEdit=\''+r.a+'\';re()" style="background:none;border:none;cursor:pointer;color:#F59E0B;font-size:11px;padding:0 3px">✏️</button>':'';
+    return '<tr '+click+' '+hover+' style="background:'+bg+';cursor:'+(isAnal?'pointer':'default')+'">'+
+      '<td style="font-family:monospace;font-size:10px;color:#6B7280;padding:3px 6px;white-space:nowrap">'+r.a+'</td>'+
+      '<td style="text-align:center;font-family:monospace;font-size:10px;color:#9CA3AF;padding:3px 4px">'+r.b+'</td>'+
+      '<td style="text-align:center;font-family:monospace;font-size:10px;color:#9CA3AF;padding:3px 4px">'+r.c+'</td>'+
+      '<td style="text-align:center;font-family:monospace;font-size:10px;color:#9CA3AF;padding:3px 4px">'+r.d+'</td>'+
+      '<td style="text-align:center;font-family:monospace;font-size:10px;color:#9CA3AF;padding:3px 4px">'+r.e+'</td>'+
+      '<td style="text-align:center;font-family:monospace;font-size:10px;color:#9CA3AF;padding:3px 4px">'+r.f+'</td>'+
+      '<td style="font-size:11px;font-weight:'+fw+';color:'+col+';padding:3px 8px">'+row.g+'</td>'+
+      '<td style="font-size:10px;color:#9CA3AF;white-space:nowrap;padding:3px 6px">'+r.l+'</td>'+
+      '<td style="padding:1px 3px">'+editBtn+'</td>'+
+    '</tr>';
+  }).join('');
+
+  var hasCustom=customPlan.length>0;
+  return '<div class="card">'+editForm+createForm+
+    '<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;flex-wrap:wrap">'+
+      '<div class="h2" style="flex:1;margin:0">📋 Plan de Cuentas CONTAX <span style="font-size:11px;font-weight:400;color:#77888C">('+plan.length+' filas)</span></div>'+
+      '<button onclick="S.planCreate=true;S.planEdit=null;re()" style="background:#16A34A;color:#fff;border:none;border-radius:6px;padding:7px 12px;font-size:12px;cursor:pointer;font-weight:600">+ Crear Cuenta</button>'+
+      '<button onclick="exportPlanExcel()" style="background:#0c2b56;color:#fff;border:none;border-radius:6px;padding:7px 12px;font-size:12px;cursor:pointer">⬇ Exportar Excel</button>'+
+      '<label style="background:#77888C;color:#fff;border-radius:6px;padding:7px 12px;font-size:12px;cursor:pointer">'+
+        '⬆ Importar Excel<input type="file" accept=".xlsx" onchange="importPlanExcel(this)" style="display:none"/>'+
+      '</label>'+
+      (hasCustom?'<button onclick="resetAllPlan()" style="background:#FEF2F2;border:1px solid #FECACA;border-radius:6px;padding:7px 10px;font-size:11px;cursor:pointer;color:#DC2626">↺ Restaurar todo</button>':'')+
+    '</div>'+
+    legend+
+    '<div style="margin-bottom:8px"><input type="text" placeholder="🔍 Buscar por código o nombre..." value="'+(S.planQ||'')+'" oninput="S.planQ=this.value;re()" style="width:100%;padding:6px 10px;border:1px solid #E2E8F0;border-radius:6px;font-size:12px;outline:none"/></div>'+
+    (filtered.length<plan.length?'<div style="font-size:11px;color:#77888C;margin-bottom:6px">Mostrando '+filtered.length+' de '+plan.length+'</div>':'')+
+    '<div class="tbl-wrap" style="max-height:580px"><table style="width:100%;border-collapse:collapse">'+
+    '<thead><tr style="background:#031740;color:#fff;font-size:10px">'+
+      '<th style="padding:6px 8px;text-align:left">Nro Cuenta</th>'+
+      '<th style="padding:6px 4px;text-align:center" title="Cuenta">C</th>'+
+      '<th style="padding:6px 4px;text-align:center" title="Grupo">G</th>'+
+      '<th style="padding:6px 4px;text-align:center" title="Sub Grupo">SG</th>'+
+      '<th style="padding:6px 4px;text-align:center" title="Cuenta Principal">CP</th>'+
+      '<th style="padding:6px 4px;text-align:center" title="Cuenta Analítica">CA</th>'+
+      '<th style="padding:6px 8px;text-align:left">Nombre de la Cuenta</th>'+
+      '<th style="padding:6px 8px;text-align:left">Tipo de Cuenta</th>'+
+      '<th style="padding:6px 4px"></th>'+
+    '</tr></thead><tbody>'+rows+'</tbody></table></div>'+
+  '</div>';
 }
+
+function savePlanEdit(){
+  var el=document.getElementById('ep-n');
+  if(!el)return;
+  var n=el.value.trim();
+  if(!n){alert('El nombre no puede estar vacío.');return;}
+  var id=S.planEdit;
+  var cp=S.planCuentas&&S.planCuentas.length?JSON.parse(JSON.stringify(S.planCuentas)):[];
+  var idx=cp.findIndex(function(x){return (x.a||x.c)===id;});
+  if(idx>=0){cp[idx].n=n;cp[idx].g=n;}
+  else cp.push({a:id,c:id,n:n,g:n});
+  S.planCuentas=cp;savePlanCuentas(cp);S.planEdit=null;re();
+}
+function createPlanAcct(){
+  var code=(document.getElementById('nc-code')||{value:''}).value.trim();
+  var name=(document.getElementById('nc-name')||{value:''}).value.trim();
+  var nivel=(document.getElementById('nc-nivel')||{value:'CUENTA ANALITICA'}).value;
+  var tipo=(document.getElementById('nc-tipo')||{value:'G'}).value;
+  if(!code||!name){alert('Código y nombre son obligatorios.');return;}
+  if(PLAN_DEFAULT.find(function(r){return r.a===code;})){alert('El código '+code+' ya existe en el plan.');return;}
+  var cp=S.planCuentas&&S.planCuentas.length?JSON.parse(JSON.stringify(S.planCuentas)):[];
+  if(cp.find(function(r){return (r.a||r.c)===code;})){alert('El código '+code+' ya existe.');return;}
+  cp.push({a:code,c:code,n:name,g:name,t:tipo,nivel:nivel,l:nivel,b:'',c2:'',d:'',e:'',f:''});
+  S.planCuentas=cp;savePlanCuentas(cp);S.planCreate=false;re();
+}
+function resetPlanAcct(code){
+  if(!confirm('Restaurar nombre original de '+code+'?'))return;
+  var cp=(S.planCuentas||[]).filter(function(x){return (x.a||x.c)!==code;});
+  S.planCuentas=cp;savePlanCuentas(cp);re();
+}
+function resetAllPlan(){
+  if(!confirm('Restaurar TODOS los nombres originales?'))return;
+  S.planCuentas=[];savePlanCuentas([]);re();
+}
+function savePlanCuentas(plan){localStorage.setItem('cx_plan_'+S.activeId,JSON.stringify(plan));}
+function loadPlanCuentas(){var s=localStorage.getItem('cx_plan_'+S.activeId);return s?JSON.parse(s):[];}
+function deletePlanAcct(){}
+function resetPlan(){resetAllPlan();}
+
+function exportPlanExcel(){
+  var plan=PLAN_DEFAULT;
+  var cp=S.planCuentas||[];
+  var ws_data=[
+    ['PLAN DE CUENTAS SISTEMA CONTAX'],
+    ['NRO CUENTA A USAR EN TODOS LOS BALANCES','NRO DE CUENTA A USAR EN FORMATO S&S','','','','','NOMBRE DE LA CUENTA'],
+    ['NRO CUENTA CONTABLE','C','G','SG','CP','CA','NOMBRE DE LA CUENTA','TIPO CUENTA','CLASIFICACIÓN BALANCE','CLASIFICACIÓN FLUJO','ACTIVO FIJO?','TIPO DE CUENTA']
+  ];
+  plan.forEach(function(r){
+    var cust=cp.find(function(x){return (x.a||x.c)===r.a;});
+    var nombre=cust?(cust.n||cust.g||r.g):r.g;
+    ws_data.push([r.a||'',r.b||'',r.c||'',r.d||'',r.e||'',r.f||'',nombre,'','','','',r.l||'']);
+  });
+  var wb=XLSX.utils.book_new();
+  var ws=XLSX.utils.aoa_to_sheet(ws_data);
+  ws['!cols']=[{wch:18},{wch:5},{wch:5},{wch:5},{wch:5},{wch:5},{wch:50},{wch:12},{wch:20},{wch:15},{wch:12},{wch:18}];
+  XLSX.utils.book_append_sheet(wb,ws,'Plan de Cuentas');
+  XLSX.writeFile(wb,'Plan_Cuentas_CONTAX.xlsx');
+}
+
+function importPlanExcel(input){
+  var file=input.files[0];if(!file)return;
+  var reader=new FileReader();
+  reader.onload=function(e){
+    try{
+      var wb=XLSX.read(e.target.result,{type:'binary'});
+      var ws=wb.Sheets[wb.SheetNames[0]];
+      var data=XLSX.utils.sheet_to_json(ws,{header:1,defval:''});
+      // Buscar fila de encabezado (fila 3 = index 2)
+      var newPlan=[];
+      for(var i=3;i<data.length;i++){
+        var row=data[i];
+        var a=String(row[0]||'').trim();
+        var g=String(row[6]||'').trim();
+        var l=String(row[11]||'').trim();
+        if(!a||!g)continue;
+        newPlan.push({a:a,c:a,n:g,g:g,t:'',l:l,nivel:l,
+          b:String(row[1]||''),c2:String(row[2]||''),
+          d:String(row[3]||''),e:String(row[4]||''),f:String(row[5]||'')});
+      }
+      if(newPlan.length<10){alert('El archivo no parece un plan de cuentas válido (menos de 10 filas).');return;}
+      S.planCuentas=newPlan;
+      savePlanCuentas(newPlan);
+      alert('Plan importado: '+newPlan.length+' cuentas.');
+      re();
+    }catch(err){alert('Error al importar: '+err.message);}
+  };
+  reader.readAsBinaryString(file);
+}
+
+
 
 
 function getHier(code){
@@ -1852,11 +2191,12 @@ function renderFormatoSS(c){
 
 function renderEE(c){
   const{M,gs,util,tI,tG,aC,aNC,tA,tP,tPT,difBG,dep,gUFV,iUFV,vCF,vIC,vDF,vIT,vIUE,vPr,inv,fOp,fFin,difF,sI,sF,cajaMN,ajC,ssA,ssTD,ssTH,ssTSD,ssTSH,bgOK,ssOK,fOK}=c;
-  const cfg=emp().cfg;const tr=emp().traspaso;let ee='';const st=S.sub||'bg';if(!S.sub)S.sub='bg';
+  const cfg=emp().cfg;const tr=emp().traspaso;let ee='';const st=S.sub;
   if(st==='bg'){
-    const acR=['111001001','111002001','116001001','116006001'].filter(k=>gs(k)!==0).map(k=>'<tr><td style="padding-left:18px"><span style="font-family:monospace;font-size:10px;color:#aaa;margin-right:5px">'+k+'</span>'+acctName(k)+'</td><td class="r">'+fmt(gs(k))+'</td></tr>').join('');
-    const ancR=Object.keys(M).filter(k=>acctTipo(k)==='A'&&k.startsWith('12')&&gs(k)!==0).map(k=>'<tr><td style="padding-left:18px"><span style="font-family:monospace;font-size:10px;color:#aaa;margin-right:5px">'+k+'</span>'+acctName(k)+'</td><td class="r">'+fmt(gs(k))+'</td></tr>').join('');
-    const pasR=Object.keys(M).filter(k=>acctTipo(k)==='P'&&gs(k)!==0).map(k=>{var nm=acctName(k);return '<tr><td style="padding-left:18px"><span style="font-family:monospace;font-size:10px;color:#aaa;margin-right:5px">'+k+'</span>'+nm+'</td><td class="r">'+fmt(gs(k))+'</td></tr>';}).join('');
+    function bgRow(k){return '<tr><td style="padding-left:18px"><span style="font-family:monospace;font-size:10px;color:#aaa;margin-right:5px">'+k+'</span>'+acctName(k)+'</td><td class="r">'+fmt(gs(k))+'</td></tr>';}
+    var acR=Object.keys(M).filter(function(k){return acctTipo(k)==='A'&&!k.startsWith('12')&&gs(k)!==0;}).sort().map(bgRow).join('');
+    var ancR=Object.keys(M).filter(function(k){return acctTipo(k)==='A'&&k.startsWith('12')&&gs(k)!==0;}).sort().map(bgRow).join('');
+    const pasR=Object.keys(M).filter(k=>acctTipo(k)==='P'&&gs(k)!==0).map(k=>'<tr><td style="padding-left:18px"><span style="font-family:monospace;font-size:10px;color:#aaa;margin-right:5px">'+k+'</span>'+acctName(k)+'</td><td class="r">'+fmt(gs(k))+'</td></tr>').join('');
     const patR=Object.keys(M).filter(k=>acctTipo(k)==='PT'&&gs(k)!==0).map(k=>'<tr><td style="padding-left:18px"><span style="font-family:monospace;font-size:10px;color:#aaa;margin-right:5px">'+k+'</span>'+acctName(k)+'</td><td class="r">'+fmt(gs(k))+'</td></tr>').join('');
     ee='<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">'+
       '<table><thead><tr><th colspan="2">ACTIVO</th></tr></thead><tbody>'+
@@ -1867,9 +2207,9 @@ function renderEE(c){
       '<tr class="tr-g"><td colspan="2">PASIVO CORRIENTE</td></tr>'+pasR+'<tr class="tr-t"><td>TOTAL PASIVO</td><td class="r">'+fmt(tP)+'</td></tr>'+
       '<tr class="tr-g"><td colspan="2">PATRIMONIO</td></tr>'+patR+
       '<tr><td style="padding-left:18px">UTILIDAD DE LA GESTIÓN</td><td class="r">'+fmt(util)+'</td></tr>'+
-      '<tr class="tr-t"><td>TOTAL PATRIMONIO</td><td class="r">'+fmt(tPT)+'</td></tr>'+
+      '<tr class="tr-t"><td>TOTAL PATRIMONIO</td><td class="r">'+fmt(r2(tPT+util))+'</td></tr>'+
       '</tbody><tfoot>'+
-      '<tr class="tr-f"><td>TOTAL PASIVO + PATRIMONIO</td><td class="r">'+fmt(r2(tP+tPT))+'</td></tr>'+
+      '<tr class="tr-f"><td>TOTAL PASIVO + PATRIMONIO</td><td class="r">'+fmt(r2(tP+tPT+util))+'</td></tr>'+
       '<tr class="'+(bgOK?'bok':'ber')+'"><td>DIFERENCIA</td><td class="r '+(bgOK?'cok':'cer')+'">'+fmt(difBG)+' '+(bgOK?'✓':'')+'</td></tr>'+
       '</tfoot></table></div>';
   } else if(st==='er'){
@@ -1880,83 +2220,120 @@ function renderEE(c){
     const iueER=resTribER>0?r2(resTribER*0.25):0;
     const utilDespues=r2(util-iueER);
 
-    // Build hierarchical ER with group headers
-    function erHierRows(tipo){
-      const accounts=Object.keys(M).filter(k=>acctTipo(k)===tipo&&gs(k)!==0);
-      if(!accounts.length)return '';
-      // Group by first 3 digits (class-group-subgroup pattern 5xx)
-      const groups={};
-      accounts.forEach(k=>{
-        const g=k.substring(0,3);
-        if(!groups[g])groups[g]={keys:[],total:0};
-        groups[g].keys.push(k);
-        groups[g].total=r2(groups[g].total+gs(k));
-      });
-      const planMap={};S.planCuentas.forEach(a=>{planMap[a.c]=a.n;});
-      // Map group codes to names from ACCT_HIER or build from plan
-      function groupName(code){
-        return erGroupName(code+'000000')||('Grupo '+code);
-      }
-      let rows='';
-      Object.keys(groups).sort().forEach(g=>{
-        const gAccounts=groups[g];
-        // Find group name: look for a 3-digit prefix match in known groups
-        const grpLabel=erGroupName(gAccounts.keys[0])||('Grupo '+g);
-        // Check if multiple accounts - if so, show subgroup header
-        if(Object.keys(groups).length>1){
-          // Find longest common prefix name
-          const sampleAccount=gAccounts.keys[0];
-          // Try to get a meaningful group name from the plan hierarchy
-          const grpPlanName='';
-          rows+='<tr style="background:#F0F4F8"><td colspan="2" style="padding:4px 8px;font-size:11px;font-weight:700;color:#142740;border-left:3px solid #031740">'+
-            (grpPlanName||('Grupo '+g))+'</td></tr>';
+    // ── Jerarquía desde PLAN_DEFAULT ──────────────────────
+    var planI=PLAN_DEFAULT.filter(function(r){return r.t==='I';});
+    var planG=PLAN_DEFAULT.filter(function(r){return r.t==='G';});
+
+    function sumChildren(prefixCode, tipo){
+      return Object.keys(M).filter(function(k){
+        return k.startsWith(prefixCode)&&acctTipo(k)===tipo&&gs(k)!==0;
+      }).reduce(function(s,k){return r2(s+gs(k));},0);
+    }
+
+    function buildSection(planRows, tipo, headerColor, rowColor, totalLabel){
+      var rows='';
+      var sectionTotal=0;
+      planRows.forEach(function(r){
+        var isAnal=r.l==='CUENTA ANALITICA';
+        var saldo=isAnal?(gs(r.a)||0):sumChildren(r.a,tipo);
+        if(saldo===0)return;
+        // Para ingresos mostramos positivo, para gastos positivo (son costos)
+        var display=tipo==='I'?saldo:saldo;
+        var indent=r.l==='CUENTA'?0:r.l==='GRUPO'?1:r.l==='SUB GRUPO'?2:r.l==='CUENTA PRINCIPAL'?3:4;
+        var padLeft=(indent*14)+'px';
+
+        if(r.l==='CUENTA'){
+          rows+='<tr style="background:'+headerColor+';color:#fff">'+
+            '<td style="padding:7px 10px;font-weight:900;font-size:13px">'+r.g+'</td>'+
+            '<td style="text-align:right;padding:7px 10px;font-family:monospace;font-weight:900;font-size:13px">'+fmt(display)+'</td>'+
+          '</tr>';
+          sectionTotal=r2(sectionTotal+display);
+        } else if(r.l==='GRUPO'){
+          rows+='<tr style="background:'+rowColor+'20">'+
+            '<td style="padding:5px 10px 5px '+(10+indent*14)+'px;font-weight:700;font-size:12px;color:'+headerColor+'">'+r.g+'</td>'+
+            '<td style="text-align:right;padding:5px 10px;font-family:monospace;font-weight:700;font-size:12px;color:'+headerColor+'">'+fmt(display)+'</td>'+
+          '</tr>';
+        } else if(r.l==='SUB GRUPO'){
+          rows+='<tr style="background:'+rowColor+'10;border-top:1px solid '+rowColor+'30">'+
+            '<td style="padding:4px 10px 4px '+(10+indent*14)+'px;font-weight:600;font-size:11px">'+r.g+'</td>'+
+            '<td style="text-align:right;padding:4px 10px;font-family:monospace;font-size:11px;font-weight:600;color:'+headerColor+'">'+fmt(display)+'</td>'+
+          '</tr>';
+        } else if(r.l==='CUENTA PRINCIPAL'){
+          rows+='<tr style="background:#fafafa">'+
+            '<td style="padding:4px 10px 4px '+(10+indent*14)+'px;font-size:11px;color:#444">'+r.g+'</td>'+
+            '<td style="text-align:right;padding:4px 10px;font-family:monospace;font-size:11px;color:#444">'+fmt(display)+'</td>'+
+          '</tr>';
+        } else {
+          rows+='<tr style="border-bottom:1px solid #f0f0f0">'+
+            '<td style="padding:3px 10px 3px '+(10+indent*14)+'px;font-size:10px;color:#666">'+
+              '<span style="font-family:monospace;font-size:9px;color:#aaa;margin-right:4px">'+r.a+'</span>'+r.g+
+            '</td>'+
+            '<td style="text-align:right;padding:3px 10px;font-family:monospace;font-size:10px;color:'+headerColor+'">'+fmt(display)+'</td>'+
+          '</tr>';
         }
-        gAccounts.keys.forEach(k=>{
-          rows+='<tr><td style="padding-left:28px"><span style="font-family:monospace;font-size:10px;color:#aaa;margin-right:5px">'+k+'</span>'+acctName(k)+'</td>'+
-            '<td class="r">'+fmt(gs(k))+'</td></tr>';
-        });
-        if(Object.keys(groups).length>1&&gAccounts.keys.length>1){
-          rows+='<tr style="background:#F8FAFC"><td style="padding-left:20px;font-size:10px;color:#555">Subtotal</td>'+
-            '<td class="r" style="font-size:10px;color:#555">'+fmt(gAccounts.total)+'</td></tr>';
-        }
       });
+      // Total de la sección
+      rows+='<tr style="background:'+headerColor+'15;border-top:2px solid '+headerColor+'">'+
+        '<td style="padding:6px 10px;font-weight:700;font-size:12px;color:'+headerColor+'">'+totalLabel+'</td>'+
+        '<td style="text-align:right;padding:6px 10px;font-family:monospace;font-weight:700;font-size:13px;color:'+headerColor+'">'+fmt(tipo==='I'?tI:tG)+'</td>'+
+      '</tr>';
       return rows;
     }
-    const iR=erHierRows('I');
-    const gR=erHierRows('G');
-    ee='<table><thead><tr><th>CUENTA</th><th class="r">MONTO (Bs)</th></tr></thead><tbody>'+
-      '<tr class="tr-i"><td colspan="2">▸ INGRESOS</td></tr>'+iR+
-      '<tr class="tr-t"><td>TOTAL INGRESOS</td><td class="r" style="color:#059669">'+fmt(tI)+'</td></tr>'+
-      '<tr><td colspan="2" style="padding:3px"></td></tr>'+
-      '<tr class="tr-e"><td colspan="2">▸ GASTOS</td></tr>'+gR+
-      '<tr class="tr-t"><td>TOTAL GASTOS</td><td class="r" style="color:#DC2626">'+fmt(tG)+'</td></tr>'+
-      '</tbody><tfoot>'+
-      '<tr class="'+(util>=0?'bok':'ber')+'"><td style="font-weight:700;padding:7px">RESULTADO DE LA GESTIÓN (E67)</td>'+
-        '<td class="r" style="color:'+(util>=0?'#059669':'#DC2626')+';font-size:14px;font-weight:700">'+fmt(util)+'</td></tr>'+
-      '<tr style="background:#FFFBEB">'+
-        '<td style="padding:6px 8px;color:#92400E">+ Gastos No Deducibles (E68)</td>'+
-        '<td class="r" style="color:#92400E;font-weight:600;padding:3px 8px">'+
-          '<input type="text" class="n" id="gnd-inp" value="'+(gasNoDedER||'0').toString().replace('.',',')+'" '+
-          'style="width:120px;background:#FFFBEB;border:1px solid #F97316;border-radius:4px;padding:4px 6px;font-size:12px;text-align:right" '+
-          'oninput="" onblur="emp().cfg.gasNoDed=pn(this.value)||0;saveLS();reLazy()"/>'+
-        '</td></tr>'+
-      '<tr style="background:#FFFBEB">'+
-        '<td style="padding:6px 8px;color:#92400E">− Saldo Pérdida No Compensada (E69)</td>'+
-        '<td class="r" style="color:#92400E;font-weight:600;padding:3px 8px">'+
-          '<input type="text" class="n" id="pnc-inp" value="'+(perdNCompER||'0').toString().replace('.',',')+'" '+
-          'style="width:120px;background:#FFFBEB;border:1px solid #F97316;border-radius:4px;padding:4px 6px;font-size:12px;text-align:right" '+
-          'oninput="" onblur="emp().cfg.perdNComp=pn(this.value)||0;saveLS();reLazy()"/>'+
-        '</td></tr>'+
-      '<tr style="background:#FEF3C7;font-weight:700"><td style="padding:7px 8px;color:#78350F">RESULTADO TRIBUTARIO (E70)</td>'+
-        '<td class="r" style="color:#78350F;font-size:13px">'+fmt(resTribER)+'</td></tr>'+
-      '<tr style="background:#FEE2E2"><td style="padding:6px 8px;color:#991B1B">IMPUESTO SOBRE LAS UTILIDADES DE LA EMPRESA — IUE (25%) (E71)</td>'+
-        '<td class="r" style="color:#991B1B;font-weight:700">'+fmt(iueER)+'</td></tr>'+
-      '<tr style="background:#E0F2FE;font-weight:700"><td style="padding:7px 8px;color:#0C4A6E">RESULTADO DE LA GESTIÓN DESPUÉS DE IMPUESTOS (E72)</td>'+
-        '<td class="r" style="color:#0C4A6E;font-size:13px">'+fmt(utilDespues)+'</td></tr>'+
-      (iueER>0?'<tr style="background:#F0FDF4"><td colspan="2" style="padding:6px 8px;font-size:11px;color:#065F46">'+
-        '💡 IUE generado: <strong>DEBE 116006001</strong> (IUE A Compensar — Activo) / <strong>HABER 214006001</strong> (IUE Por Pagar — Pasivo) = <strong>'+fmt(iueER)+' Bs</strong>. Figura en Balance General y Mayores.'+
-        '</td></tr>':'')+
-      '</tfoot></table>';} else if(st==='ss'){
+
+    var ingresosRows=buildSection(planI,'I','#059669','#059669','TOTAL INGRESOS');
+    var gastosRows=buildSection(planG,'G','#DC2626','#DC2626','TOTAL GASTOS');
+
+    // ── Sección E67-E72 ────────────────────────────────────
+    var utilColor=util>=0?'#059669':'#DC2626';
+    var e67row='<tr style="background:'+(util>=0?'#D1FAE5':'#FEE2E2')+'">'+
+      '<td style="padding:8px 10px;font-weight:700;font-size:13px;color:'+utilColor+'">RESULTADO DE LA GESTIÓN (E67)</td>'+
+      '<td style="text-align:right;padding:8px 10px;font-family:monospace;font-weight:700;font-size:14px;color:'+utilColor+'">'+fmt(util)+'</td>'+
+    '</tr>';
+
+    var e68row='<tr style="background:#FFFBEB">'+
+      '<td style="padding:6px 10px;font-size:12px">+ Gastos No Deducibles (E68)</td>'+
+      '<td style="text-align:right;padding:4px 10px">'+
+        '<input type="number" value="'+gasNoDedER+'" onchange="emp().cfg.gasNoDed=parseFloat(this.value)||0;saveLS();re()" '+
+        'style="width:120px;text-align:right;border:1px solid #F59E0B;border-radius:4px;padding:3px 6px;font-family:monospace;font-size:12px"/>'+
+      '</td>'+
+    '</tr>';
+
+    var e69row='<tr style="background:#FFFBEB">'+
+      '<td style="padding:6px 10px;font-size:12px">− Saldo Pérdida No Compensada (E69)</td>'+
+      '<td style="text-align:right;padding:4px 10px">'+
+        '<input type="number" value="'+perdNCompER+'" onchange="emp().cfg.perdNComp=parseFloat(this.value)||0;saveLS();re()" '+
+        'style="width:120px;text-align:right;border:1px solid #F59E0B;border-radius:4px;padding:3px 6px;font-family:monospace;font-size:12px"/>'+
+      '</td>'+
+    '</tr>';
+
+    var e70row='<tr style="background:#FEF9C3">'+
+      '<td style="padding:7px 10px;font-weight:700;font-size:12px">RESULTADO TRIBUTARIO (E70)</td>'+
+      '<td style="text-align:right;padding:7px 10px;font-family:monospace;font-weight:700;font-size:13px">'+fmt(resTribER)+'</td>'+
+    '</tr>';
+
+    var e71row='<tr style="background:#FEE2E2">'+
+      '<td style="padding:6px 10px;font-size:12px;color:#DC2626">IMPUESTO SOBRE LAS UTILIDADES DE LA EMPRESA — IUE (25%) (E71)</td>'+
+      '<td style="text-align:right;padding:6px 10px;font-family:monospace;font-size:12px;color:#DC2626">'+fmt(iueER)+'</td>'+
+    '</tr>';
+
+    var e72row='<tr style="background:#DBEAFE">'+
+      '<td style="padding:8px 10px;font-weight:700;font-size:13px;color:#1E40AF">RESULTADO DE LA GESTIÓN DESPUÉS DE IMPUESTOS (E72)</td>'+
+      '<td style="text-align:right;padding:8px 10px;font-family:monospace;font-weight:700;font-size:14px;color:#1E40AF">'+fmt(utilDespues)+'</td>'+
+    '</tr>';
+
+    var iueNote='<tr style="background:#F0FDF4">'+
+      '<td colspan="2" style="padding:6px 10px;font-size:10px;color:#166534">'+
+        '💡 IUE: <strong>DEBE 116006001</strong> (IUE A Compensar — Activo) / '+
+        '<strong>HABER 214006001</strong> (IUE Por Pagar — Pasivo) = <strong>'+fmt(iueER)+' Bs.</strong>'+
+        (iueER>0?' Figura en Balance General y Mayores.':' — No aplica (resultado tributario ≤ 0).')+
+      '</td>'+
+    '</tr>';
+
+    ee='<table style="width:100%;border-collapse:collapse">'+
+      '<tbody>'+ingresosRows+gastosRows+'</tbody>'+
+      '<tfoot>'+e67row+e68row+e69row+e70row+e71row+e72row+iueNote+'</tfoot>'+
+    '</table>';
+  } else if(st==='ss'){
     const rows=ssA.map(k=>'<tr><td class="mono">'+k+'</td><td>'+acctName(k)+'</td><td class="r">'+fmt(r2(M[k].debe))+'</td><td class="r">'+fmt(r2(M[k].haber))+'</td><td class="r">'+(M[k].sD>0?fmt(r2(M[k].sD)):'')+'</td><td class="r">'+(M[k].sH>0?fmt(r2(M[k].sH)):'')+'</td></tr>').join('');
     const dSS=r2(ssTSD-ssTSH);
     ee='<div class="tbl-wrap"><table><thead><tr><th>CUENTA</th><th>NOMBRE</th><th class="r">SUMAS DEBE</th><th class="r">SUMAS HABER</th><th class="r">SALDO DEUDOR</th><th class="r">SALDO ACREEDOR</th></tr></thead>'+
@@ -1997,6 +2374,66 @@ function renderEE(c){
       (ajC!==0?'<tr><td style="padding-left:18px">+ Ajuste capital UFV</td><td class="r">'+fmt(ajC)+'</td><td class="r">—</td><td class="r">—</td><td class="r">'+fmt(ajC)+'</td></tr>':'')+
       '<tr><td style="padding-left:18px">+ Utilidad del período</td><td class="r">—</td><td class="r">—</td><td class="r">'+fmt(util)+'</td><td class="r">'+fmt(util)+'</td></tr>'+
       '</tbody><tfoot><tr class="tr-f"><td>Saldo al FINAL</td><td class="r">'+fmt(capF)+'</td><td class="r">'+fmt(resA)+'</td><td class="r">'+fmt(util)+'</td><td class="r">'+fmt(r2(capF+resA+util))+'</td></tr></tfoot></table>';
+  
+  } else if(st==='patrimonio'){
+    var capI=r2(pn(tr.capitalSocial));
+    var ajCapI=r2(pn(tr.ajusteCapital));
+    var resAI=r2(pn(tr.resAcum));
+    var totalInicio=r2(capI+ajCapI+resAI);
+    var totalCierre=r2(capI+ajCapI+ajC+resAI+util);
+    var ajCRow=ajC?('<tr><td style="padding:5px 10px 5px 24px;font-size:11px;color:#77888C">+ Ajuste del Capital (UFV)</td>'+
+      '<td style="text-align:right;padding:5px 10px;font-family:monospace;font-size:11px">—</td>'+
+      '<td style="text-align:right;padding:5px 10px;font-family:monospace;font-size:11px;color:#059669">'+fmt(ajC)+'</td>'+
+      '<td style="text-align:right;padding:5px 10px;color:#aaa">—</td>'+
+      '<td style="text-align:right;padding:5px 10px;color:#aaa">—</td>'+
+      '<td style="text-align:right;padding:5px 10px;font-family:monospace;font-size:11px;color:#059669">'+fmt(ajC)+'</td>'+
+    '</tr>'):'';
+    var utilColor=util>=0?'#059669':'#DC2626';
+    ee='<div style="overflow-x:auto">'+
+    '<table style="width:100%;border-collapse:collapse;min-width:600px">'+
+    '<thead>'+
+      '<tr style="background:#031740;color:#fff">'+
+        '<th style="padding:10px;text-align:left;font-size:13px" colspan="6">ESTADO DE EVOLUCIÓN DEL PATRIMONIO</th>'+
+      '</tr>'+
+      '<tr style="background:#0c2b56;color:#fff;font-size:11px;text-align:right">'+
+        '<th style="padding:8px 10px;text-align:left">CONCEPTO</th>'+
+        '<th style="padding:8px 10px">CAPITAL SOCIAL</th>'+
+        '<th style="padding:8px 10px">AJUSTE CAPITAL</th>'+
+        '<th style="padding:8px 10px">RES. ACUMULADOS</th>'+
+        '<th style="padding:8px 10px">UTILIDAD GESTIÓN</th>'+
+        '<th style="padding:8px 10px">TOTAL</th>'+
+      '</tr>'+
+    '</thead>'+
+    '<tbody>'+
+      '<tr style="background:#F8FAFC">'+
+        '<td style="padding:8px 10px;font-weight:700">Saldo al INICIO del período</td>'+
+        '<td style="padding:8px 10px;text-align:right;font-family:monospace">'+fmt(capI)+'</td>'+
+        '<td style="padding:8px 10px;text-align:right;font-family:monospace">'+fmt(ajCapI)+'</td>'+
+        '<td style="padding:8px 10px;text-align:right;font-family:monospace">'+fmt(resAI)+'</td>'+
+        '<td style="padding:8px 10px;text-align:right;color:#aaa">—</td>'+
+        '<td style="padding:8px 10px;text-align:right;font-family:monospace;font-weight:700">'+fmt(totalInicio)+'</td>'+
+      '</tr>'+
+      ajCRow+
+      '<tr>'+
+        '<td style="padding:5px 10px 5px 24px;font-size:11px;color:#77888C">+ Utilidad / Pérdida del período</td>'+
+        '<td style="padding:5px 10px;text-align:right;color:#aaa">—</td>'+
+        '<td style="padding:5px 10px;text-align:right;color:#aaa">—</td>'+
+        '<td style="padding:5px 10px;text-align:right;color:#aaa">—</td>'+
+        '<td style="padding:5px 10px;text-align:right;font-family:monospace;color:'+utilColor+'">'+fmt(util)+'</td>'+
+        '<td style="padding:5px 10px;text-align:right;font-family:monospace;color:'+utilColor+'">'+fmt(util)+'</td>'+
+      '</tr>'+
+    '</tbody>'+
+    '<tfoot>'+
+      '<tr style="background:#031740;color:#fff">'+
+        '<td style="padding:10px;font-weight:700;font-size:13px">Saldo al CIERRE del período</td>'+
+        '<td style="padding:10px;text-align:right;font-family:monospace;font-weight:700">'+fmt(capI)+'</td>'+
+        '<td style="padding:10px;text-align:right;font-family:monospace;font-weight:700">'+fmt(r2(ajCapI+ajC))+'</td>'+
+        '<td style="padding:10px;text-align:right;font-family:monospace;font-weight:700">'+fmt(resAI)+'</td>'+
+        '<td style="padding:10px;text-align:right;font-family:monospace;font-weight:700">'+fmt(util)+'</td>'+
+        '<td style="padding:10px;text-align:right;font-family:monospace;font-weight:800;font-size:14px">'+fmt(totalCierre)+'</td>'+
+      '</tr>'+
+    '</tfoot></table></div>';
+  
   } else if(st==='mayor'){
     const MESES_SHORT=['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
     // Build detailed movements per account from E (journal entries)
@@ -2063,14 +2500,10 @@ function renderEE(c){
     }).join('')+
     '</div>';
   }
-    // ── Sub-nav tabs ────────────────────────────────────
-  function tabBtn(id,lbl){
-    var active=st===id;
-    return '<button onclick="S.sub=\''+id+'\';re()" style="padding:6px 14px;border:none;border-bottom:'+(active?'2px solid #031740;font-weight:700;color:#031740':'2px solid transparent;color:#77888C')+';background:transparent;font-size:11px;cursor:pointer;white-space:nowrap">'+lbl+'</button>';
-  }
-  var tabs=tabBtn('bg','Balance General')+tabBtn('er','Est. Resultados')+tabBtn('ss','Sumas y Saldos')+tabBtn('flujo','Flujo')+tabBtn('patrimonio','Patrimonio')+tabBtn('mayor','Mayor General');
+    function tabBtn(id,lbl){var active=st===id;return '<button onclick="S.sub=\''+id+'\';re()" style="padding:8px 14px;border:none;cursor:pointer;font-size:11px;white-space:nowrap;border-bottom:'+(active?'2px solid #031740;font-weight:700;color:#031740':'2px solid transparent;color:#77888C')+';background:transparent">'+lbl+'</button>';}
+  var navTabs=tabBtn('bg','Balance General')+tabBtn('er','Est. Resultados')+tabBtn('ss','Sumas y Saldos')+tabBtn('flujo','Flujo de Efectivo')+tabBtn('patrimonio','Patrimonio')+tabBtn('mayor','Mayor General');
   return '<div class="card" style="padding:0">'+
-    '<div style="display:flex;gap:0;border-bottom:1px solid #E2E8F0;padding:0 16px;overflow-x:auto;background:#FAFAFA;border-radius:12px 12px 0 0">'+tabs+'</div>'+
+    '<div style="display:flex;gap:0;border-bottom:1px solid #E2E8F0;padding:0 12px;overflow-x:auto;background:#FAFAFA;border-radius:12px 12px 0 0">'+navTabs+'</div>'+
     '<div style="padding:16px">'+ee+'</div>'+
   '</div>';
 }
@@ -2571,34 +3004,18 @@ function switchPlan(planId){
 
 // ─── ER Account Group Names (from PlanCONTAX) ────────────
 const ER_GROUPS={
-  // ─ INGRESOS ─
   '411':'INGRESOS POR VENTAS',
-  '412':'INGRESOS POR VENTAS',
-  '413':'SERVICIOS PRESTADOS',
-  '431':'INGRESOS NO OPERATIVOS',
-  '432':'AJUSTE POR INFLACIÓN Y TENENCIA',
   '441':'AJUSTES Y DIFERENCIAS DE CAMBIO',
-  // ─ GASTOS OPERATIVOS ─
-  '521':'GASTOS DE PERSONAL Y BENEFICIOS SOCIALES',
   '522':'GASTOS GENERALES DE OFICINA',
-  '523':'GASTOS POR SERVICIOS PROFESIONALES',
-  '524':'DEPRECIACIONES Y AMORTIZACIONES',
-  '525':'GASTOS IMPOSITIVOS Y MULTAS',
-  '526':'OTROS GASTOS OPERATIVOS',
-  '531':'GASTOS ADMINISTRATIVOS',
-  '532':'OTROS GASTOS',
-  '533':'GASTOS POR MANTENIMIENTO DE VEHÍCULOS',
-  '534':'GASTOS MATERIALES',
-  '535':'GASTOS IMPOSITIVOS',
-  '536':'GASTOS PUBLICITARIOS',
-  '537':'GASTOS POR SERVICIOS',
-  '538':'GASTOS MÉDICOS Y SEGUROS',
-  '539':'DEPRECIACIONES',
-  '540':'GASTOS FINANCIEROS',
-  '541':'GASTOS FINANCIEROS',
-  '550':'GASTOS POR MANTENIMIENTO DE OFICINA',
-  '560':'GASTOS NO OPERATIVOS',
-  '561':'AJUSTE POR INFLACIÓN Y TENENCIA DE BIENES',
+  '524':'DEPRECIACIONES BIENES DE USO Y AMORTIZACIONES',
+  '525':'IMPUESTOS, TASAS Y PATENTES',
+  '526':'OTROS GASTOS DE ADMINISTRACIÓN',
+  '532':'GASTOS OPERACIONALES',
+  '533':'PUBLICIDAD, MARKETING Y PROPAGANDA',
+  '534':'SERVICIOS ESPECIALIZADOS',
+  '541':'GASTOS BANCARIOS',
+  '551':'OTROS GASTOS',
+  '561':'AJUSTES Y DIFERENCIAS DE CAMBIO'
 };
 function erGroupName(code){
   if(!code||code.length<3)return '';
@@ -2961,6 +3378,8 @@ function getVentasComments(){var s=localStorage.getItem('cx_ven_cmt_'+S.activeId
 function setVentaComment(idx,val){var c=getVentasComments();c[idx]=val;localStorage.setItem('cx_ven_cmt_'+S.activeId,JSON.stringify(c));}
 
 // ─── RCV bulk payment selection ──────────────────────────
+function toggleAllRCVSel(ch){Array.from(document.querySelectorAll('.rcv-cb')).forEach(function(cb){cb.checked=ch;});updateRCVBulkBar();}
+
 function updateRCVBulkBar(){
   var cbs=document.querySelectorAll('.rcv-cb');
   var sel=Array.from(cbs).filter(function(cb){return cb.checked;});
@@ -3350,7 +3769,7 @@ function renderSplash(){
   const cfg=emp().cfg;const c=calcAll();
   const bgOK=c.bgOK;const fOK=c.fOK;
   const user=getCurrentUser()?.nombre||getUser();
-  const version='V.2';
+  const version='V.2 — Build 47';
   return '<div style="min-height:calc(100vh - 50px);background:'+(S.darkMode?'#0F172A':'#fff')+';display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 24px">'+
     // Logo horizontal
     '<div style="margin-bottom:8px">'+
@@ -3455,7 +3874,7 @@ function autoAddCxP(idx,tipo,razon,monto,fecha){if(tipo!=='porpagar')return;var 
 
 function renderCxP(){
   var data=getCxP();
-  var allRCV=emp().rcvData||[];var pays=getRCVPayments();
+  var _rf=emp().rcvData||[];var _rp=parseRCV(emp().rcvTxt||'').filter(function(r){return r.estado==='CONSOLIDADO';});var allRCV=_rf.length>0?_rf:_rp;var pays=getRCVPayments();
   allRCV.forEach(function(r,i){if(pays[i]==='porpagar')autoAddCxP(i,'porpagar',r.razon,r.total,r.fecha);});
   data=getCxP();
   var pend=data.filter(function(x){return x.estado!=='pagado';});
