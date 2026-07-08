@@ -667,8 +667,7 @@ function genEntries(){
   const gasNoDed2=r2(pn(e.cfg.gasNoDed||0)); // E68: Gastos No Deducibles
   const perdNComp2=r2(pn(e.cfg.perdNComp||0)); // E69: Saldo de Pérdida No Compensada
   const resTrib2=r2(util2+gasNoDed2-perdNComp2); // E70: Resultado Tributario
-  const iue=resTrib2>0?r2(resTrib2*0.25):0; // E71: IUE = 25% del Resultado Tributario
-  if(iue>0)E.push({id:'IUE',tipo:'T',desc:'PROVISIÓN IUE (25% de Resultado Tributario)',lines:[{c:'116006001',d:iue,h:0},{c:'214006001',d:0,h:iue}]});
+  // IUE se calcula al final con todos los asientos incluidos (ver más abajo)
 
   // COMPENSACIONES (CF UFV + DF vs CF + IT + Multas)
   const m2=buildM(E);
@@ -694,6 +693,29 @@ function genEntries(){
   if(itS2>0){compLines.push({c:'214004001',d:itS2,h:0});if(iueParIT>0)compLines.push({c:'116006001',d:0,h:iueParIT});if(itCaja>0)compLines.push({c:'111001001',d:0,h:itCaja});}
   if(multaS2>0){compLines.push({c:'214026001',d:multaS2,h:0});compLines.push({c:'111001001',d:0,h:multaS2});}
   if(compLines.length>0)E.push({id:'COMP',tipo:'T',desc:'COMPENSACIONES IVA / IT / MULTAS',lines:compLines});
+
+  // ── ASIENTO IUE AUTOMÁTICO (25% Resultado Tributario) ──
+  // Calcular utilidad con el estado actual de E
+  const mIUE=buildM(E);
+  const tI_IUE=r2(Object.entries(mIUE).filter(([k])=>acctTipo(k)==='I').reduce((s,[,v])=>r2(s+v.saldo),0));
+  const tG_IUE=r2(Object.entries(mIUE).filter(([k])=>acctTipo(k)==='G').reduce((s,[,v])=>r2(s+v.saldo),0));
+  const util_IUE=r2(tI_IUE-tG_IUE);
+  const gasNoDed_IUE=r2(pn(e.cfg.gasNoDed||0));
+  const perdNComp_IUE=r2(pn(e.cfg.perdNComp||0));
+  const resTrib_IUE=r2(util_IUE+gasNoDed_IUE-perdNComp_IUE);
+  const iue_IUE=resTrib_IUE>0?r2(resTrib_IUE*0.25):0;
+  if(iue_IUE>0){
+    E.push({
+      id:'IUE',
+      tipo:'T',
+      desc:'PROVISIÓN IUE — 25% del Resultado Tributario ('+fmt(resTrib_IUE)+' Bs.)',
+      lines:[
+        {c:'116006001',d:iue_IUE,h:0},  // DEBE: IUE A Compensar (Activo)
+        {c:'214006001',d:0,h:iue_IUE}   // HABER: IUE Por Pagar (Pasivo)
+      ]
+    });
+  }
+
   return E;
 }
 
@@ -3769,7 +3791,7 @@ function renderSplash(){
   const cfg=emp().cfg;const c=calcAll();
   const bgOK=c.bgOK;const fOK=c.fOK;
   const user=getCurrentUser()?.nombre||getUser();
-  const version='V.2 — Build 47';
+  const version='V.2 — Build 49';
   return '<div style="min-height:calc(100vh - 50px);background:'+(S.darkMode?'#0F172A':'#fff')+';display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 24px">'+
     // Logo horizontal
     '<div style="margin-bottom:8px">'+
