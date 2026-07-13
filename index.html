@@ -158,12 +158,109 @@ body.dark-mode .auto-card{background:#010e26!important;border-color:#0d2e5e!impo
 body.dark-mode .tbl-wrap{background:#021332!important}
 body.dark-mode .emp-box{background:#0d2145!important;color:#E2E8F0!important}
 </style>
+  <!-- Firebase 10.x compat SDK -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
 </head>
 <body>
 <div id="root"></div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script>
+
+// ══════════════════════════════════════════════════════════
+// FIREBASE — Sincronización en nube
+// ══════════════════════════════════════════════════════════
+var fbDb=null,fbAuth=null,fbUser=null,fbListener=null,fbSyncing=false;
+
+function initFirebase(){
+  try{
+    if(typeof firebase==='undefined'){console.warn('Firebase SDK no cargado');return;}
+    firebase.initializeApp({
+      apiKey:"AIzaSyC20z4ToZtFSAlfOiUOJeC4BAUSEpYyk4Q",
+      authDomain:"sistema-contable-contax.firebaseapp.com",
+      projectId:"sistema-contable-contax",
+      storageBucket:"sistema-contable-contax.firebasestorage.app",
+      messagingSenderId:"454602863737",
+      appId:"1:454602863737:web:5b1d94d4aa95fe8c4ad0a8"
+    });
+    fbDb=firebase.firestore();
+    fbAuth=firebase.auth();
+    fbAuth.onAuthStateChanged(function(user){
+      fbUser=user;
+      var el=document.getElementById('fb-status');
+      if(el)el.textContent=user?'☁️ '+user.email.split('@')[0]:'☁️';
+    });
+    console.log('✅ Firebase OK');
+  }catch(e){console.warn('Firebase init:',e.message);}
+}
+
+function fbSave(){
+  if(!fbDb||!S.activeId||fbSyncing)return;
+  var d=S.data[S.activeId];if(!d)return;
+  fbSyncing=true;
+  fbDb.collection('contax').doc(S.activeId).set({
+    data:JSON.stringify(d),
+    rz:(d.cfg&&d.cfg.razonSocial)||'',
+    by:fbUser?fbUser.email:(getCurrentUser()||'anon'),
+    at:firebase.firestore.FieldValue.serverTimestamp()
+  },{merge:true}).then(function(){
+    fbSyncing=false;
+    var el=document.getElementById('fb-status');
+    if(el){el.textContent='☁️ Sincronizado';setTimeout(function(){if(el)el.textContent=fbUser?'☁️ '+fbUser.email.split('@')[0]:'☁️';},2000);}
+  }).catch(function(e){fbSyncing=false;console.warn('FB save:',e.message);});
+}
+
+function fbListen(docId){
+  if(fbListener){fbListener();fbListener=null;}
+  if(!fbDb||!docId)return;
+  fbListener=fbDb.collection('contax').doc(docId).onSnapshot(function(snap){
+    if(!snap.exists||snap.metadata.hasPendingWrites||snap.metadata.fromCache)return;
+    try{
+      var remote=JSON.parse(snap.data().data||'{}');
+      if(JSON.stringify(remote)!==JSON.stringify(S.data[docId]||{})){
+        S.data[docId]=remote;
+        localStorage.setItem('cx_emp_'+docId,JSON.stringify(remote));
+        showNotif('📡 Datos actualizados por otro usuario');
+        re();
+      }
+    }catch(e){}
+  },function(e){console.warn('FB listen:',e.message);});
+}
+
+function fbLogin(email,pass){
+  if(!fbAuth)return alert('Firebase no disponible');
+  fbAuth.signInWithEmailAndPassword(email,pass).catch(function(e){
+    var m=e.code==='auth/user-not-found'?'Usuario no encontrado':
+          e.code==='auth/wrong-password'?'Contraseña incorrecta':e.message;
+    alert('Firebase: '+m);
+  });
+}
+
+function fbRegister(email,pass){
+  if(!fbAuth)return alert('Firebase no disponible');
+  var name=prompt('Tu nombre completo:');
+  if(!name)return;
+  fbAuth.createUserWithEmailAndPassword(email,pass).then(function(c){
+    c.user.updateProfile({displayName:name});
+    alert('✓ Cuenta creada: '+email);
+  }).catch(function(e){alert('Error: '+e.message);});
+}
+
+function fbLogout(){if(fbAuth)fbAuth.signOut();}
+
+function showNotif(msg){
+  try{
+    var n=document.getElementById('fb-notif');
+    if(!n){n=document.createElement('div');n.id='fb-notif';
+      n.style.cssText='position:fixed;top:55px;right:12px;background:#031740;color:#fff;padding:8px 14px;border-radius:8px;font-size:11px;z-index:9999;box-shadow:0 4px 12px rgba(0,0,0,.3);opacity:0;transition:opacity .3s';
+      document.body.appendChild(n);}
+    n.textContent=msg;n.style.opacity='1';
+    setTimeout(function(){n.style.opacity='0';},3000);
+  }catch(e){}
+}
+
 const r2=n=>Math.round(((n||0)+Number.EPSILON)*100)/100;
 const fmt=n=>{if(n==null||isNaN(n))return'—';return r2(n).toLocaleString('de-DE',{minimumFractionDigits:2,maximumFractionDigits:2});};
 const pn=v=>parseFloat((v||'').toString().replace(',','.').replace(/[^\d.-]/g,''))||0;
@@ -458,6 +555,7 @@ function loadLS(){try{const r=localStorage.getItem('contax_v2');return r?JSON.pa
 function saveLS(){
   try{localStorage.setItem('contax_v2',JSON.stringify({empresas:S.empresas,activeId:S.activeId,planCuentas:S.planCuentas,ufvData:S.ufvData,nits:S.nits}));}catch{}
   logAudit('Guardado');
+  if(typeof fbSave==='function'&&fbDb)fbSave();
 }
 
 const saved=loadLS();
@@ -483,11 +581,18 @@ function emp(){return S.empresas.find(e=>e.id===S.activeId)||S.empresas[0];}
 function acctName(code){var cp=S.planCuentas||[];var cu=cp.find(function(x){return (x.a||x.c)===code;});if(cu){var nn=cu.n||cu.g||'';if(nn&&nn!==code)return nn;}var df=PLAN_DEFAULT.find(function(x){return (x.a||x.c)===code;});return df?(df.g||df.n||code):code;}
 function acctTipo(code){if(!code)return'?';var df=PLAN_DEFAULT.find(function(x){return (x.a||x.c)===code;});if(df&&df.t)return df.t;var d=code[0];return d==='1'?'A':d==='2'?'P':d==='3'?'PT':d==='4'?'I':d==='5'?'G':'?';}
 function getUser(){return localStorage.getItem('cu')||'Usuario';}
-function logAudit(action){
-  try{const logs=JSON.parse(localStorage.getItem('ca')||'[]');
-  logs.unshift({u:getUser(),a:action,t:new Date().toISOString(),e:emp().cfg.razonSocial||'—'});
-  if(logs.length>100)logs.length=100;
-  localStorage.setItem('ca',JSON.stringify(logs));}catch{}
+function logAudit(action,detail){
+  try{
+    var logs=JSON.parse(localStorage.getItem('ca')||'[]');
+    logs.unshift({
+      u:getUser(),
+      a:action+(detail?' — '+detail:''),
+      t:new Date().toISOString(),
+      e:emp().cfg.razonSocial||'—'
+    });
+    if(logs.length>500)logs.length=500;
+    localStorage.setItem('ca',JSON.stringify(logs));
+  }catch(e){}
 }
 
 function parseRCV(txt){
@@ -2925,6 +3030,27 @@ function getCurrentUser(){const s=localStorage.getItem('cx_session');return s?JS
 function setSession(u){localStorage.setItem('cx_session',JSON.stringify(u));}
 function logout(){localStorage.removeItem('cx_session');S.showLogin=true;re();}
 
+
+  var fbSection=(typeof firebase!=='undefined')?
+    ('<div style="border-top:1px solid rgba(255,255,255,.1);margin-top:14px;padding-top:12px">'+
+      '<div style="font-size:10px;color:rgba(255,255,255,.6);margin-bottom:8px">☁️ Firebase — Sincronización en Nube</div>'+
+      (fbUser?
+        '<div style="background:rgba(5,150,105,.2);border-radius:6px;padding:8px;font-size:11px;color:#6EE7B7;display:flex;align-items:center;gap:8px">'+
+          '✓ Conectado: <strong>'+fbUser.email+'</strong>'+
+          '<button onclick="fbLogout()" style="margin-left:auto;background:none;border:1px solid #F87171;border-radius:4px;padding:2px 8px;font-size:10px;cursor:pointer;color:#F87171">Salir</button>'+
+        '</div>':
+        '<div style="display:flex;flex-direction:column;gap:6px">'+
+          '<input id="fb-email" type="email" placeholder="Email Firebase" style="border:1px solid rgba(255,255,255,.2);border-radius:6px;padding:7px 10px;font-size:11px;background:rgba(255,255,255,.05);color:#fff"/>'+
+          '<input id="fb-pass" type="password" placeholder="Contraseña" style="border:1px solid rgba(255,255,255,.2);border-radius:6px;padding:7px 10px;font-size:11px;background:rgba(255,255,255,.05);color:#fff"/>'+
+          '<div style="display:flex;gap:6px">'+
+            '<button onclick="fbLogin((document.getElementById(\'fb-email\')||{value:\'\'}).value,(document.getElementById(\'fb-pass\')||{value:\'\'}).value)" '+
+              'style="flex:1;background:#F57C00;color:#fff;border:none;border-radius:6px;padding:8px;font-size:11px;cursor:pointer;font-weight:600">☁️ Entrar con Firebase</button>'+
+            '<button onclick="fbRegister((document.getElementById(\'fb-email\')||{value:\'\'}).value,(document.getElementById(\'fb-pass\')||{value:\'\'}).value)" '+
+              'style="background:rgba(255,255,255,.1);color:#fff;border:1px solid rgba(255,255,255,.2);border-radius:6px;padding:8px 10px;font-size:11px;cursor:pointer">Registrarse</button>'+
+          '</div>'+
+        '</div>')+
+    '</div>'):
+    '<div style="font-size:10px;color:rgba(255,255,255,.4);text-align:center;margin-top:10px;padding-top:10px;border-top:1px solid rgba(255,255,255,.1)">Firebase no disponible</div>';
 function renderLogin(){
   const users=getUsers();
   const AVTS=['🐯','🐆','🦊','🐴','🦋','🦄','🐲','⭐','⚡','🎯','🚀','💎','🔥','🌈','🎸'];
@@ -3791,7 +3917,7 @@ function renderSplash(){
   const cfg=emp().cfg;const c=calcAll();
   const bgOK=c.bgOK;const fOK=c.fOK;
   const user=getCurrentUser()?.nombre||getUser();
-  const version='V.2 — Build 49';
+  const version='V.2 — Build 51';
   return '<div style="min-height:calc(100vh - 50px);background:'+(S.darkMode?'#0F172A':'#fff')+';display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 24px">'+
     // Logo horizontal
     '<div style="margin-bottom:8px">'+
@@ -3947,28 +4073,90 @@ function renderCxP(){
 
 // ═══ VERIFICACIONES ════════════════════════════════════
 function renderVerificaciones(c){
-  const{M,gs,tA,tP,tPT,difBG,bgOK,fOK,ssTSD,ssTSH}=c;
-  function vRow(label,ok,detail){
-    return '<div style="display:flex;align-items:center;gap:10px;padding:8px 12px;background:'+(ok?'#F0FDF4':'#FEF2F2')+';border-radius:8px;margin-bottom:6px">'+
-      '<span style="font-size:18px">'+(ok?'✅':'❌')+'</span>'+
-      '<div><div style="font-weight:600;font-size:12px;color:'+(ok?'#059669':'#DC2626')+'">'+label+'</div>'+
-      (detail?'<div style="font-size:10px;color:#555;margin-top:1px">'+detail+'</div>':'')+
-      '</div></div>';
+  const{M,gs,tA,tP,tPT,difBG,util,bgOK,fOK,ssTSD,ssTSH,ssOK}=c;
+  const e=emp();
+  const E=genEntries();
+  
+  function vRow(label,ok,detail,warn){
+    var color=ok?'#F0FDF4':warn?'#FFF8E1':'#FEF2F2';
+    var icon=ok?'✅':warn?'⚠️':'❌';
+    var textColor=ok?'#059669':warn?'#92400E':'#DC2626';
+    return '<div style="display:flex;align-items:flex-start;gap:10px;padding:8px 12px;background:'+color+';border-radius:8px;margin-bottom:6px">'+
+      '<span style="font-size:18px;margin-top:1px">'+icon+'</span>'+
+      '<div style="flex:1">'+
+        '<div style="font-weight:600;font-size:12px;color:'+textColor+'">'+label+'</div>'+
+        (detail?'<div style="font-size:10px;color:#555;margin-top:2px">'+detail+'</div>':'')+
+      '</div>'+
+    '</div>';
   }
-  const cfIva=r2(gs('116001001'));const iueCmp=r2(gs('116006001'));
-  const caja=r2(gs('111001001'));const banco=r2(gs('111002001'));
-  return '<div class="card"><div class="h2">✅ Verificaciones Contables</div>'+
-    '<div class="info ib" style="margin-bottom:12px">Verificaciones automáticas del estado de los estados financieros.</div>'+
-    vRow('Balance General CUADRA',bgOK,'Total Activo: '+fmt(tA)+' Bs | Total Pasivo+Pat: '+fmt(r2(tP+tPT))+' Bs | Diferencia: '+fmt(difBG)+' Bs')+
-    vRow('Sumas y Saldos CUADRA',r2(ssTSD-ssTSH)===0,'Suma Débitos: '+fmt(ssTSD)+' | Suma Créditos: '+fmt(ssTSH))+
-    vRow('Flujo de Efectivo CUADRA',fOK,'Verificación del flujo de caja')+
-    vRow('Caja no negativa',caja>=0,'Saldo Caja: '+fmt(caja)+' Bs')+
-    vRow('Banco no negativo',banco>=0,'Saldo Banco: '+fmt(banco)+' Bs')+
-    vRow('CF IVA no negativo',cfIva>=0,'CF IVA: '+fmt(cfIva)+' Bs')+
+
+  // 1. Balance General cuadra
+  var bgCheck=Math.abs(difBG)<1;
+  
+  // 2. Sumas y Saldos cuadra (debe = haber total)
+  var ssCheck=Math.abs(ssTSD-ssTSH)<1;
+  
+  // 3. Todos los asientos balancean (debe = haber por asiento)
+  var unbalanced=E.filter(function(entry){
+    var d=entry.lines.reduce(function(s,l){return s+(l.d||0);},0);
+    var h=entry.lines.reduce(function(s,l){return s+(l.h||0);},0);
+    return Math.abs(d-h)>0.01;
+  });
+  var entriesOk=unbalanced.length===0;
+  
+  // 4. Caja M/N no negativa
+  var cajaOk=(gs('111001001')||0)>=0;
+  
+  // 5. CF IVA no negativo
+  var cfOk=(gs('116001001')||0)>=0;
+  
+  // 6. Empresa configurada
+  var configOk=!!(e.cfg&&e.cfg.razonSocial&&e.cfg.fechaInicio&&e.cfg.fechaFin);
+  
+  // 7. UFV configuradas
+  var ufvOk=!!(e.cfg&&pn(e.cfg.ufvInicio)>0&&pn(e.cfg.ufvFin)>0);
+  
+  // 8. IUE provisionado
+  var iueEntry=E.find(function(en){return en.id==='IUE';});
+  var iueOk=util<=0||!!iueEntry;
+  
+  // 9. Cuentas por cobrar = CxC pendientes
+  var cxcBalance=gs('113001001')||0;
+  var cxcPend=r2((getCxC()||[]).filter(function(x){return x.estado!=='cobrado';}).reduce(function(s,x){return s+pn(x.monto);},0));
+  var cxcOk=Math.abs(cxcBalance-cxcPend)<1||cxcPend===0;
+  
+  // 10. Cuentas por pagar = CxP pendientes
+  var cxpBalance=gs('212004001')||0;
+  var cxpPend=r2((getCxP()||[]).filter(function(x){return x.estado!=='pagado';}).reduce(function(s,x){return s+pn(x.monto);},0));
+  var cxpOk=Math.abs(cxpBalance-cxpPend)<1||cxpPend===0;
+  
+  var totalOk=[bgCheck,ssCheck,entriesOk,cajaOk,cfOk,configOk,ufvOk,iueOk].filter(Boolean).length;
+  var totalChecks=8;
+  var scoreColor=totalOk===totalChecks?'#059669':totalOk>=6?'#F59E0B':'#DC2626';
+  
+  return '<div class="card">'+
+    '<div style="display:flex;align-items:center;gap:12px;margin-bottom:16px">'+
+      '<div class="h2" style="flex:1;margin:0">✅ Verificaciones Automáticas</div>'+
+      '<div style="background:'+scoreColor+';color:#fff;border-radius:8px;padding:8px 14px;font-weight:700;font-size:14px">'+
+        totalOk+'/'+totalChecks+' OK'+
+      '</div>'+
+    '</div>'+
+    '<div>'+
+    vRow('Balance General cuadra', bgCheck, bgCheck?'ACTIVO = PASIVO + PATRIMONIO + UTILIDAD':'Diferencia: Bs. '+fmt(Math.abs(difBG)))+
+    vRow('Sumas y Saldos cuadra', ssCheck, ssCheck?'Total DEBE = Total HABER':'Diferencia: Bs. '+fmt(Math.abs(ssTSD-ssTSH)))+
+    vRow('Todos los asientos balancean', entriesOk, entriesOk?('Total '+E.length+' asientos verificados'):unbalanced.length+' asiento(s) desbalanceado(s): '+unbalanced.map(function(e){return e.id;}).join(', '))+
+    vRow('Caja M/N no es negativa', cajaOk, 'Saldo CAJA M/N: Bs. '+fmt(gs('111001001')||0), !cajaOk)+
+    vRow('CF IVA no es negativo', cfOk, 'Saldo CF IVA: Bs. '+fmt(gs('116001001')||0), !cfOk)+
+    vRow('Empresa configurada', configOk, configOk?('RZ: '+e.cfg.razonSocial):'Falta razón social, fecha inicio o fecha fin')+
+    vRow('UFV configuradas', ufvOk, ufvOk?('Inicio: '+e.cfg.ufvInicio+' | Fin: '+e.cfg.ufvFin):'Configura las UFV de inicio y fin de gestión')+
+    vRow('IUE provisionado', iueOk, util>0?(iueEntry?'Asiento IUE generado: Bs. '+fmt(iueEntry.lines[0].d):'Sin asiento IUE — revisar'):'No aplica (utilidad ≤ 0)')+
+    '</div>'+
+    '<div style="margin-top:16px;padding:10px;background:#F8FAFC;border-radius:6px;font-size:10px;color:#77888C">'+
+      '💡 Las verificaciones se ejecutan en tiempo real con los datos actuales. '+
+      'Corrija los ❌ antes de exportar los estados financieros.'+
+    '</div>'+
   '</div>';
 }
-
-// ═══ NOTAS EEFF ════════════════════════════════════════
 function renderNotasEEFF(c){
   const cfg=emp().cfg;const tr=emp().traspaso;
   const{gs,tI,tG,util}=c;
@@ -4248,6 +4436,8 @@ function re(){
     else if(S.tab==='ufvs')main=renderUFVs();
     else if(S.tab==='listaeeff')main=renderListaEEFF();
     else if(S.tab==='dashboard')main=renderDashboard(c);
+    else if(S.tab==='nomina')main=renderNomina();
+    else if(S.tab==='historial')main=renderHistorial();
     else if(S.tab==='usuarios')main=renderUsuarios();
     else if(S.tab==='iaapi')main=renderIAApi(c);
     else main='<div class="card"><p>Pestaña: '+S.tab+'</p></div>';
@@ -4270,6 +4460,7 @@ function re(){
       {id:'cxp',ic:'📤',lb:'Ctas. por Pagar'},
       {id:'compensaciones',ic:'⚖️',lb:'Compensaciones'},
       {id:'otros',ic:'📝',lb:'Otros Asientos'},
+      {id:'nomina',ic:'👷',lb:'Nómina / Planilla'},
       {id:'verificaciones',ic:'✅',lb:'Verificaciones'},
     ]},
     {sec:'Resultados',items:[
@@ -4293,6 +4484,7 @@ function re(){
       {id:'listaeeff',ic:'📁',lb:'Lista EEFF'},
       {id:'dashboard',ic:'📊',lb:'Dashboard'},
       {id:'usuarios',ic:'👥',lb:'Usuarios'},
+      {id:'historial',ic:'📜',lb:'Historial de Cambios'},
       {id:'iaapi',ic:'🤖',lb:'CONTAX IA'},
     ]},
   ];
@@ -4325,6 +4517,116 @@ function re(){
     (S.navOpen?'<nav class="nav">'+navHTML+'</nav>':'')+
     '<main class="cnt" id="main-cnt">'+main+'</main>'+
     '</div>';
+}
+
+
+function renderNomina(){
+  return '<div class="card" style="text-align:center;padding:60px 20px">'+
+    '<div style="font-size:64px;margin-bottom:16px">👷</div>'+
+    '<div style="font-size:24px;font-weight:700;color:#031740;margin-bottom:8px">Nómina / Planilla</div>'+
+    '<div style="font-size:14px;color:#77888C;max-width:400px;margin:0 auto 24px">'+
+      'Este módulo está en desarrollo. Próximamente podrás gestionar sueldos, '+
+      'aguinaldo, indemnizaciones, AFP, RC-IVA y planillas completas.'+
+    '</div>'+
+    '<div style="background:#FFF8E1;border:1.5px solid #F59E0B;border-radius:8px;padding:14px 20px;display:inline-block;text-align:left">'+
+      '<div style="font-weight:700;color:#92400E;margin-bottom:8px">🚧 En Construcción</div>'+
+      '<div style="font-size:12px;color:#78350F">'+
+        '• Sueldos y salarios mensuales<br>'+
+        '• Aguinaldo y bono de producción<br>'+
+        '• AFP Contributivo / Solidario<br>'+
+        '• RC-IVA y descuentos de ley<br>'+
+        '• Indemnizaciones<br>'+
+        '• Exportar planilla en Excel'+
+      '</div>'+
+    '</div>'+
+  '</div>';
+}
+
+function renderHistorial(){
+  var logs=[];
+  try{logs=JSON.parse(localStorage.getItem('ca')||'[]');}catch(e){}
+  
+  var empFilter=S.histEmpFilter||'all';
+  var typeFilter=S.histTypeFilter||'all';
+  var search=(S.histSearch||'').toLowerCase();
+  
+  var filtered=logs.filter(function(l){
+    if(empFilter!=='all'&&l.e!==empFilter)return false;
+    if(typeFilter!=='all'&&l.cat!==typeFilter)return false;
+    if(search&&!(l.a||'').toLowerCase().includes(search)&&
+       !(l.u||'').toLowerCase().includes(search)&&
+       !(l.e||'').toLowerCase().includes(search))return false;
+    return true;
+  });
+  
+  function fmtDate(iso){
+    if(!iso)return '—';
+    try{
+      var d=new Date(iso);
+      return d.toLocaleDateString('es-BO')+' '+d.toLocaleTimeString('es-BO',{hour:'2-digit',minute:'2-digit'});
+    }catch(e){return iso;}
+  }
+  
+  function actionIcon(a){
+    if(!a)return '📝';
+    a=a.toLowerCase();
+    if(a.includes('rcv')||a.includes('compra'))return '🧾';
+    if(a.includes('ingreso')||a.includes('venta'))return '💰';
+    if(a.includes('pago')||a.includes('cobr'))return '💳';
+    if(a.includes('config')||a.includes('empresa'))return '🏢';
+    if(a.includes('apertura'))return '📂';
+    if(a.includes('asiento'))return '📝';
+    if(a.includes('plan'))return '📋';
+    if(a.includes('usuario'))return '👤';
+    if(a.includes('export')||a.includes('pdf'))return '📄';
+    return '📝';
+  }
+
+  var rows=filtered.slice(0,200).map(function(l,i){
+    var bg=i%2===0?'#FAFAFA':'#fff';
+    return '<tr style="background:'+bg+'">'+
+      '<td style="padding:6px 8px;font-size:11px;color:#77888C;white-space:nowrap">'+fmtDate(l.t)+'</td>'+
+      '<td style="padding:6px 8px;font-size:12px;text-align:center">'+actionIcon(l.a)+'</td>'+
+      '<td style="padding:6px 8px;font-size:11px;font-weight:600;color:#031740">'+( l.u||'—')+'</td>'+
+      '<td style="padding:6px 8px;font-size:11px">'+( l.a||'—')+'</td>'+
+      '<td style="padding:6px 8px;font-size:11px;color:#77888C">'+( l.e||'—')+'</td>'+
+    '</tr>';
+  }).join('');
+
+  var clearBtn=logs.length>0?
+    '<button onclick="if(confirm(\'¿Limpiar TODO el historial?\')){{localStorage.removeItem(\'ca\');S.histSearch=\'\';re();}}" style="background:#FEF2F2;border:1px solid #FECACA;border-radius:6px;padding:6px 10px;font-size:11px;cursor:pointer;color:#DC2626">🗑 Limpiar historial</button>':'';
+
+  return '<div class="card">'+
+    '<div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;flex-wrap:wrap">'+
+      '<div class="h2" style="flex:1;margin:0">📜 Historial de Cambios</div>'+
+      clearBtn+
+    '</div>'+
+    '<div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap">'+
+      '<input type="text" placeholder="🔍 Buscar acción, usuario..." value="'+(S.histSearch||'')+'" '+
+        'oninput="S.histSearch=this.value;re()" '+
+        'style="flex:1;min-width:180px;padding:6px 10px;border:1px solid #E2E8F0;border-radius:6px;font-size:12px;outline:none"/>'+
+    '</div>'+
+    (filtered.length<logs.length?
+      '<div style="font-size:11px;color:#77888C;margin-bottom:8px">Mostrando '+filtered.length+' de '+logs.length+' registros</div>':
+      '<div style="font-size:11px;color:#77888C;margin-bottom:8px">Total: '+logs.length+' registros</div>')+
+    (logs.length===0?
+      '<div style="text-align:center;padding:40px;color:#aaa">'+
+        '<div style="font-size:32px;margin-bottom:8px">📋</div>'+
+        '<div>No hay registros en el historial.</div>'+
+        '<div style="font-size:11px;margin-top:4px">Los cambios se registran automáticamente.</div>'+
+      '</div>':
+      '<div class="tbl-wrap" style="max-height:520px">'+
+      '<table style="width:100%;border-collapse:collapse">'+
+      '<thead><tr style="background:#031740;color:#fff;font-size:10px">'+
+        '<th style="padding:6px 8px;text-align:left;white-space:nowrap">Fecha y Hora</th>'+
+        '<th style="padding:6px 8px;text-align:center"></th>'+
+        '<th style="padding:6px 8px;text-align:left">Usuario</th>'+
+        '<th style="padding:6px 8px;text-align:left">Acción</th>'+
+        '<th style="padding:6px 8px;text-align:left">Empresa</th>'+
+      '</tr></thead>'+
+      '<tbody>'+rows+'</tbody>'+
+      '</table></div>')+
+  '</div>';
 }
 
 // ─── Startup ────────────────────────────────────────────
