@@ -173,8 +173,11 @@ body.dark-mode .emp-box{background:#0d2145!important;color:#E2E8F0!important}
 // VERSIÓN DEL SISTEMA — Única fuente de verdad
 // Al aprobar una versión: subir VERSION y agregar una entrada al inicio de CHANGELOG.
 // ══════════════════════════════════════════════════════════
-const VERSION='V53';
+const VERSION='V54';
 const CHANGELOG=[
+  {v:'V54', fecha:'2026-07-14', cambios:[
+    'Pestaña Verificaciones: nuevo panel superior que muestra si CUADRAN los 6 estados financieros (Balance General, Estado de Resultados, Flujo de Efectivo, Sumas y Saldos, Evolución del Patrimonio y Cuadro de Activos Fijos), con la diferencia en Bs. cuando no cuadran.'
+  ]},
   {v:'V53', fecha:'2026-07-14', cambios:[
     'Sistema de versión único: la versión se define en un solo lugar (VERSION) y se muestra en el encabezado y en el inicio.',
     'Registro de cambios (changelog) visible al hacer clic en la versión del encabezado.',
@@ -4191,13 +4194,56 @@ function renderVerificaciones(c){
   var cxpPend=r2((getCxP()||[]).filter(function(x){return x.estado!=='pagado';}).reduce(function(s,x){return s+pn(x.monto);},0));
   var cxpOk=Math.abs(cxpBalance-cxpPend)<1||cxpPend===0;
   
+  // ═══ CUADRE DE LOS 6 ESTADOS FINANCIEROS (V54) ═══
+  var trp=(e.traspaso||{});
+  var capT=r2(pn(trp.capitalSocial)+pn(trp.ajusteCapital));
+  var resA=r2(pn(trp.resAcum));
+  var patFinal=r2(capT+(c.ajC||0)+resA+util);
+  var afList=(typeof getAFFromApertura==='function')?(getAFFromApertura()||[]):[];
+  var afNeto=r2(afList.reduce(function(s,a){return r2(s+pn(a.vNeto));},0));
+  var aNC=c.aNC||0;
+  var difSS=r2(ssTSD-ssTSH);
+  var difFL=r2(c.sF-c.cajaMN);
+  var difPT=r2(patFinal-c.tPT);
+  var difAF=r2(afNeto-aNC);
+  var estados=[
+    {n:'Balance General', ok:Math.abs(difBG)<1, dif:Math.abs(difBG), desc:'Activo = Pasivo + Patrimonio + Resultado'},
+    {n:'Estado de Resultados', ok:Math.abs(difBG)<1&&ssCheck, dif:Math.abs(difBG), desc:'Resultado (Ingresos − Gastos) integrado al Balance'},
+    {n:'Flujo de Efectivo', ok:Math.abs(difFL)<1, dif:Math.abs(difFL), desc:'Saldo final del flujo = Caja M/N del Balance'},
+    {n:'Sumas y Saldos', ok:Math.abs(difSS)<1, dif:Math.abs(difSS), desc:'Total saldos Deudores = Total saldos Acreedores'},
+    {n:'Evolución del Patrimonio', ok:Math.abs(difPT)<1, dif:Math.abs(difPT), desc:'Patrimonio final = Patrimonio del Balance'},
+    {n:'Cuadro de Activos Fijos', ok:afList.length===0?true:Math.abs(difAF)<1, dif:Math.abs(difAF), desc:afList.length===0?'Sin activos fijos registrados':'Valor neto de A.F. = Activo no corriente del Balance'}
+  ];
+  var cuadran=estados.filter(function(x){return x.ok;}).length;
+  var efColor=cuadran===6?'#059669':cuadran>=4?'#F59E0B':'#DC2626';
+  function stRow(s){
+    var bg=s.ok?'#F0FDF4':'#FEF2F2';var ic=s.ok?'✅':'❌';var tc=s.ok?'#059669':'#DC2626';
+    return '<div style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:'+bg+';border-radius:8px;margin-bottom:6px">'+
+      '<span style="font-size:18px">'+ic+'</span>'+
+      '<div style="flex:1"><div style="font-weight:700;font-size:12px;color:#031740">'+s.n+'</div>'+
+        '<div style="font-size:10px;color:#666;margin-top:1px">'+s.desc+'</div></div>'+
+      '<div style="text-align:right"><div style="font-weight:700;font-size:12px;color:'+tc+'">'+(s.ok?'CUADRA':'NO CUADRA')+'</div>'+
+        (s.ok?'':'<div style="font-size:10px;color:#DC2626">Dif: Bs. '+fmt(s.dif)+'</div>')+'</div>'+
+    '</div>';
+  }
+  var estadosCard='<div class="card">'+
+    '<div style="display:flex;align-items:center;gap:12px;margin-bottom:14px">'+
+      '<div class="h2" style="flex:1;margin:0">🧮 Cuadre de los Estados Financieros</div>'+
+      '<div style="background:'+efColor+';color:#fff;border-radius:8px;padding:8px 14px;font-weight:700;font-size:14px">'+cuadran+'/6 cuadran</div>'+
+    '</div>'+
+    estados.map(stRow).join('')+
+    (cuadran===6
+      ?'<div style="margin-top:12px;padding:10px;background:#F0FDF4;border-radius:6px;font-size:11px;color:#059669;font-weight:600">✅ Todos los estados financieros cuadran. Listos para exportar.</div>'
+      :'<div style="margin-top:12px;padding:10px;background:#FEF2F2;border-radius:6px;font-size:11px;color:#DC2626">⚠️ Hay estados que no cuadran. Revisa las diferencias antes de exportar. Nota: Balance General, Estado de Resultados y Sumas y Saldos están enlazados por la partida doble; si uno no cuadra, suele arrastrar a los otros.</div>')+
+  '</div>';
+
   var totalOk=[bgCheck,ssCheck,entriesOk,cajaOk,cfOk,configOk,ufvOk,iueOk].filter(Boolean).length;
   var totalChecks=8;
   var scoreColor=totalOk===totalChecks?'#059669':totalOk>=6?'#F59E0B':'#DC2626';
   
-  return '<div class="card">'+
+  return estadosCard + '<div class="card">'+
     '<div style="display:flex;align-items:center;gap:12px;margin-bottom:16px">'+
-      '<div class="h2" style="flex:1;margin:0">✅ Verificaciones Automáticas</div>'+
+      '<div class="h2" style="flex:1;margin:0">🔎 Otras Verificaciones de Integridad</div>'+
       '<div style="background:'+scoreColor+';color:#fff;border-radius:8px;padding:8px 14px;font-weight:700;font-size:14px">'+
         totalOk+'/'+totalChecks+' OK'+
       '</div>'+
