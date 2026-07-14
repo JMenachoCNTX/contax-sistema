@@ -170,6 +170,22 @@ body.dark-mode .emp-box{background:#0d2145!important;color:#E2E8F0!important}
 <script>
 
 // ══════════════════════════════════════════════════════════
+// VERSIÓN DEL SISTEMA — Única fuente de verdad
+// Al aprobar una versión: subir VERSION y agregar una entrada al inicio de CHANGELOG.
+// ══════════════════════════════════════════════════════════
+const VERSION='V53';
+const CHANGELOG=[
+  {v:'V53', fecha:'2026-07-14', cambios:[
+    'Sistema de versión único: la versión se define en un solo lugar (VERSION) y se muestra en el encabezado y en el inicio.',
+    'Registro de cambios (changelog) visible al hacer clic en la versión del encabezado.',
+    'Nuevo respaldo completo: exportar e importar TODOS los datos del sistema en un archivo .json.',
+    'Aviso cuando falla el guardado local (por ejemplo, si se llena el almacenamiento).',
+    'Limpieza de código de menú duplicado que no se usaba.'
+  ]},
+  {v:'V52', fecha:'—', cambios:['Versión base sobre la que empezamos a trabajar.']}
+];
+
+// ══════════════════════════════════════════════════════════
 // FIREBASE — Sincronización en nube
 // ══════════════════════════════════════════════════════════
 var fbDb=null,fbAuth=null,fbUser=null,fbListener=null,fbSyncing=false;
@@ -553,7 +569,8 @@ function newEmp(id){
 
 function loadLS(){try{const r=localStorage.getItem('contax_v2');return r?JSON.parse(r):null;}catch{return null;}}
 function saveLS(){
-  try{localStorage.setItem('contax_v2',JSON.stringify({empresas:S.empresas,activeId:S.activeId,planCuentas:S.planCuentas,ufvData:S.ufvData,nits:S.nits}));}catch{}
+  try{localStorage.setItem('contax_v2',JSON.stringify({empresas:S.empresas,activeId:S.activeId,planCuentas:S.planCuentas,ufvData:S.ufvData,nits:S.nits}));}
+  catch(e){console.error('saveLS:',e);if(typeof showNotif==='function')showNotif('⚠️ No se pudo guardar localmente: '+e.message+'. Descarga un respaldo para no perder datos.');}
   logAudit('Guardado');
   if(typeof fbSave==='function'&&fbDb)fbSave();
 }
@@ -865,7 +882,6 @@ function calcAll(){
 }
 
 // HELPERS
-function ni(id,icon,label){return '<div class="ni'+(S.tab===id?' a':'')+'" onclick="S.tab=\''+id+'\';re()">'+icon+' '+label+'</div>';}
 function sb(id,label){return '<button class="tab-btn'+(S.sub===id?' a':'')+'" onclick="S.sub=\''+id+'\';re()">'+label+'</button>';}
 function nInput(label,val,onblurCode){
   const disp=pn(val)?pn(val).toString().replace('.',','):'';
@@ -2764,6 +2780,36 @@ function renderReporte(c){
 }
 
 function renderUsuarios(){
+  var fbCard='<div class="card" style="margin-bottom:12px;border:2px solid '+(fbUser?'#4ADE80':'#E2E8F0')+';border-radius:12px">'+
+    '<div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">'+
+      '<span style="font-size:24px">☁️</span>'+
+      '<div>'+
+        '<div style="font-weight:700;font-size:14px;color:#031740">Firebase — Sincronización en Nube</div>'+
+        '<div style="font-size:11px;color:#77888C">'+(fbUser?'Conectado y sincronizando automáticamente':'Sin conexión — los datos solo se guardan localmente')+'</div>'+
+      '</div>'+
+      '<div style="margin-left:auto;background:'+(fbUser?'#D1FAE5':'#FEF3C7')+';color:'+(fbUser?'#065F46':'#92400E')+';border-radius:20px;padding:4px 12px;font-size:11px;font-weight:700">'+
+        (fbUser?'● EN LÍNEA':'● LOCAL')+
+      '</div>'+
+    '</div>'+
+    (fbUser?
+      '<div style="background:#F0FDF4;border-radius:8px;padding:10px;display:flex;align-items:center;gap:10px">'+
+        '<div style="flex:1">'+
+          '<div style="font-size:12px;font-weight:600;color:#059669">'+fbUser.email+'</div>'+
+          '<div style="font-size:10px;color:#77888C">Última sync: '+new Date().toLocaleTimeString('es-BO')+'</div>'+
+        '</div>'+
+        '<button onclick="fbLogout();re()" style="background:#FEF2F2;border:1px solid #FECACA;border-radius:6px;padding:6px 12px;font-size:11px;cursor:pointer;color:#DC2626">Cerrar sesión Firebase</button>'+
+      '</div>':
+      '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">'+
+        '<div><label style="font-size:10px;color:#77888C;display:block;margin-bottom:3px">Email</label>'+
+          '<input id="fb-email2" type="email" placeholder="tu@email.com" style="width:100%;border:1px solid #E2E8F0;border-radius:6px;padding:6px 8px;font-size:11px;box-sizing:border-box"/></div>'+
+        '<div><label style="font-size:10px;color:#77888C;display:block;margin-bottom:3px">Contraseña</label>'+
+          '<input id="fb-pass2" type="password" placeholder="Mínimo 6 caracteres" style="width:100%;border:1px solid #E2E8F0;border-radius:6px;padding:6px 8px;font-size:11px;box-sizing:border-box"/></div>'+
+        '<div style="display:flex;align-items:flex-end;gap:6px;padding-bottom:0">'+
+          '<button onclick="fbLogin((document.getElementById(\'fb-email2\')||{value:\'\'}).value,(document.getElementById(\'fb-pass2\')||{value:\'\'}).value)" style="flex:1;background:#F57C00;color:#fff;border:none;border-radius:6px;padding:7px 8px;font-size:11px;cursor:pointer;font-weight:600">☁️ Entrar</button>'+
+          '<button onclick="fbRegister((document.getElementById(\'fb-email2\')||{value:\'\'}).value,(document.getElementById(\'fb-pass2\')||{value:\'\'}).value)" style="background:#031740;color:#fff;border:none;border-radius:6px;padding:7px 8px;font-size:11px;cursor:pointer">Registrarse</button>'+
+        '</div>'+
+      '</div>')+
+  '</div>';
   const cu=getCurrentUser();
   const isAdm=isAdmin();
   const users=getUsers();
@@ -2812,7 +2858,7 @@ function renderUsuarios(){
     return '<tr><td>'+a.user+'</td><td>'+(a.e||'—')+'</td><td>'+a.a+'</td><td style="font-size:10px;color:#888">'+new Date(a.t).toLocaleString('es-BO')+'</td></tr>';
   }).join('');
 
-  return '<div class="card"><div class="h2">👥 Usuarios</div>'+
+  return fbCard+'<div class="card"><div class="h2">👥 Usuarios</div>'+
     adminCodeSection+
     '<div class="h3">USUARIOS REGISTRADOS '+(isAdm?'(ADMIN: puedes activar/desactivar)':'')+'</div>'+
     '<div style="margin-bottom:12px">'+(userRows||'<div class="info iy">No hay usuarios registrados.</div>')+'</div>'+
@@ -3105,6 +3151,21 @@ function renderLogin(){
     '</div>'+
     // RIGHT: background image
     '<div style="flex:1;min-height:100vh;background-image:url(\''+LOGIN_BG+'\');background-size:cover;background-position:center right;background-repeat:no-repeat">'+
+    '<div style="border-top:1px solid rgba(255,255,255,.15);margin-top:14px;padding-top:12px">'+
+      '<div style="font-size:10px;color:rgba(255,255,255,.6);font-weight:600;margin-bottom:8px">☁️ FIREBASE — SINCRONIZACIÓN EN NUBE</div>'+
+      (fbUser?
+        '<div style="background:rgba(5,150,105,.25);border-radius:6px;padding:8px;font-size:11px;color:#6EE7B7;display:flex;align-items:center;gap:8px">✓ Conectado: <strong>'+fbUser.email+'</strong>'+
+          '<button onclick="fbLogout()" style="margin-left:auto;background:none;border:1px solid #F87171;border-radius:4px;padding:2px 8px;font-size:10px;cursor:pointer;color:#F87171">Salir</button>'+
+        '</div>':
+        '<div>'+
+          '<input id="fb-email" type="email" placeholder="Tu email" style="width:100%;border:1px solid rgba(255,255,255,.2);border-radius:6px;padding:6px 10px;font-size:11px;background:rgba(255,255,255,.08);color:#fff;margin-bottom:6px;box-sizing:border-box"/>'+
+          '<input id="fb-pass" type="password" placeholder="Contraseña" style="width:100%;border:1px solid rgba(255,255,255,.2);border-radius:6px;padding:6px 10px;font-size:11px;background:rgba(255,255,255,.08);color:#fff;margin-bottom:6px;box-sizing:border-box"/>'+
+          '<div style="display:flex;gap:6px">'+
+            '<button onclick="fbLogin((document.getElementById(\'fb-email\')||{value:\'\'}).value,(document.getElementById(\'fb-pass\')||{value:\'\'}).value)" style="flex:1;background:#F57C00;color:#fff;border:none;border-radius:6px;padding:7px;font-size:11px;cursor:pointer;font-weight:600">☁️ Entrar</button>'+
+            '<button onclick="fbRegister((document.getElementById(\'fb-email\')||{value:\'\'}).value,(document.getElementById(\'fb-pass\')||{value:\'\'}).value)" style="background:rgba(255,255,255,.1);color:#fff;border:1px solid rgba(255,255,255,.2);border-radius:6px;padding:7px 10px;font-size:11px;cursor:pointer">Registrarse</button>'+
+          '</div>'+
+        '</div>')+
+    '</div>'+
     '</div>'+
   '</div>';
 }
@@ -3917,7 +3978,7 @@ function renderSplash(){
   const cfg=emp().cfg;const c=calcAll();
   const bgOK=c.bgOK;const fOK=c.fOK;
   const user=getCurrentUser()?.nombre||getUser();
-  const version='V.2 — Build 51';
+  const version='V.2 — '+VERSION;
   return '<div style="min-height:calc(100vh - 50px);background:'+(S.darkMode?'#0F172A':'#fff')+';display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 24px">'+
     // Logo horizontal
     '<div style="margin-bottom:8px">'+
@@ -4378,6 +4439,57 @@ function exportNotasWord(){
   a.download='Notas_EEFF_'+(cfg.razonSocial||'')+'_'+(cfg.gestion||'')+'.doc';
   a.click();URL.revokeObjectURL(a.href);
 }
+// ═══ REGISTRO DE CAMBIOS (CHANGELOG) ═══════════════════
+function renderChangelogModal(){
+  var items=(CHANGELOG||[]).map(function(e){
+    var lis=(e.cambios||[]).map(function(c){return '<li style="margin-bottom:4px">'+c+'</li>';}).join('');
+    return '<div style="border-left:3px solid #3B82F6;padding:4px 0 4px 12px;margin-bottom:14px">'+
+      '<div style="font-weight:700;color:#031740;font-size:13px">'+e.v+
+        '<span style="font-weight:400;color:#888;font-size:11px;margin-left:8px">'+(e.fecha||'')+'</span></div>'+
+      '<ul style="margin:6px 0 0 16px;font-size:12px;color:#333;line-height:1.5">'+lis+'</ul></div>';
+  }).join('');
+  return '<div class="emp-modal" onclick="S.showChangelog=false;re()"><div class="emp-box" style="max-width:560px;max-height:80vh;overflow-y:auto" onclick="event.stopPropagation()">'+
+    '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">'+
+      '<div style="font-size:16px;font-weight:700;color:#031740">🗒️ Registro de cambios — '+VERSION+'</div>'+
+      '<button onclick="S.showChangelog=false;re()" style="background:none;border:none;font-size:18px;cursor:pointer;color:#888">✕</button></div>'+
+    items+'</div></div>';
+}
+
+// ═══ RESPALDO COMPLETO (todos los datos del sistema) ════
+function exportBackup(){
+  try{
+    var dump={_meta:{version:VERSION,fecha:new Date().toISOString(),app:'CONTAX'}, data:{}};
+    for(var i=0;i<localStorage.length;i++){
+      var k=localStorage.key(i);
+      dump.data[k]=localStorage.getItem(k);
+    }
+    var blob=new Blob([JSON.stringify(dump,null,2)],{type:'application/json'});
+    var url=URL.createObjectURL(blob);
+    var a=document.createElement('a');
+    var stamp=new Date().toISOString().slice(0,10);
+    a.href=url;a.download='CONTAX_respaldo_'+VERSION+'_'+stamp+'.json';
+    document.body.appendChild(a);a.click();
+    document.body.removeChild(a);URL.revokeObjectURL(url);
+    if(typeof showNotif==='function')showNotif('✅ Respaldo completo descargado');
+  }catch(e){alert('Error al crear el respaldo: '+e.message);}
+}
+
+function importBackupFile(input){
+  var file=input.files&&input.files[0];if(!file)return;
+  if(!confirm('⚠️ Restaurar un respaldo REEMPLAZA todos los datos actuales de este navegador por los del archivo. ¿Continuar?')){input.value='';return;}
+  var reader=new FileReader();
+  reader.onload=function(ev){
+    try{
+      var dump=JSON.parse(ev.target.result);
+      if(!dump||!dump.data)throw new Error('El archivo no es un respaldo válido de CONTAX.');
+      Object.keys(dump.data).forEach(function(k){localStorage.setItem(k,dump.data[k]);});
+      alert('✅ Respaldo restaurado (versión del respaldo: '+((dump._meta&&dump._meta.version)||'?')+'). La página se recargará.');
+      location.reload();
+    }catch(e){alert('No se pudo restaurar: '+e.message);}
+  };
+  reader.readAsText(file);
+}
+
 function renderExportModal(){
   var cfg=emp().cfg;var nit=cfg.nit||'NIT';var year=cfg.gestion||'2025';
   var nombre=(cfg.razonSocial||'').replace(/[^a-zA-Z0-9]/g,'_').substring(0,20);
@@ -4387,6 +4499,7 @@ function renderExportModal(){
     {icon:'📄',title:'PDF Completo (con carátula)',desc:'Carátula + BG + ER + S&S + Flujo + Patrimonio + AF + Notas. Hoja carta.',file:'EEFF-'+nombre+'-'+year+'.pdf',color:'#DC2626',action:'exportPDFCompleto()'},
     {icon:'📉',title:'PDF Análisis',desc:'Resumen Tributario + Reporte Ejecutivo',file:'Analisis-'+nombre+'-'+year+'.pdf',color:'#7C3AED',action:'exportPDFAnalisis()'},
     {icon:'📝',title:'Word — Notas EEFF',desc:'Notas en formato Word editable',file:'Notas_EEFF_'+nombre+'_'+year+'.doc',color:'#142740',action:'exportNotasWord()'},
+    {icon:'💾',title:'Respaldo completo (JSON)',desc:'TODOS los datos del sistema. Guárdalo como copia de seguridad o para pasar a otro equipo.',file:'CONTAX_respaldo_'+VERSION+'.json',color:'#334155',action:'exportBackup()'},
   ];
   var cards=opts.map(function(o){
     return '<div onclick="S.showExport=false;'+o.action+'" style="border:1px solid #E2E8F0;border-radius:10px;padding:14px 16px;cursor:pointer;display:flex;align-items:flex-start;gap:12px" onmouseover="this.style.borderColor=\''+o.color+'\';this.style.background=\'#F8FAFC\'" onmouseout="this.style.borderColor=\'#E2E8F0\';this.style.background=\'#fff\'">'+
@@ -4398,7 +4511,12 @@ function renderExportModal(){
     '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px"><div style="font-size:16px;font-weight:700;color:#031740">📤 Exportar Estados Financieros</div>'+
     '<button onclick="S.showExport=false;re()" style="background:none;border:none;font-size:18px;cursor:pointer;color:#888">✕</button></div>'+
     '<div style="font-size:11px;color:#888;margin-bottom:12px">'+cfg.razonSocial+' | NIT: '+nit+' | Gestión '+year+'</div>'+
-    '<div style="display:flex;flex-direction:column;gap:10px">'+cards+'</div></div></div>';
+    '<div style="display:flex;flex-direction:column;gap:10px">'+cards+'</div>'+
+    '<div style="border-top:1px solid #E2E8F0;margin-top:14px;padding-top:12px">'+
+      '<label style="font-size:11px;color:#555;font-weight:600;display:block;margin-bottom:4px">↻ Restaurar respaldo completo (.json)</label>'+
+      '<input type="file" accept="application/json,.json" onchange="importBackupFile(this)" style="font-size:11px"/>'+
+      '<div style="font-size:10px;color:#888;margin-top:4px">Reemplaza los datos actuales de este navegador por los del archivo de respaldo.</div>'+
+    '</div></div></div>';
 }
 
 
@@ -4497,6 +4615,7 @@ function re(){
     return '<div class="nav-sec">'+sec.sec+'</div>'+sec.items.map(navItem).join('');
   }).join('');
   document.getElementById('root').innerHTML=
+    (S.showChangelog?renderChangelogModal():'')+
     (S.showExport?renderExportModal():'')+
     (S.showImportPreview?renderImportPreview():(S.showEmp?renderEmpModal():''))+
     '<div class="hdr">'+
@@ -4505,6 +4624,7 @@ function re(){
       '<img src="'+CONTAX_ISOTIPO+'" style="height:28px;width:auto;filter:brightness(0) invert(1)"/>'+
       '<div><div style="font-size:14px;font-weight:700">CONTAX</div>'+
       '<div style="font-size:10px;opacity:.7">'+(cfg.razonSocial||'Sistema Contable')+(cfg.razonSocial?' | NIT: '+cfg.nit+' | '+cfg.gestion:'')+'</div></div></div>'+
+    '<button onclick="S.showChangelog=true;re()" title="Ver registro de cambios" style="background:rgba(59,130,246,.25);border:1px solid rgba(59,130,246,.5);color:#fff;border-radius:20px;padding:3px 10px;font-size:11px;font-weight:700;cursor:pointer;letter-spacing:.03em">'+VERSION+'</button>'+
     '<div style="flex:1"></div>'+
     '<div style="font-size:10px;display:flex;gap:8px">BG:<span class="'+(bgOK?'ok':'err')+'">'+(bgOK?'✓':'✗')+'</span> S&S:<span class="'+(ssOK?'ok':'err')+'">'+(ssOK?'✓':'✗')+'</span> Flujo:<span class="'+(fOK?'ok':'err')+'">'+(fOK?'✓':'✗')+'</span></div>'+
     '<span style="font-size:11px;color:rgba(255,255,255,.6)">👤 '+(cu&&cu.nombre||cu&&cu.username||'—')+'</span>'+
