@@ -173,8 +173,15 @@ body.dark-mode .emp-box{background:#0d2145!important;color:#E2E8F0!important}
 // VERSIÓN DEL SISTEMA — Única fuente de verdad
 // Al aprobar una versión: subir VERSION y agregar una entrada al inicio de CHANGELOG.
 // ══════════════════════════════════════════════════════════
-const VERSION='V58';
+const VERSION='V59';
 const CHANGELOG=[
+  {v:'V59', fecha:'2026-07-14', cambios:[
+    'Permisos por tipo de usuario: en la pestaña Usuarios, el administrador marca con casillas qué pestañas puede EDITAR cada tipo (Auditor, Contador, Auxiliar).',
+    'Si un usuario no tiene permiso de edición en una pestaña, la ve en "modo solo lectura": puede consultarla pero no modificar nada.',
+    'El Administrador siempre puede editar todo.',
+    'Valores por defecto: Contador edita casi todo, Auxiliar solo carga de datos (RCV, ingresos, cuentas, asientos), Auditor todo en solo lectura.',
+    'Los permisos se comparten en la nube entre todos los usuarios.'
+  ]},
   {v:'V58', fecha:'2026-07-14', cambios:[
     'Lista de correos autorizados: en la pestaña Usuarios, el administrador agrega los correos que pueden acceder. Si un correo no está en la lista, no puede ingresar.',
     'El primer usuario que entra queda automáticamente como Administrador.',
@@ -260,6 +267,67 @@ function currentRol(){
   return getAuthUsers().length===0?'Administrador':null; // bootstrap: primer usuario = admin
 }
 function isCurrentAdmin(){return currentRol()==='Administrador';}
+
+// ═══ V59 — PERMISOS POR TIPO DE USUARIO Y PESTAÑA ═══
+var PERM_TABS=[
+  {id:'config',lb:'Configuración'},
+  {id:'apertura',lb:'Asiento de Apertura'},
+  {id:'rcv',lb:'RCV Compras'},
+  {id:'ingresos',lb:'Ingresos'},
+  {id:'cxc',lb:'Ctas. por Cobrar'},
+  {id:'cxp',lb:'Ctas. por Pagar'},
+  {id:'compensaciones',lb:'Compensaciones'},
+  {id:'otros',lb:'Otros Asientos'},
+  {id:'nomina',lb:'Nómina / Planilla'},
+  {id:'notas',lb:'Notas EEFF'},
+  {id:'comprobantes',lb:'Comprobantes'},
+  {id:'tributario',lb:'Resumen Tributario'},
+  {id:'cuadroaf',lb:'Cuadro A.F.'},
+  {id:'plan',lb:'Plan de Cuentas'},
+  {id:'nits',lb:"NIT's"},
+  {id:'ufvs',lb:"UFV's"},
+  {id:'vidautil',lb:'Vida Útil'},
+  {id:'listaeeff',lb:'Lista EEFF'}
+];
+var ROLES_PERM=['Auditor','Contador','Auxiliar']; // Administrador siempre tiene todo
+var AUXILIAR_DEF=['apertura','rcv','ingresos','cxc','cxp','otros'];
+function permDefault(rol,tabId){
+  if(rol==='Contador')return true;
+  if(rol==='Auxiliar')return AUXILIAR_DEF.indexOf(tabId)>-1;
+  return false; // Auditor: todo solo lectura
+}
+function getPerms(){
+  var p={};
+  try{var s=localStorage.getItem('cx_perms');if(s){var o=JSON.parse(s);if(o&&typeof o==='object')p=o;}}catch(e){}
+  ROLES_PERM.forEach(function(rol){
+    if(!p[rol])p[rol]={};
+    PERM_TABS.forEach(function(t){if(typeof p[rol][t.id]!=='boolean')p[rol][t.id]=permDefault(rol,t.id);});
+  });
+  return p;
+}
+function savePerms(p){try{localStorage.setItem('cx_perms',JSON.stringify(p));}catch(e){}}
+function canEdit(tabId){
+  if(isCurrentAdmin())return true;
+  var rol=currentRol();
+  if(!rol)return false;
+  if(rol==='Administrador')return true;
+  if(!PERM_TABS.find(function(t){return t.id===tabId;}))return true; // pestañas de solo consulta: siempre visibles
+  var p=getPerms();
+  return !!(p[rol]&&p[rol][tabId]===true);
+}
+function setPerm(rol,tabId,val){
+  if(!isCurrentAdmin())return;
+  var p=getPerms();
+  if(!p[rol])p[rol]={};
+  p[rol][tabId]=!!val;
+  savePerms(p);
+}
+function applyReadOnly(){
+  var main=document.getElementById('main-cnt');
+  if(!main)return;
+  main.querySelectorAll('input,select,textarea').forEach(function(el){el.disabled=true;el.style.background='#F1F5F9';el.style.cursor='not-allowed';el.style.color='#64748B';});
+  main.querySelectorAll('.btn-del,.btn-green,.btn-blue,.btn-orange,.btn-purple').forEach(function(el){el.style.pointerEvents='none';el.style.opacity='.4';});
+}
 
 // Verifica contra la nube si el correo está autorizado.
 function checkAuthorized(user,cb){
@@ -436,7 +504,8 @@ function globalSnapshot(){
     vidautil:localStorage.getItem('cx_vidautil')||null,
     plans:localStorage.getItem('cx_plans')||null,
     lista_eeff:localStorage.getItem('lista_eeff')||null,
-    authusers:localStorage.getItem('cx_authusers')||null
+    authusers:localStorage.getItem('cx_authusers')||null,
+    perms:localStorage.getItem('cx_perms')||null
   };
 }
 function applyGlobal(g){
@@ -448,6 +517,7 @@ function applyGlobal(g){
   if(g.plans)try{localStorage.setItem('cx_plans',g.plans);}catch(e){}
   if(g.lista_eeff)try{localStorage.setItem('lista_eeff',g.lista_eeff);}catch(e){}
   if(g.authusers)try{localStorage.setItem('cx_authusers',g.authusers);}catch(e){}
+  if(g.perms)try{localStorage.setItem('cx_perms',g.perms);}catch(e){}
   try{localStorage.setItem('contax_v2',JSON.stringify({empresas:S.empresas,activeId:S.activeId,planCuentas:S.planCuentas,ufvData:S.ufvData,nits:S.nits}));}catch(e){}
 }
 function fbPushGlobal(){
@@ -489,7 +559,7 @@ function scheduleSyncGlobal(){
       if(syncApplying||!syncReady||!fbDb||typeof k!=='string')return;
       // claves locales/personales que NO se sincronizan
       if(k==='cx_session'||k==='cu'||k==='ca'||k==='cx_darkmode'||k==='ia_msgs'||k==='ai_reporte'||k==='ia_prov'||k==='ia_key'||k==='cx_access'||k==='cx_override_code')return;
-      if(k==='cx_vidautil'||k==='cx_plans'||k==='lista_eeff'||k==='cx_authusers'){scheduleSyncGlobal();return;}
+      if(k==='cx_vidautil'||k==='cx_plans'||k==='lista_eeff'||k==='cx_authusers'||k==='cx_perms'){scheduleSyncGlobal();return;}
       if(k==='contax_v2'){scheduleSync();scheduleSyncGlobal();return;}
       if(k.indexOf('cx_')===0&&S.activeId&&k.indexOf('_'+S.activeId)>-1){scheduleSync();}
     }catch(e){}
@@ -3173,6 +3243,21 @@ function renderUsuarios(){
   var bootstrapNote=(list.length<=1&&isAdm)?
     '<div class="info iy" style="margin-bottom:10px">Estás como <strong>Administrador</strong>. Agrega los correos de tu equipo para que puedan ingresar. Los correos que NO estén en esta lista no podrán entrar.</div>':'';
 
+  var permsCard='';
+  if(isAdm){
+    var permData=getPerms();
+    var head='<tr><th style="text-align:left">Pestaña</th>'+ROLES_PERM.map(function(r){return '<th style="text-align:center;font-size:11px">'+r+'</th>';}).join('')+'</tr>';
+    var prows=PERM_TABS.map(function(t){
+      return '<tr><td style="font-size:12px">'+t.lb+'</td>'+ROLES_PERM.map(function(r){
+        var chk=permData[r]&&permData[r][t.id]===true;
+        return '<td style="text-align:center"><input type="checkbox" '+(chk?'checked':'')+' onchange="setPerm(\''+r+'\',\''+t.id+'\',this.checked)" style="width:16px;height:16px;cursor:pointer"/></td>';
+      }).join('')+'</tr>';
+    }).join('');
+    permsCard='<div class="card"><div class="h2">🔐 Permisos por Tipo de Usuario</div>'+
+      '<div class="info iy" style="margin-bottom:10px">Marca las pestañas que cada tipo puede <strong>editar</strong>. Si está desmarcada, ese tipo la verá en <strong>solo lectura</strong>. El <strong>Administrador</strong> siempre puede editar todo. Los cambios se guardan y comparten al instante.</div>'+
+      '<div class="tbl-wrap"><table><thead>'+head+'</thead><tbody>'+prows+'</tbody></table></div></div>';
+  }
+
   return myCard+
     '<div class="card">'+
       '<div style="display:flex;align-items:center;gap:12px;margin-bottom:12px">'+
@@ -3186,7 +3271,7 @@ function renderUsuarios(){
         '<th>Estado</th><th>Nombre</th><th>Correo</th><th>Tipo</th><th style="text-align:center">Acceso</th><th></th>'+
       '</tr></thead><tbody>'+(rows||'<tr><td colspan="6" style="text-align:center;color:#888">Sin usuarios en la lista</td></tr>')+'</tbody></table></div>'+
       (!isAdm?'<div class="info iy" style="margin-top:10px;font-size:11px">Solo el administrador puede agregar o quitar usuarios.</div>':'')+
-    '</div>';
+    '</div>'+permsCard;
 }
 function addAuthUser(){
   if(!isCurrentAdmin())return alert('Solo el administrador puede agregar usuarios.');
@@ -5118,6 +5203,17 @@ function re(){
     (S.navOpen?'<nav class="nav">'+navHTML+'</nav>':'')+
     '<main class="cnt" id="main-cnt">'+main+'</main>'+
     '</div>';
+  // V59: aplicar modo solo lectura si el usuario no puede editar esta pestaña.
+  if(!canEdit(S.tab)){
+    var _mc=document.getElementById('main-cnt');
+    if(_mc){
+      var _b=document.createElement('div');
+      _b.style.cssText='background:#FEF3C7;border:1px solid #F59E0B;border-radius:8px;padding:8px 12px;font-size:12px;color:#92400E;margin-bottom:10px;font-weight:600';
+      _b.textContent='🔒 Modo solo lectura — tu tipo de usuario ('+(currentRol()||'')+') no puede editar esta pestaña.';
+      _mc.insertBefore(_b,_mc.firstChild);
+      applyReadOnly();
+    }
+  }
 }
 
 
