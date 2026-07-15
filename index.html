@@ -173,8 +173,14 @@ body.dark-mode .emp-box{background:#0d2145!important;color:#E2E8F0!important}
 // VERSIÓN DEL SISTEMA — Única fuente de verdad
 // Al aprobar una versión: subir VERSION y agregar una entrada al inicio de CHANGELOG.
 // ══════════════════════════════════════════════════════════
-const VERSION='V55';
+const VERSION='V56';
 const CHANGELOG=[
+  {v:'V56', fecha:'2026-07-14', cambios:[
+    'SINCRONIZACIÓN EN LA NUBE reconstruida: antes el sistema decía sincronizar pero en realidad guardaba todo solo en tu computadora (el motor apuntaba a datos que no existían y Firebase ni siquiera se iniciaba). Ahora sí funciona.',
+    'Todos los datos de una empresa (configuración, RCV, ingresos, cuentas por cobrar/pagar, compensaciones, tributario, activos, otros asientos, etc.) se sincronizan en tiempo real: si un usuario edita, los demás ven los cambios al instante.',
+    'Datos compartidos del equipo (UFVs, NITs, Plan de Cuentas, Vida Útil, Lista de EEFF) también se sincronizan.',
+    'Indicador de estado de nube en el encabezado. Los datos siempre se guardan primero en tu equipo, así que nunca se pierden aunque falle internet.'
+  ]},
   {v:'V55', fecha:'2026-07-14', cambios:[
     'Cuadro de Activos Fijos rehecho: las cabeceras ahora coinciden con los datos, siguiendo el mismo formato del cálculo de actualización y depreciación (valor actual, incremento por actualización, valor actualizado, depreciación del año, depreciación acumulada actualizada e inventario final valorado).',
     'Corrección de cálculo: el valor del activo comprado (RCV) ahora toma el 87% del importe (el 13% de IVA no se activa).',
@@ -217,11 +223,18 @@ function afTipoFor(tipo){var a=getAFTipos();return a.find(function(x){return x.t
 // ══════════════════════════════════════════════════════════
 // FIREBASE — Sincronización en nube
 // ══════════════════════════════════════════════════════════
-var fbDb=null,fbAuth=null,fbUser=null,fbListener=null,fbSyncing=false;
+var fbDb=null,fbAuth=null,fbUser=null,fbListener=null,fbGlobalListener=null;
+var syncApplying=false,syncTimer=null,syncGlobalTimer=null,syncReady=false,_lastListenId=null;
+
+function fbSetStatus(txt){var el=document.getElementById('fb-status');if(el)el.textContent='☁️ '+txt;}
+function fbUserName(){
+  var c=(typeof getCurrentUser==='function')?getCurrentUser():null;
+  return (c&&(c.nombre||c.username))||(fbUser&&(fbUser.displayName||fbUser.email))||'anón';
+}
 
 function initFirebase(){
   try{
-    if(typeof firebase==='undefined'){console.warn('Firebase SDK no cargado');return;}
+    if(typeof firebase==='undefined'){console.warn('Firebase SDK no cargado');fbSetStatus('sin conexión');return;}
     firebase.initializeApp({
       apiKey:"AIzaSyC20z4ToZtFSAlfOiUOJeC4BAUSEpYyk4Q",
       authDomain:"sistema-contable-contax.firebaseapp.com",
@@ -234,45 +247,158 @@ function initFirebase(){
     fbAuth=firebase.auth();
     fbAuth.onAuthStateChanged(function(user){
       fbUser=user;
-      var el=document.getElementById('fb-status');
-      if(el)el.textContent=user?'☁️ '+user.email.split('@')[0]:'☁️';
+      if(user){
+        fbSetStatus(user.isAnonymous?'nube activa':('nube: '+(user.email||user.displayName||'')));
+        startSync();
+      }else{
+        // Iniciar sesión anónima para que la nube funcione sin necesidad de cuentas individuales.
+        // (El login por usuario se agrega en V57.)
+        fbSetStatus('conectando…');
+        if(fbAuth.signInAnonymously){
+          fbAuth.signInAnonymously().catch(function(e){console.warn('anon auth:',e.message);fbSetStatus('nube no disponible');});
+        }
+      }
     });
     console.log('✅ Firebase OK');
-  }catch(e){console.warn('Firebase init:',e.message);}
+  }catch(e){console.warn('Firebase init:',e.message);fbSetStatus('error');}
 }
 
-function fbSave(){
-  if(!fbDb||!S.activeId||fbSyncing)return;
-  var d=S.data[S.activeId];if(!d)return;
-  fbSyncing=true;
-  fbDb.collection('contax').doc(S.activeId).set({
-    data:JSON.stringify(d),
-    rz:(d.cfg&&d.cfg.razonSocial)||'',
-    by:fbUser?fbUser.email:(getCurrentUser()||'anon'),
+function startSync(){
+  syncReady=true;
+  fbListenGlobal();
+  fbListenEmp(S.activeId);
+  _lastListenId=S.activeId;
+}
+
+// ── Snapshot de una empresa: su objeto + todas sus claves locales ──
+function keysForEmp(id){
+  var out=[],suf='_'+id;
+  for(var i=0;i<localStorage.length;i++){
+    var k=localStorage.key(i);
+    if(!k||k.indexOf('cx_')!==0)continue;
+    if(k.length>=suf.length&&(k.slice(-suf.length)===suf||k.indexOf(suf+'_')>-1))out.push(k);
+  }
+  return out;
+}
+function empSnapshot(id){
+  var e=S.empresas.find(function(x){return x.id===id;})||null;
+  var extra={};
+  keysForEmp(id).forEach(function(k){extra[k]=localStorage.getItem(k);});
+  return {emp:e,extra:extra};
+}
+function applyEmpSnapshot(id,snap){
+  if(snap.emp){
+    var idx=S.empresas.findIndex(function(e){return e.id===id;});
+    if(idx>=0)S.empresas[idx]=snap.emp;else S.empresas.push(snap.emp);
+  }
+  if(snap.extra)Object.keys(snap.extra).forEach(function(k){try{localStorage.setItem(k,snap.extra[k]);}catch(e){}});
+  try{localStorage.setItem('contax_v2',JSON.stringify({empresas:S.empresas,activeId:S.activeId,planCuentas:S.planCuentas,ufvData:S.ufvData,nits:S.nits}));}catch(e){}
+}
+function fbPushEmp(id){
+  if(!fbDb||!id||syncApplying)return;
+  var snap=empSnapshot(id);
+  if(!snap.emp)return;
+  fbDb.collection('contax').doc(id).set({
+    data:JSON.stringify(snap),
+    rz:(snap.emp.cfg&&snap.emp.cfg.razonSocial)||'',
+    by:fbUserName(),
     at:firebase.firestore.FieldValue.serverTimestamp()
-  },{merge:true}).then(function(){
-    fbSyncing=false;
-    var el=document.getElementById('fb-status');
-    if(el){el.textContent='☁️ Sincronizado';setTimeout(function(){if(el)el.textContent=fbUser?'☁️ '+fbUser.email.split('@')[0]:'☁️';},2000);}
-  }).catch(function(e){fbSyncing=false;console.warn('FB save:',e.message);});
+  },{merge:true}).then(function(){fbSetStatus('sincronizado');})
+   .catch(function(e){console.warn('push emp:',e.message);fbSetStatus('error de nube');});
+}
+function fbListenEmp(id){
+  if(fbListener){fbListener();fbListener=null;}
+  if(!fbDb||!id)return;
+  fbListener=fbDb.collection('contax').doc(id).onSnapshot(function(snap){
+    if(snap.metadata.hasPendingWrites)return;        // es un cambio propio en camino
+    if(!snap.exists){fbPushEmp(id);return;}          // nube vacía → subir lo local
+    if(snap.metadata.fromCache)return;
+    try{
+      var incoming=JSON.parse(snap.data().data||'{}');
+      if(!incoming||!incoming.emp)return;
+      if(JSON.stringify(incoming)===JSON.stringify(empSnapshot(id)))return;
+      syncApplying=true;
+      applyEmpSnapshot(id,incoming);
+      syncApplying=false;
+      fbSetStatus('actualizado desde la nube');
+      showNotif('📡 Datos actualizados en la nube');
+      re();
+    }catch(e){syncApplying=false;console.warn('apply emp:',e);}
+  },function(e){console.warn('listen emp:',e.message);});
+}
+function scheduleSync(){
+  if(!fbDb||syncApplying||!syncReady)return;
+  if(syncTimer)clearTimeout(syncTimer);
+  syncTimer=setTimeout(function(){syncTimer=null;fbPushEmp(S.activeId);},1000);
 }
 
-function fbListen(docId){
-  if(fbListener){fbListener();fbListener=null;}
-  if(!fbDb||!docId)return;
-  fbListener=fbDb.collection('contax').doc(docId).onSnapshot(function(snap){
-    if(!snap.exists||snap.metadata.hasPendingWrites||snap.metadata.fromCache)return;
-    try{
-      var remote=JSON.parse(snap.data().data||'{}');
-      if(JSON.stringify(remote)!==JSON.stringify(S.data[docId]||{})){
-        S.data[docId]=remote;
-        localStorage.setItem('cx_emp_'+docId,JSON.stringify(remote));
-        showNotif('📡 Datos actualizados por otro usuario');
-        re();
-      }
-    }catch(e){}
-  },function(e){console.warn('FB listen:',e.message);});
+// ── Datos compartidos del equipo (UFV, NITs, Plan, Vida Útil, Lista EEFF) ──
+function globalSnapshot(){
+  return {
+    ufvData:S.ufvData||[],
+    nits:S.nits||[],
+    planCuentas:S.planCuentas||[],
+    vidautil:localStorage.getItem('cx_vidautil')||null,
+    plans:localStorage.getItem('cx_plans')||null,
+    lista_eeff:localStorage.getItem('lista_eeff')||null
+  };
 }
+function applyGlobal(g){
+  if(!g)return;
+  if(g.ufvData)S.ufvData=g.ufvData;
+  if(g.nits)S.nits=g.nits;
+  if(g.planCuentas)S.planCuentas=g.planCuentas;
+  if(g.vidautil)try{localStorage.setItem('cx_vidautil',g.vidautil);}catch(e){}
+  if(g.plans)try{localStorage.setItem('cx_plans',g.plans);}catch(e){}
+  if(g.lista_eeff)try{localStorage.setItem('lista_eeff',g.lista_eeff);}catch(e){}
+  try{localStorage.setItem('contax_v2',JSON.stringify({empresas:S.empresas,activeId:S.activeId,planCuentas:S.planCuentas,ufvData:S.ufvData,nits:S.nits}));}catch(e){}
+}
+function fbPushGlobal(){
+  if(!fbDb||syncApplying)return;
+  fbDb.collection('contax_config').doc('global').set({
+    data:JSON.stringify(globalSnapshot()),
+    by:fbUserName(),
+    at:firebase.firestore.FieldValue.serverTimestamp()
+  },{merge:true}).catch(function(e){console.warn('push global:',e.message);});
+}
+function fbListenGlobal(){
+  if(fbGlobalListener){fbGlobalListener();fbGlobalListener=null;}
+  if(!fbDb)return;
+  fbGlobalListener=fbDb.collection('contax_config').doc('global').onSnapshot(function(snap){
+    if(snap.metadata.hasPendingWrites)return;
+    if(!snap.exists){fbPushGlobal();return;}
+    if(snap.metadata.fromCache)return;
+    try{
+      var g=JSON.parse(snap.data().data||'{}');
+      if(JSON.stringify(g)===JSON.stringify(globalSnapshot()))return;
+      syncApplying=true;applyGlobal(g);syncApplying=false;
+      re();
+    }catch(e){syncApplying=false;}
+  },function(e){console.warn('listen global:',e.message);});
+}
+function scheduleSyncGlobal(){
+  if(!fbDb||syncApplying||!syncReady)return;
+  if(syncGlobalTimer)clearTimeout(syncGlobalTimer);
+  syncGlobalTimer=setTimeout(function(){syncGlobalTimer=null;fbPushGlobal();},1200);
+}
+
+// ── Intercepta cualquier guardado local para disparar la sincronización ──
+(function(){
+  if(!window.localStorage||localStorage.__cxPatched)return;
+  var _set=localStorage.setItem.bind(localStorage);
+  localStorage.setItem=function(k,v){
+    _set(k,v);
+    try{
+      if(syncApplying||!syncReady||!fbDb||typeof k!=='string')return;
+      // claves locales/personales que NO se sincronizan
+      if(k==='cx_session'||k==='cu'||k==='ca'||k==='cx_darkmode'||k==='ia_msgs'||k==='ai_reporte'||k==='ia_prov'||k==='ia_key'||k==='cx_access'||k==='cx_override_code')return;
+      if(k==='cx_vidautil'||k==='cx_plans'||k==='lista_eeff'){scheduleSyncGlobal();return;}
+      if(k==='contax_v2'){scheduleSync();scheduleSyncGlobal();return;}
+      if(k.indexOf('cx_')===0&&S.activeId&&k.indexOf('_'+S.activeId)>-1){scheduleSync();}
+    }catch(e){}
+  };
+  localStorage.__cxPatched=true;
+})();
 
 function fbLogin(email,pass){
   if(!fbAuth)return alert('Firebase no disponible');
@@ -601,7 +727,8 @@ function saveLS(){
   try{localStorage.setItem('contax_v2',JSON.stringify({empresas:S.empresas,activeId:S.activeId,planCuentas:S.planCuentas,ufvData:S.ufvData,nits:S.nits}));}
   catch(e){console.error('saveLS:',e);if(typeof showNotif==='function')showNotif('⚠️ No se pudo guardar localmente: '+e.message+'. Descarga un respaldo para no perder datos.');}
   logAudit('Guardado');
-  if(typeof fbSave==='function'&&fbDb)fbSave();
+  if(typeof scheduleSync==='function')scheduleSync();
+  if(typeof scheduleSyncGlobal==='function')scheduleSyncGlobal();
 }
 
 const saved=loadLS();
@@ -4687,6 +4814,12 @@ function re(){
     return;
   }
   if(typeof checkAccess==='function')checkAccess();
+  // Al cambiar de empresa activa, reconectar la escucha de la nube a ese documento.
+  if(fbDb&&syncReady&&S.activeId!==_lastListenId){
+    if(syncTimer){clearTimeout(syncTimer);syncTimer=null;}
+    _lastListenId=S.activeId;
+    fbListenEmp(S.activeId);
+  }
   const c=calcAll();
   let main='';
   try{
@@ -4786,6 +4919,7 @@ function re(){
       '<div><div style="font-size:14px;font-weight:700">CONTAX</div>'+
       '<div style="font-size:10px;opacity:.7">'+(cfg.razonSocial||'Sistema Contable')+(cfg.razonSocial?' | NIT: '+cfg.nit+' | '+cfg.gestion:'')+'</div></div></div>'+
     '<button onclick="S.showChangelog=true;re()" title="Ver registro de cambios" style="background:rgba(59,130,246,.25);border:1px solid rgba(59,130,246,.5);color:#fff;border-radius:20px;padding:3px 10px;font-size:11px;font-weight:700;cursor:pointer;letter-spacing:.03em">'+VERSION+'</button>'+
+    '<span id="fb-status" title="Estado de sincronización en la nube" style="font-size:10px;color:rgba(255,255,255,.75);white-space:nowrap">☁️ '+(syncReady?'nube activa':(fbDb?'conectando…':'local'))+'</span>'+
     '<div style="flex:1"></div>'+
     '<div style="font-size:10px;display:flex;gap:8px">BG:<span class="'+(bgOK?'ok':'err')+'">'+(bgOK?'✓':'✗')+'</span> S&S:<span class="'+(ssOK?'ok':'err')+'">'+(ssOK?'✓':'✗')+'</span> Flujo:<span class="'+(fOK?'ok':'err')+'">'+(fOK?'✓':'✗')+'</span></div>'+
     '<span style="font-size:11px;color:rgba(255,255,255,.6)">👤 '+(cu&&cu.nombre||cu&&cu.username||'—')+'</span>'+
@@ -4914,6 +5048,7 @@ function renderHistorial(){
 (function(){
   if(localStorage.getItem('cx_darkmode')==='1'){S.darkMode=true;document.body.classList.add('dark-mode');}
 })();
+if(typeof initFirebase==='function')initFirebase();
 re();
 </script>
 </body>
