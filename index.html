@@ -173,8 +173,14 @@ body.dark-mode .emp-box{background:#0d2145!important;color:#E2E8F0!important}
 // VERSIÓN DEL SISTEMA — Única fuente de verdad
 // Al aprobar una versión: subir VERSION y agregar una entrada al inicio de CHANGELOG.
 // ══════════════════════════════════════════════════════════
-const VERSION='V59';
+const VERSION='V60';
 const CHANGELOG=[
+  {v:'V60', fecha:'2026-07-14', cambios:[
+    'Pestaña "Lista EEFF" conectada a Google Sheets: muestra los datos de la hoja Balance2025 y permite editarla desde el sistema.',
+    'La conexión se hace con un pequeño conector (Apps Script) que se publica una vez en tu hoja; la URL del conector se pega en el sistema y se comparte con el equipo.',
+    'Al guardar, solo se envían las celdas que cambiaste (no se tocan las fórmulas de las demás).',
+    'Respeta los permisos: si tu tipo de usuario no puede editar Lista EEFF, la verás en solo lectura.'
+  ]},
   {v:'V59', fecha:'2026-07-14', cambios:[
     'Permisos por tipo de usuario: en la pestaña Usuarios, el administrador marca con casillas qué pestañas puede EDITAR cada tipo (Auditor, Contador, Auxiliar).',
     'Si un usuario no tiene permiso de edición en una pestaña, la ve en "modo solo lectura": puede consultarla pero no modificar nada.',
@@ -505,7 +511,8 @@ function globalSnapshot(){
     plans:localStorage.getItem('cx_plans')||null,
     lista_eeff:localStorage.getItem('lista_eeff')||null,
     authusers:localStorage.getItem('cx_authusers')||null,
-    perms:localStorage.getItem('cx_perms')||null
+    perms:localStorage.getItem('cx_perms')||null,
+    gsheet_url:localStorage.getItem('cx_gsheet_url')||null
   };
 }
 function applyGlobal(g){
@@ -518,6 +525,7 @@ function applyGlobal(g){
   if(g.lista_eeff)try{localStorage.setItem('lista_eeff',g.lista_eeff);}catch(e){}
   if(g.authusers)try{localStorage.setItem('cx_authusers',g.authusers);}catch(e){}
   if(g.perms)try{localStorage.setItem('cx_perms',g.perms);}catch(e){}
+  if(g.gsheet_url)try{localStorage.setItem('cx_gsheet_url',g.gsheet_url);}catch(e){}
   try{localStorage.setItem('contax_v2',JSON.stringify({empresas:S.empresas,activeId:S.activeId,planCuentas:S.planCuentas,ufvData:S.ufvData,nits:S.nits}));}catch(e){}
 }
 function fbPushGlobal(){
@@ -559,7 +567,7 @@ function scheduleSyncGlobal(){
       if(syncApplying||!syncReady||!fbDb||typeof k!=='string')return;
       // claves locales/personales que NO se sincronizan
       if(k==='cx_session'||k==='cu'||k==='ca'||k==='cx_darkmode'||k==='ia_msgs'||k==='ai_reporte'||k==='ia_prov'||k==='ia_key'||k==='cx_access'||k==='cx_override_code')return;
-      if(k==='cx_vidautil'||k==='cx_plans'||k==='lista_eeff'||k==='cx_authusers'||k==='cx_perms'){scheduleSyncGlobal();return;}
+      if(k==='cx_vidautil'||k==='cx_plans'||k==='lista_eeff'||k==='cx_authusers'||k==='cx_perms'||k==='cx_gsheet_url'){scheduleSyncGlobal();return;}
       if(k==='contax_v2'){scheduleSync();scheduleSyncGlobal();return;}
       if(k.indexOf('cx_')===0&&S.activeId&&k.indexOf('_'+S.activeId)>-1){scheduleSync();}
     }catch(e){}
@@ -3369,42 +3377,97 @@ function syncLista(){
   if(idx>=0){lista[idx]={...lista[idx],...item};}else{lista.push({...item,estado:'en-curso',creado:new Date().toISOString()});}
   saveListaEEFF(lista);return lista;
 }
+// ═══ V60 — LISTA EEFF conectada a Google Sheets (Balance2025) ═══
+function gsheetUrl(){return localStorage.getItem('cx_gsheet_url')||'';}
+function setGsheetUrl(){
+  var el=document.getElementById('gs-url');if(!el)return;
+  localStorage.setItem('cx_gsheet_url',(el.value||'').trim());
+  S.gsLoaded=false;S.gsData=null;S.gsEdits={};S.gsStatus='';
+  re();
+}
+function loadGsheet(){
+  var url=gsheetUrl();
+  if(!url){alert('Primero configura la URL del conector.');return;}
+  S.gsStatus='cargando';S.gsError='';re();
+  fetch(url,{method:'GET'}).then(function(r){return r.json();}).then(function(d){
+    if(!d||!d.ok){S.gsStatus='error';S.gsError=(d&&d.error)||'El conector respondió con un error.';re();return;}
+    S.gsData=d.values||[];S.gsEdits={};S.gsLoaded=true;S.gsStatus='ok';S.gsError='';re();
+  }).catch(function(e){
+    S.gsStatus='error';
+    S.gsError='No se pudo conectar con el conector. Revisa que la URL termine en /exec y que esté publicado para "Cualquier usuario". Detalle: '+e.message;
+    re();
+  });
+}
+function editGsheet(r,c,val){S.gsEdits=S.gsEdits||{};S.gsEdits[r+'_'+c]={r:r,c:c,v:val};}
+function saveGsheet(){
+  var url=gsheetUrl();if(!url)return;
+  var edits=S.gsEdits||{};
+  var changes=Object.keys(edits).map(function(k){return edits[k];});
+  if(!changes.length){alert('No hay cambios para guardar.');return;}
+  S.gsStatus='guardando';re();
+  fetch(url,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:'save',changes:changes})})
+    .then(function(r){return r.json();}).then(function(d){
+      if(!d||!d.ok){S.gsStatus='error';S.gsError=(d&&d.error)||'No se pudo guardar.';re();return;}
+      S.gsEdits={};
+      if(typeof showNotif==='function')showNotif('✅ '+(d.saved||changes.length)+' celda(s) guardada(s) en Google Sheets');
+      S.gsLoaded=false;loadGsheet();
+    }).catch(function(e){S.gsStatus='error';S.gsError='No se pudo guardar: '+e.message;re();});
+}
 function renderListaEEFF(){
-  const lista=syncLista();
-  const pend=lista.filter(i=>i.estado==='pendiente').length;
-  const enc=lista.filter(i=>i.estado==='en-curso').length;
-  const term=lista.filter(i=>i.estado==='terminado').length;
-  const eCols={'pendiente':'#F59E0B','en-curso':'#3B82F6','terminado':'#059669'};
-  const eLabs={'pendiente':'⏳ Pendiente','en-curso':'🔄 En Curso','terminado':'✅ Terminado'};
-  const rows=lista.map((item,i)=>{
-    const p=calcProg(item);const isAct=item.empId===S.activeId;
-    return '<div style="background:#fff;border:'+(isAct?'2px solid #3B82F6':'1px solid #E2E8F0')+';border-radius:8px;padding:12px;margin-bottom:8px">'+
-      '<div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:6px">'+
-      '<div><div style="font-weight:700;font-size:13px">'+item.razon+' '+(isAct?'<span style="background:#3B82F6;color:#fff;padding:1px 6px;border-radius:10px;font-size:10px">ACTIVO</span>':'')+'</div>'+
-      '<div style="font-size:11px;color:#888">NIT: '+(item.nit||'—')+' | Gestión: '+item.gestion+' | '+getUser()+'</div></div>'+
-      '<div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">'+
-      '<span style="background:'+(eCols[item.estado]||'#888')+';color:#fff;padding:3px 10px;border-radius:10px;font-size:11px;font-weight:600">'+(eLabs[item.estado]||item.estado)+'</span>'+
-      (item.bgOk&&item.flujoOk?'<span class="badge-ok">✓</span>':'<span class="badge-warn">⚠</span>')+
-      (item.estado!=='terminado'&&item.bgOk&&item.flujoOk?'<button class="btn-green" style="font-size:10px;padding:4px 8px" onclick="const l=getListaEEFF();l['+i+'].estado=\'terminado\';saveListaEEFF(l);re()">✓ Terminar</button>':'')+
-      (item.estado==='terminado'?'<button class="btn-blue" style="font-size:10px;padding:4px 8px" onclick="const l=getListaEEFF();l['+i+'].estado=\'en-curso\';saveListaEEFF(l);re()">Reabrir</button>':'')+
-      '<button class="btn-del" style="font-size:10px;padding:4px 8px" onclick="if(confirm(\'¿Eliminar de la lista?\')){const l=getListaEEFF();l.splice('+i+',1);saveListaEEFF(l);re()}">✕</button>'+
-      '</div></div>'+
-      '<div style="margin-top:8px">'+
-      '<div style="display:flex;justify-content:space-between;font-size:10px;color:#888;margin-bottom:3px"><span>Progreso</span><span style="font-weight:700;color:#1C2B4B">'+p+'%</span></div>'+
-      '<div class="prog-bar"><div class="prog-fill" style="width:'+p+'%;background:'+(p===100?'#059669':p>70?'#3B82F6':p>40?'#F59E0B':'#94A3B8')+'"></div></div>'+
-      '<div style="display:flex;gap:8px;margin-top:4px;flex-wrap:wrap">'+
-      [['RCV',item.rcvOk],['Ingresos',item.ingOk],['Activos',item.afOk],['BG',item.bgOk],['S&S',item.ssOk],['Flujo',item.flujoOk]].map(([l,ok])=>'<span style="font-size:10px;color:'+(ok?'#059669':'#94A3B8')+'">'+(ok?'✓':'○')+' '+l+'</span>').join('')+
+  var isAdm=isCurrentAdmin();
+  var url=gsheetUrl();
+  var canEd=canEdit('listaeeff');
+
+  var urlCard='<div class="card" style="margin-bottom:12px">'+
+    '<div class="h3" style="margin-top:0">🔗 Conexión con Google Sheets — hoja Balance2025</div>'+
+    (isAdm?
+      '<div style="display:flex;gap:8px;align-items:center">'+
+        '<input id="gs-url" type="text" value="'+url.replace(/"/g,'&quot;')+'" placeholder="Pega la URL del conector (termina en /exec)" style="flex:1"/>'+
+        '<button class="btn" onclick="setGsheetUrl()">Guardar URL</button>'+
       '</div>'+
-      (item.utilidad!=null?'<div style="font-size:11px;margin-top:4px"><strong style="color:'+(item.utilidad>=0?'#059669':'#DC2626')+'">'+(item.utilidad>=0?'Utilidad':'Pérdida')+': '+fmt(Math.abs(item.utilidad))+' Bs</strong></div>':'')+
-      '</div></div>';
-  }).join('');
-  return '<div class="card"><div class="h2">📁 Lista de Estados Financieros</div>'+
-    '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px">'+
-    '<div style="background:#FEF3C7;border-radius:8px;padding:12px;text-align:center"><div style="font-size:24px;font-weight:700;color:#92400E">'+pend+'</div><div style="font-size:11px;color:#92400E">Pendientes</div></div>'+
-    '<div style="background:#EFF6FF;border-radius:8px;padding:12px;text-align:center"><div style="font-size:24px;font-weight:700;color:#1E40AF">'+enc+'</div><div style="font-size:11px;color:#1E40AF">En Curso</div></div>'+
-    '<div style="background:#F0FDF4;border-radius:8px;padding:12px;text-align:center"><div style="font-size:24px;font-weight:700;color:#065F46">'+term+'</div><div style="font-size:11px;color:#065F46">Terminados</div></div>'+
-    '</div>'+(rows||'<div class="info iy">Los balances aparecen aquí automáticamente al trabajar en ellos.</div>')+
-    '</div>';
+      '<div class="nota" style="margin-top:4px">Publica el archivo <strong>CONTAX_Conector_GoogleSheets.gs</strong> en tu hoja (Extensiones → Apps Script → Implementar como Aplicación web) y pega aquí la URL. Se comparte con todo el equipo.</div>'
+      :'<div class="nota">'+(url?'Conexión configurada por el administrador.':'El administrador aún no ha configurado la conexión.')+'</div>')+
+  '</div>';
+
+  if(!url){
+    return urlCard+'<div class="card"><div class="info iy">Aún no hay conexión con Google Sheets. '+(isAdm?'Pega la URL del conector arriba para ver y editar la hoja Balance2025.':'Pide al administrador que la configure.')+'</div></div>';
+  }
+
+  if(!S.gsLoaded && S.gsStatus!=='cargando' && S.gsStatus!=='guardando' && S.gsStatus!=='error'){loadGsheet();}
+
+  var toolbar='<div class="card"><div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;flex-wrap:wrap">'+
+    '<div class="h2" style="flex:1;margin:0">📁 Balance 2025</div>'+
+    (S.gsEdits&&Object.keys(S.gsEdits).length?'<span style="font-size:11px;color:#F59E0B;font-weight:600">● '+Object.keys(S.gsEdits).length+' cambio(s) sin guardar</span>':'')+
+    '<button onclick="S.gsLoaded=false;loadGsheet()" style="background:none;border:1px solid #E2E8F0;border-radius:6px;padding:6px 12px;font-size:12px;cursor:pointer">↻ Actualizar</button>'+
+    (canEd?'<button class="btn-green" onclick="saveGsheet()">💾 Guardar cambios</button>':'')+
+  '</div>';
+
+  var body='';
+  if(S.gsStatus==='cargando'){body='<div class="info ib">Cargando datos de la hoja…</div>';}
+  else if(S.gsStatus==='guardando'){body='<div class="info ib">Guardando cambios en Google Sheets…</div>';}
+  else if(S.gsStatus==='error'){body='<div class="info" style="background:#FEF2F2;border:1px solid #FECACA;color:#DC2626;font-size:12px">⚠️ '+(S.gsError||'Error')+'</div>';}
+  else if(S.gsData){
+    var data=S.gsData;
+    if(!data.length){body='<div class="info iy">La hoja Balance2025 está vacía.</div>';}
+    else{
+      var maxCols=data.reduce(function(m,row){return Math.max(m,row.length);},0);
+      var rowsHtml=data.map(function(row,ri){
+        var cells='';
+        for(var ci=0;ci<maxCols;ci++){
+          var cell=row[ci];
+          var safe=(cell==null?'':String(cell)).replace(/"/g,'&quot;');
+          cells+='<td style="padding:0;border:1px solid #E2E8F0"><input value="'+safe+'" onchange="editGsheet('+ri+','+ci+',this.value)" style="border:none;border-radius:0;background:'+(ri===0?'#EEF2FF':'#fff')+';font-weight:'+(ri===0?'700':'400')+';min-width:110px;font-size:11px;padding:5px 6px"/></td>';
+        }
+        return '<tr>'+cells+'</tr>';
+      }).join('');
+      body='<div style="font-size:11px;color:#77888C;margin-bottom:6px">'+data.length+' filas × '+maxCols+' columnas. Edita las celdas y pulsa "Guardar cambios". Solo se envían las celdas que modifiques.</div>'+
+        '<div class="tbl-wrap" style="max-height:68vh;overflow:auto"><table style="border-collapse:collapse">'+rowsHtml+'</table></div>';
+    }
+  } else {
+    body='<div class="info iy">Pulsa "Actualizar" para cargar los datos.</div>';
+  }
+
+  return urlCard+toolbar+body+'</div>';
 }
 
 function renderDashboard(c){
