@@ -173,8 +173,15 @@ body.dark-mode .emp-box{background:#0d2145!important;color:#E2E8F0!important}
 // VERSIÓN DEL SISTEMA — Única fuente de verdad
 // Al aprobar una versión: subir VERSION y agregar una entrada al inicio de CHANGELOG.
 // ══════════════════════════════════════════════════════════
-const VERSION='V56';
+const VERSION='V57';
 const CHANGELOG=[
+  {v:'V57', fecha:'2026-07-14', cambios:[
+    'Inicio de sesión único con Firebase: ahora se entra al sistema con correo y contraseña. Solo quien tenga una cuenta puede ingresar.',
+    'Se reemplazó el acceso por avatares y el código de acceso por este login único.',
+    'La sesión queda guardada de forma segura por Firebase (funciona sin internet después del primer ingreso).',
+    'El botón "Salir" cierra la sesión de Firebase.',
+    'Nota: en V58 se agrega la lista de correos autorizados que administras tú, para que solo tu equipo pueda entrar.'
+  ]},
   {v:'V56', fecha:'2026-07-14', cambios:[
     'SINCRONIZACIÓN EN LA NUBE reconstruida: antes el sistema decía sincronizar pero en realidad guardaba todo solo en tu computadora (el motor apuntaba a datos que no existían y Firebase ni siquiera se iniciaba). Ahora sí funciona.',
     'Todos los datos de una empresa (configuración, RCV, ingresos, cuentas por cobrar/pagar, compensaciones, tributario, activos, otros asientos, etc.) se sincronizan en tiempo real: si un usuario edita, los demás ven los cambios al instante.',
@@ -225,6 +232,7 @@ function afTipoFor(tipo){var a=getAFTipos();return a.find(function(x){return x.t
 // ══════════════════════════════════════════════════════════
 var fbDb=null,fbAuth=null,fbUser=null,fbListener=null,fbGlobalListener=null;
 var syncApplying=false,syncTimer=null,syncGlobalTimer=null,syncReady=false,_lastListenId=null;
+var fbAuthResolved=false,fbUnavailable=false;
 
 function fbSetStatus(txt){var el=document.getElementById('fb-status');if(el)el.textContent='☁️ '+txt;}
 function fbUserName(){
@@ -234,7 +242,7 @@ function fbUserName(){
 
 function initFirebase(){
   try{
-    if(typeof firebase==='undefined'){console.warn('Firebase SDK no cargado');fbSetStatus('sin conexión');return;}
+    if(typeof firebase==='undefined'){console.warn('Firebase SDK no cargado');fbUnavailable=true;fbAuthResolved=true;fbSetStatus('sin conexión');return;}
     firebase.initializeApp({
       apiKey:"AIzaSyC20z4ToZtFSAlfOiUOJeC4BAUSEpYyk4Q",
       authDomain:"sistema-contable-contax.firebaseapp.com",
@@ -246,21 +254,24 @@ function initFirebase(){
     fbDb=firebase.firestore();
     fbAuth=firebase.auth();
     fbAuth.onAuthStateChanged(function(user){
-      fbUser=user;
-      if(user){
-        fbSetStatus(user.isAnonymous?'nube activa':('nube: '+(user.email||user.displayName||'')));
+      fbAuthResolved=true;
+      // Limpiar sesiones anónimas heredadas de V56: ahora se requiere login real.
+      if(user&&user.isAnonymous){fbAuth.signOut();return;}
+      fbUser=user||null;
+      if(fbUser){
+        // Mapear el usuario de Firebase a la sesión que usa el resto del sistema.
+        setSession({username:fbUser.email,nombre:fbUser.displayName||fbUser.email,email:fbUser.email,fbUid:fbUser.uid});
+        localStorage.setItem('cu',fbUser.displayName||fbUser.email||'Usuario');
+        fbSetStatus('nube: '+(fbUser.email||''));
         startSync();
       }else{
-        // Iniciar sesión anónima para que la nube funcione sin necesidad de cuentas individuales.
-        // (El login por usuario se agrega en V57.)
-        fbSetStatus('conectando…');
-        if(fbAuth.signInAnonymously){
-          fbAuth.signInAnonymously().catch(function(e){console.warn('anon auth:',e.message);fbSetStatus('nube no disponible');});
-        }
+        localStorage.removeItem('cx_session');
+        fbSetStatus('sin iniciar sesión');
       }
+      re();
     });
     console.log('✅ Firebase OK');
-  }catch(e){console.warn('Firebase init:',e.message);fbSetStatus('error');}
+  }catch(e){console.warn('Firebase init:',e.message);fbUnavailable=true;fbAuthResolved=true;fbSetStatus('error');}
 }
 
 function startSync(){
@@ -3308,7 +3319,84 @@ function getUsers(){return JSON.parse(localStorage.getItem('cx_users')||'[]');}
 function saveUsers(u){localStorage.setItem('cx_users',JSON.stringify(u));}
 function getCurrentUser(){const s=localStorage.getItem('cx_session');return s?JSON.parse(s):null;}
 function setSession(u){localStorage.setItem('cx_session',JSON.stringify(u));}
-function logout(){localStorage.removeItem('cx_session');S.showLogin=true;re();}
+function logout(){
+  localStorage.removeItem('cx_session');
+  if(fbAuth){try{fbAuth.signOut();}catch(e){}}
+  if(fbListener){fbListener();fbListener=null;}
+  if(fbGlobalListener){fbGlobalListener();fbGlobalListener=null;}
+  syncReady=false;fbUser=null;_lastListenId=null;
+  re();
+}
+
+// ═══ V57 — LOGIN ÚNICO CON FIREBASE ══════════════════════
+function renderFbLoading(){
+  return '<div style="position:fixed;inset:0;background:#031740;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:2000;color:#fff">'+
+    '<img src="'+CONTAX_ISOTIPO+'" style="height:60px;width:auto;filter:brightness(0) invert(1);margin-bottom:16px"/>'+
+    '<div style="font-size:16px;font-weight:600">CONTAX</div>'+
+    '<div style="font-size:12px;color:rgba(255,255,255,.6);margin-top:8px">Conectando…</div>'+
+  '</div>';
+}
+function doFbLogin(){
+  var em=(document.getElementById('fbl-email')||{}).value||'';
+  var pw=(document.getElementById('fbl-pass')||{}).value||'';
+  var errEl=document.getElementById('fbl-err');
+  if(!em||!pw){if(errEl)errEl.textContent='Ingresa correo y contraseña.';return;}
+  if(!fbAuth){if(errEl)errEl.textContent='No hay conexión con Firebase. Revisa tu internet.';return;}
+  if(errEl){errEl.style.color='#64748B';errEl.textContent='Ingresando…';}
+  fbAuth.signInWithEmailAndPassword(em.trim(),pw).catch(function(e){
+    var m=e.code==='auth/user-not-found'?'Este correo no está registrado.':
+          e.code==='auth/wrong-password'?'Contraseña incorrecta.':
+          e.code==='auth/invalid-email'?'Correo inválido.':
+          (e.code==='auth/invalid-credential'||e.code==='auth/invalid-login-credentials')?'Correo o contraseña incorrectos.':
+          e.code==='auth/too-many-requests'?'Demasiados intentos. Espera un momento.':e.message;
+    if(errEl){errEl.style.color='#DC2626';errEl.textContent=m;}
+  });
+}
+function doFbRegister(){
+  var nm=(document.getElementById('fbl-name')||{}).value||'';
+  var em=(document.getElementById('fbl-email')||{}).value||'';
+  var pw=(document.getElementById('fbl-pass')||{}).value||'';
+  var errEl=document.getElementById('fbl-err');
+  if(!nm||!em||!pw){if(errEl){errEl.style.color='#DC2626';errEl.textContent='Completa nombre, correo y contraseña.';}return;}
+  if(pw.length<6){if(errEl){errEl.style.color='#DC2626';errEl.textContent='La contraseña debe tener al menos 6 caracteres.';}return;}
+  if(!fbAuth){if(errEl)errEl.textContent='No hay conexión con Firebase.';return;}
+  if(errEl){errEl.style.color='#64748B';errEl.textContent='Creando cuenta…';}
+  fbAuth.createUserWithEmailAndPassword(em.trim(),pw).then(function(c){
+    return c.user.updateProfile({displayName:nm});
+  }).catch(function(e){
+    var m=e.code==='auth/email-already-in-use'?'Este correo ya tiene una cuenta. Inicia sesión.':
+          e.code==='auth/invalid-email'?'Correo inválido.':
+          e.code==='auth/weak-password'?'Contraseña muy débil (mínimo 6 caracteres).':e.message;
+    if(errEl){errEl.style.color='#DC2626';errEl.textContent=m;}
+  });
+}
+function renderFbLogin(){
+  var reg=!!S.fbRegMode;
+  var offline=fbUnavailable||!fbAuth;
+  return '<div style="min-height:100vh;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#031740,#0a2a5c);padding:24px">'+
+    '<div style="background:#fff;border-radius:16px;padding:34px 30px;max-width:400px;width:100%;box-shadow:0 10px 40px rgba(0,0,0,.3)">'+
+      '<div style="text-align:center;margin-bottom:22px">'+
+        '<img src="'+CONTAX_ISOTIPO+'" style="height:56px;width:auto;display:block;margin:0 auto 10px"/>'+
+        '<div style="font-size:26px;font-weight:700;color:#031740;letter-spacing:.04em">CONTAX</div>'+
+        '<div style="font-size:12px;color:#77888C;margin-top:2px">Sistema Contable — '+VERSION+'</div>'+
+      '</div>'+
+      (offline?'<div style="background:#FEF2F2;border:1px solid #FECACA;border-radius:8px;padding:10px;font-size:12px;color:#DC2626;margin-bottom:14px">No hay conexión con Firebase. Necesitas internet para iniciar sesión la primera vez.</div>':'')+
+      '<div style="font-size:15px;font-weight:700;color:#031740;margin-bottom:14px">'+(reg?'Crear cuenta':'Iniciar sesión')+'</div>'+
+      (reg?'<div style="margin-bottom:10px"><label style="font-size:11px;font-weight:600;color:#555">Nombre completo</label>'+
+        '<input id="fbl-name" type="text" placeholder="Tu nombre" style="width:100%;border:1.5px solid #E2E8F0;border-radius:8px;padding:9px 11px;font-size:13px;margin-top:3px"/></div>':'')+
+      '<div style="margin-bottom:10px"><label style="font-size:11px;font-weight:600;color:#555">Correo electrónico</label>'+
+        '<input id="fbl-email" type="email" autocomplete="username" placeholder="correo@ejemplo.com" style="width:100%;border:1.5px solid #E2E8F0;border-radius:8px;padding:9px 11px;font-size:13px;margin-top:3px" onkeydown="if(event.key===\'Enter\'){document.getElementById(\'fbl-pass\').focus();}"/></div>'+
+      '<div style="margin-bottom:14px"><label style="font-size:11px;font-weight:600;color:#555">Contraseña</label>'+
+        '<input id="fbl-pass" type="password" autocomplete="'+(reg?'new-password':'current-password')+'" placeholder="••••••••" style="width:100%;border:1.5px solid #E2E8F0;border-radius:8px;padding:9px 11px;font-size:13px;margin-top:3px" onkeydown="if(event.key===\'Enter\'){'+(reg?'doFbRegister()':'doFbLogin()')+';}"/></div>'+
+      '<div id="fbl-err" style="font-size:12px;color:#DC2626;min-height:16px;margin-bottom:10px"></div>'+
+      '<button onclick="'+(reg?'doFbRegister()':'doFbLogin()')+'" style="width:100%;background:#031740;color:#fff;border:none;border-radius:8px;padding:11px;font-size:14px;font-weight:700;cursor:pointer">'+(reg?'Crear cuenta e ingresar':'Ingresar')+'</button>'+
+      '<div style="text-align:center;margin-top:14px;font-size:12px;color:#64748B">'+
+        (reg?'¿Ya tienes cuenta? ':'¿Primera vez? ')+
+        '<a onclick="S.fbRegMode='+(reg?'false':'true')+';re()" style="color:#3B82F6;font-weight:600;cursor:pointer">'+(reg?'Iniciar sesión':'Crear cuenta')+'</a>'+
+      '</div>'+
+    '</div>'+
+  '</div>';
+}
 
 
   var fbSection=(typeof firebase!=='undefined')?
@@ -4808,11 +4896,10 @@ function renderExportModal(){
 
 // ═══ MAIN RENDER FUNCTION ══════════════════════════════
 function re(){
+  // V57: Inicio de sesión único con Firebase Auth
+  if(!fbAuthResolved){document.getElementById('root').innerHTML=renderFbLoading();return;}
+  if(!fbUser){document.getElementById('root').innerHTML=renderFbLogin();return;}
   const _cu=getCurrentUser&&getCurrentUser();
-  if(!_cu){
-    document.getElementById('root').innerHTML=renderLogin();
-    return;
-  }
   if(typeof checkAccess==='function')checkAccess();
   // Al cambiar de empresa activa, reconectar la escucha de la nube a ese documento.
   if(fbDb&&syncReady&&S.activeId!==_lastListenId){
