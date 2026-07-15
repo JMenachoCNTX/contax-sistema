@@ -173,8 +173,11 @@ body.dark-mode .emp-box{background:#0d2145!important;color:#E2E8F0!important}
 // VERSIÓN DEL SISTEMA — Única fuente de verdad
 // Al aprobar una versión: subir VERSION y agregar una entrada al inicio de CHANGELOG.
 // ══════════════════════════════════════════════════════════
-const VERSION='V65';
+const VERSION='V66';
 const CHANGELOG=[
+  {v:'V66', fecha:'2026-07-14', cambios:[
+    'Cuadro de Activos Fijos: nuevo apartado de "Cálculos auxiliares" (desplegable) debajo del cuadro, que muestra paso a paso cómo se calcula cada activo (valor neto, UFV inicial/final, coeficiente, incremento, valor actualizado, depreciación e inventario final) para poder revisarlo visualmente. No cambia ningún cálculo, solo lo muestra.'
+  ]},
   {v:'V65', fecha:'2026-07-14', cambios:[
     'El chat de la IA ahora baja automáticamente al último mensaje (antes se subía al inicio).',
     'Chat separado por empresa: cada empresa tiene su propia conversación, así la IA no cruza datos entre clientes. Al cambiar de empresa se ve su chat.',
@@ -2651,7 +2654,7 @@ function renderCuadroAF(){
     const vH=r2(pn(af.valorHistorico)),dAP=r2(pn(af.depAcumAnterior));
     const ajA=ui>0?r2(vH*(uR-1)):0,vAct=r2(vH+ajA),dep=r2(vAct/anios),ajD=ui>0?r2(dAP*(uR-1)):0;
     const jVal=r2(dAP+ajD);
-    return{tipo:af.tipo,nombre:af.nombre||af.tipo,fuente:'Manual',anios:anios,meses:12,vH,dAP,ajA,vAct,dep,ajD,jVal,dTotal:r2(jVal+dep),vNeto:r2(vAct-r2(jVal+dep)),tasa:(pn(tab.pct)||0)/100,cA:tab.cA,cD:tab.cD,cG:tab.cG};
+    return{tipo:af.tipo,nombre:af.nombre||af.tipo,fuente:'Manual',anios:anios,meses:12,ufvIni:ui,ufvFin:uf,coef:uR,baseNeto:vH,vH,dAP,ajA,vAct,dep,ajD,jVal,dTotal:r2(jVal+dep),vNeto:r2(vAct-r2(jVal+dep)),tasa:(pn(tab.pct)||0)/100,cA:tab.cA,cD:tab.cD,cG:tab.cG};
   }).filter(Boolean);
 
   // Merge: auto items first, then manual only if no duplicate type
@@ -2681,6 +2684,41 @@ function renderCuadroAF(){
   const sourceNote=autoItems.length>0
     ?'<div class="info ig" style="margin-bottom:8px">✓ Datos tomados automáticamente del <strong>Asiento de Apertura</strong>'+(allItems.some(a=>a.fuente==='RCV')?' y <strong>RCV Compras</strong>':'')+'. El valor de las compras toma el 87% del importe; la actualización usa la UFV del día de compra (o del 31/12 del año anterior para activos de gestiones previas). Los años de vida útil se configuran en la pestaña <strong>Vida Útil</strong>.</div>'
     :'<div class="info iy" style="margin-bottom:8px">Ingresa los activos fijos en el <strong>Asiento de Apertura</strong> o en <strong>RCV Compras</strong> y aparecerán aquí automáticamente.</div>';
+
+  // ── Cálculos auxiliares paso a paso (V66) ──
+  function ufvTxt(x){return x?Number(x).toFixed(5):'—';}
+  function coefTxt(x){return (x!=null&&isFinite(x))?Number(x).toFixed(6):'—';}
+  function auxRow(label,expr,val){
+    return '<div style="display:flex;justify-content:space-between;gap:12px;padding:3px 0;border-bottom:1px dashed #EEE;font-size:11px">'+
+      '<span style="color:#555">'+label+'</span>'+
+      '<span style="font-family:monospace;text-align:right">'+(expr?expr+' = ':'')+'<strong>'+fmt(val)+'</strong></span></div>';
+  }
+  var auxBody=allItems.map(function(af){
+    var isRCV=af.fuente==='RCV';
+    var base=(af.baseNeto!=null?af.baseNeto:af.vH);
+    var L='';
+    if(isRCV)L+=auxRow('Valor Neto (87% del importe)', fmt(base)+' × 0,87', af.vH);
+    else L+=auxRow('Valor Neto (Asiento de Apertura)','', af.vH);
+    L+='<div style="font-size:10px;color:#77888C;padding:4px 0">UFV inicial: '+ufvTxt(af.ufvIni)+' · UFV final: '+ufvTxt(af.ufvFin)+' · Coeficiente = '+ufvTxt(af.ufvFin)+' ÷ '+ufvTxt(af.ufvIni)+' = <strong>'+coefTxt(af.coef)+'</strong></div>';
+    L+=auxRow('Incremento por actualización', fmt(af.vH)+' × ('+coefTxt(af.coef)+' − 1)', af.ajA);
+    L+=auxRow('Valor Actualizado', fmt(af.vH)+' + '+fmt(af.ajA), af.vAct);
+    L+=auxRow('Depreciación del año', fmt(af.vAct)+' ÷ '+af.anios+' años × ('+af.meses+'/12 meses)', af.dep);
+    if(!isRCV && (af.dAP||af.ajD)){
+      L+=auxRow('Dep. acumulada anterior','', af.dAP);
+      L+=auxRow('Actualización dep. acumulada', fmt(af.dAP)+' × ('+coefTxt(af.coef)+' − 1)', af.ajD);
+      L+=auxRow('Dep. acumulada actualizada', fmt(af.dep)+' + '+fmt(af.dAP)+' + '+fmt(af.ajD), af.dTotal);
+    }else{
+      L+=auxRow('Dep. acumulada total','', af.dTotal);
+    }
+    L+=auxRow('Inventario final valorado', fmt(af.vAct)+' − '+fmt(af.dTotal), af.vNeto);
+    return '<div style="border:1px solid #E2E8F0;border-radius:8px;padding:10px 12px;margin-bottom:8px">'+
+      '<div style="font-weight:700;color:#031740;margin-bottom:6px;font-size:12px">'+af.nombre+' <span style="font-size:10px;color:#77888C;font-weight:400">('+af.fuente+(af.fecha?' · '+af.fecha:'')+')</span></div>'+L+'</div>';
+  }).join('');
+  var auxPanel=allItems.length>0?
+    '<div class="card"><div style="display:flex;align-items:center;gap:8px"><div class="h3" style="margin:0;flex:1">🔍 Cálculos auxiliares (verificación paso a paso)</div>'+
+      '<button onclick="S.afAuxOpen=!S.afAuxOpen;re()" style="background:none;border:1px solid #E2E8F0;border-radius:6px;padding:4px 10px;font-size:11px;cursor:pointer">'+(S.afAuxOpen?'Ocultar':'Mostrar')+'</button></div>'+
+      (S.afAuxOpen?'<div style="margin-top:10px">'+auxBody+'</div>':'')+
+    '</div>':'';
 
   return '<div class="card"><div class="h2">🏭 Cuadro de Activos Fijos</div>'+
     sourceNote+
@@ -2718,7 +2756,7 @@ function renderCuadroAF(){
     '</tr></tfoot></table></div>'+
     '<div style="margin-top:8px;font-size:10px;color:#77888C">Columnas: <strong>Valor Neto</strong> = base del activo · <strong>Increm. por Actualiz.</strong> = Valor Neto × ((UFV final / UFV inicial) − 1) · <strong>Valor Actualizado</strong> = Valor Neto + Incremento · <strong>Dep. del Año</strong> = (Valor Actualizado ÷ años) × (meses ÷ 12) · <strong>Dep. Acum. Actualizada</strong> = Dep. del Año + Acum. Anterior + Increm. Acum. · <strong>Inventario Final</strong> = Valor Actualizado − Dep. Acum. Actualizada.</div>'
     :'<div class="info iy">No hay activos fijos registrados. Agrégalos en el Asiento de Apertura o en RCV Compras.</div>')+
-  '</div>';
+  '</div>'+auxPanel;
 }
 
 function renderFormatoSS(c){
@@ -4522,6 +4560,7 @@ function getAFFromApertura(){
     const ajD=ui>0?r2(dAP*(uR-1)):0;          // actualización de la depreciación acumulada anterior
     const jVal=r2(dAP+ajD);
     items.push({tipo:d.tipo,nombre:d.tipo,fuente:'Apertura',anios:anios,meses:12,
+      ufvIni:ui,ufvFin:uf,coef:uR,baseNeto:vH,
       vH,dAP,ajA,vAct,dep,ajD,jVal,dTotal:r2(jVal+dep),vNeto:r2(vAct-r2(jVal+dep)),
       tasa:(pn(d.pct)||0)/100,cA:d.cA,cD:d.cD,cG:d.cG});
   });
@@ -4555,6 +4594,7 @@ function getAFFromApertura(){
     items.push({
       tipo:def.tipo,nombre:label,fuente:'RCV',
       fecha:r.fecha,ufvCompra,meses,anios:anios,
+      ufvIni:ufvCompra,ufvFin:uf,coef:uRcv,baseNeto:baseNeto,
       vH,dAP:0,ajA,vAct,dep,ajD:0,jVal:0,
       dTotal:dep,vNeto:r2(vAct-dep),
       tasa:(pn(def.pct)||0)/100,cA:def.cA,cD:def.cD,cG:def.cG
