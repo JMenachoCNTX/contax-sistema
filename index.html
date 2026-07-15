@@ -173,8 +173,14 @@ body.dark-mode .emp-box{background:#0d2145!important;color:#E2E8F0!important}
 // VERSIÓN DEL SISTEMA — Única fuente de verdad
 // Al aprobar una versión: subir VERSION y agregar una entrada al inicio de CHANGELOG.
 // ══════════════════════════════════════════════════════════
-const VERSION='V64';
+const VERSION='V65';
 const CHANGELOG=[
+  {v:'V65', fecha:'2026-07-14', cambios:[
+    'El chat de la IA ahora baja automáticamente al último mensaje (antes se subía al inicio).',
+    'Chat separado por empresa: cada empresa tiene su propia conversación, así la IA no cruza datos entre clientes. Al cambiar de empresa se ve su chat.',
+    'Cada usuario tiene su propio historial de chat (no se mezcla entre usuarios).',
+    'API key compartida: el administrador configura una sola API key en la nube y todo el equipo la usa (sin mezclar consultas: cada quien tiene su propio chat).'
+  ]},
   {v:'V64', fecha:'2026-07-14', cambios:[
     'Volvió el chat flotante de la IA (botón 🤖 abajo a la derecha) para consultar sin ir a la pestaña CONTAX IA.',
     'La IA ahora sí lee los datos REALES de la empresa que estás viendo: se le pasan los saldos por cuenta, cuentas por cobrar/pagar, RCV y el cuadre de los estados.',
@@ -536,7 +542,9 @@ function globalSnapshot(){
     authusers:localStorage.getItem('cx_authusers')||null,
     perms:localStorage.getItem('cx_perms')||null,
     gsheet_url:localStorage.getItem('cx_gsheet_url')||null,
-    gsheet_colcfg:localStorage.getItem('cx_gsheet_colcfg')||null
+    gsheet_colcfg:localStorage.getItem('cx_gsheet_colcfg')||null,
+    ia_key:localStorage.getItem('ia_key')||null,
+    ia_prov:localStorage.getItem('ia_prov')||null
   };
 }
 function applyGlobal(g){
@@ -551,6 +559,8 @@ function applyGlobal(g){
   if(g.perms)try{localStorage.setItem('cx_perms',g.perms);}catch(e){}
   if(g.gsheet_url)try{localStorage.setItem('cx_gsheet_url',g.gsheet_url);}catch(e){}
   if(g.gsheet_colcfg)try{localStorage.setItem('cx_gsheet_colcfg',g.gsheet_colcfg);}catch(e){}
+  if(g.ia_key)try{localStorage.setItem('ia_key',g.ia_key);}catch(e){}
+  if(g.ia_prov)try{localStorage.setItem('ia_prov',g.ia_prov);}catch(e){}
   try{localStorage.setItem('contax_v2',JSON.stringify({empresas:S.empresas,activeId:S.activeId,planCuentas:S.planCuentas,ufvData:S.ufvData,nits:S.nits}));}catch(e){}
 }
 function fbPushGlobal(){
@@ -591,8 +601,8 @@ function scheduleSyncGlobal(){
     try{
       if(syncApplying||!syncReady||!fbDb||typeof k!=='string')return;
       // claves locales/personales que NO se sincronizan
-      if(k==='cx_session'||k==='cu'||k==='ca'||k==='cx_darkmode'||k==='ia_msgs'||k==='ai_reporte'||k==='ia_prov'||k==='ia_key'||k==='cx_access'||k==='cx_override_code')return;
-      if(k==='cx_vidautil'||k==='cx_plans'||k==='lista_eeff'||k==='cx_authusers'||k==='cx_perms'||k==='cx_gsheet_url'||k==='cx_gsheet_colcfg'){scheduleSyncGlobal();return;}
+      if(k==='cx_session'||k==='cu'||k==='ca'||k==='cx_darkmode'||k==='ai_reporte'||k==='cx_access'||k==='cx_override_code'||k.indexOf('ia_msgs')===0)return;
+      if(k==='cx_vidautil'||k==='cx_plans'||k==='lista_eeff'||k==='cx_authusers'||k==='cx_perms'||k==='cx_gsheet_url'||k==='cx_gsheet_colcfg'||k==='ia_key'||k==='ia_prov'){scheduleSyncGlobal();return;}
       if(k==='contax_v2'){scheduleSync();scheduleSyncGlobal();return;}
       if(k.indexOf('cx_')===0&&S.activeId&&k.indexOf('_'+S.activeId)>-1){scheduleSync();}
     }catch(e){}
@@ -3354,21 +3364,25 @@ function delAuthUser(i){
 
 function renderIAApi(c){
   const key=localStorage.getItem('ia_key')||'';const prov=localStorage.getItem('ia_prov')||'claude';
-  const msgs=JSON.parse(localStorage.getItem('ia_msgs')||'[]');
+  const msgs=getIaMsgs();
   const cfg=emp().cfg;
   const chat=msgs.map(m=>'<div style="margin-bottom:8px;display:flex;gap:8px;'+(m.role==='user'?'flex-direction:row-reverse':'')+'"><div style="background:'+(m.role==='user'?'#031740':'#F0F2F5')+';color:'+(m.role==='user'?'#fff':'#1a1a2e')+';padding:8px 12px;border-radius:8px;max-width:80%;font-size:12px;white-space:pre-wrap">'+m.content+'</div></div>').join('');
   return '<div class="card"><div class="h2">🤖 IA Asistente Contable</div>'+
     '<p class="nota">Conecta tu API de IA para analizar el balance. La IA recibe todos los datos contables automáticamente.</p>'+
     '<div class="g2" style="margin-bottom:12px">'+
     '<div><label>Proveedor</label><select id="ia-p" onchange="localStorage.setItem(\'ia_prov\',this.value)"><option value="claude"'+(prov==='claude'?' selected':'')+'>Claude (Anthropic)</option><option value="openai"'+(prov==='openai'?' selected':'')+'>ChatGPT (OpenAI)</option><option value="deepseek"'+(prov==='deepseek'?' selected':'')+'>DeepSeek</option><option value="gemini"'+(prov==='gemini'?' selected':'')+'>Gemini (Google)</option></select></div>'+
-    '<div><label>API Key</label><input type="password" id="ia-k" value="'+key+'" placeholder="Pega tu API key aquí" onblur="localStorage.setItem(\'ia_key\',this.value)"/></div></div>'+
+    '<div><label>API Key '+(isCurrentAdmin()?'(compartida con el equipo)':'(configurada por el administrador)')+'</label>'+
+      (isCurrentAdmin()
+        ?'<input type="password" id="ia-k" value="'+key+'" placeholder="Pega tu API key aquí" onblur="localStorage.setItem(\'ia_key\',this.value);re()"/>'
+        :'<input type="password" value="'+(key?'••••••••••':'')+'" disabled placeholder="'+(key?'Configurada':'Aún no configurada por el administrador')+'" style="background:#F1F5F9;color:#64748B"/>')+
+    '</div></div>'+
     '<div style="background:#F8FAFC;border:1px solid #E2E8F0;border-radius:8px;padding:12px;height:280px;overflow-y:auto;margin-bottom:8px" id="ia-chat">'+
     (chat||'<div style="color:#888;text-align:center;padding:40px">💬 Inicia una conversación.<br><small>La IA tiene acceso a todos los datos de tu balance.</small></div>')+
     '</div>'+
     '<div style="display:flex;gap:8px">'+
     '<input type="text" id="ia-i" placeholder="Ej: ¿Por qué no cuadra el flujo? ¿Qué está mal?" style="flex:1" onkeydown="if(event.key===\'Enter\')sendIA()"/>'+
     '<button class="btn-purple" onclick="sendIA()">Enviar</button>'+
-    '<button onclick="localStorage.setItem(\'ia_msgs\',\'[]\');re()" class="btn-del">🗑</button>'+
+    '<button onclick="clearIaChat()" class="btn-del">🗑</button>'+
     '</div>'+
     '<div class="info iy" style="margin-top:8px;font-size:10px">API keys se guardan solo en tu navegador. Claude: console.anthropic.com | OpenAI: platform.openai.com</div></div>';
 }
@@ -3408,14 +3422,24 @@ function iaContext(){
   }catch(e){return 'No se pudo leer el contexto de la empresa: '+e.message;}
 }
 
+// V65 — historial de chat por empresa (local, no se sincroniza → cada usuario el suyo)
+function iaMsgsKey(){return 'ia_msgs_'+(S&&S.activeId||'x');}
+function getIaMsgs(){try{return JSON.parse(localStorage.getItem(iaMsgsKey())||'[]');}catch(e){return [];}}
+function setIaMsgs(m){localStorage.setItem(iaMsgsKey(),JSON.stringify(m));}
+function clearIaChat(){setIaMsgs([]);re();}
+function iaScrollBottom(){
+  var a=document.getElementById('ia-chat');if(a)a.scrollTop=a.scrollHeight;
+  var b=document.getElementById('fc-body');if(b)b.scrollTop=b.scrollHeight;
+}
+
 async function sendIA(){
   const inp=document.getElementById('ia-i');const msg=inp?.value?.trim();if(!msg)return;
   const key=localStorage.getItem('ia_key')||'';const prov=localStorage.getItem('ia_prov')||'claude';
   if(!key){alert('Configura tu API key primero');return;}
-  const msgs=JSON.parse(localStorage.getItem('ia_msgs')||'[]');
+  const msgs=getIaMsgs();
   const c=calcAll();const cfg=emp().cfg;
   const ctx=iaContext();
-  msgs.push({role:'user',content:msg});localStorage.setItem('ia_msgs',JSON.stringify(msgs));re();
+  msgs.push({role:'user',content:msg});setIaMsgs(msgs);S.iaScroll=Date.now();re();
   inp.value='...enviando...';
   try{
     let resp='';
@@ -3434,7 +3458,7 @@ async function sendIA(){
     }
     msgs.push({role:'assistant',content:resp});
   }catch(e){msgs.push({role:'assistant',content:'Error: '+e.message});}
-  localStorage.setItem('ia_msgs',JSON.stringify(msgs));inp.value='';re();
+  setIaMsgs(msgs);S.iaScroll=Date.now();inp.value='';re();
   setTimeout(()=>{const el=document.getElementById('ia-chat');if(el)el.scrollTop=el.scrollHeight;},100);
 }
 
@@ -4014,7 +4038,7 @@ function toggleChat(){showChat=!showChat;re();}
 function renderFloatChat(){
   if(!showChat)return '<button class="chat-fab" onclick="toggleChat()" title="CONTAX IA">🤖</button>';
   const key=localStorage.getItem('ia_key')||'';const prov=localStorage.getItem('ia_prov')||'claude';
-  const msgs=JSON.parse(localStorage.getItem('ia_msgs')||'[]');
+  const msgs=getIaMsgs();
   const msgHTML=msgs.slice(-20).map(m=>`<div style="margin-bottom:6px;display:flex;gap:6px;${m.role==='user'?'flex-direction:row-reverse':''}">
     <div style="background:${m.role==='user'?'#3B82F6':'rgba(255,255,255,.1)'};padding:7px 10px;border-radius:8px;max-width:85%;font-size:11px;color:#fff;white-space:pre-wrap;line-height:1.4">${m.content}</div>
   </div>`).join('');
@@ -4046,10 +4070,10 @@ async function sendFloatIA(){
   const inp=document.getElementById('fc-input');const msg=inp?.value?.trim();if(!msg)return;
   const key=localStorage.getItem('ia_key')||'';const prov=localStorage.getItem('ia_prov')||'claude';
   if(!key){alert('Configura tu API key en la pestaña CONTAX IA');return;}
-  const msgs=JSON.parse(localStorage.getItem('ia_msgs')||'[]');
+  const msgs=getIaMsgs();
   const c=calcAll();const cfg=emp().cfg;
   const ctx=iaContext();
-  msgs.push({role:'user',content:msg});localStorage.setItem('ia_msgs',JSON.stringify(msgs));re();
+  msgs.push({role:'user',content:msg});setIaMsgs(msgs);S.iaScroll=Date.now();re();
   inp.value='';
   try{
     let resp='';
@@ -4059,7 +4083,7 @@ async function sendFloatIA(){
     else{const r=await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key='+key,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({contents:[{parts:[{text:ctx+' '+msgs.map(m=>m.role+': '+m.content).join(' ')}]}]})});const d=await r.json();resp=d.candidates?.[0]?.content?.parts?.[0]?.text||'Error';}
     msgs.push({role:'assistant',content:resp});
   }catch(e){msgs.push({role:'assistant',content:'Error: '+e.message});}
-  localStorage.setItem('ia_msgs',JSON.stringify(msgs));re();
+  setIaMsgs(msgs);S.iaScroll=Date.now();re();
   setTimeout(()=>{const b=document.getElementById('fc-body');if(b)b.scrollTop=b.scrollHeight;},100);
 }
 
@@ -5465,6 +5489,7 @@ function re(){
     }
   }
   if(S.tab==='listaeeff'&&typeof gsFilter==='function')setTimeout(gsFilter,0);
+  if(S.iaScroll&&(Date.now()-S.iaScroll<15000)&&typeof iaScrollBottom==='function')setTimeout(iaScrollBottom,60);
 }
 
 
