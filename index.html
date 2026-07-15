@@ -173,8 +173,12 @@ body.dark-mode .emp-box{background:#0d2145!important;color:#E2E8F0!important}
 // VERSIÓN DEL SISTEMA — Única fuente de verdad
 // Al aprobar una versión: subir VERSION y agregar una entrada al inicio de CHANGELOG.
 // ══════════════════════════════════════════════════════════
-const VERSION='V66';
+const VERSION='V67';
 const CHANGELOG=[
+  {v:'V67', fecha:'2026-07-14', cambios:[
+    'CORRECCIÓN IMPORTANTE de Activos Fijos: la UFV del día de compra se leía mal cuando estaba guardada con coma decimal (ej. "2,81402" se interpretaba como 2), lo que inflaba el incremento por actualización. Ahora se lee correctamente.',
+    'Con esto el incremento y la depreciación de los activos comprados vuelven a dar los valores correctos (ej. incremento 316,44 en vez de 2.010,17).'
+  ]},
   {v:'V66', fecha:'2026-07-14', cambios:[
     'Cuadro de Activos Fijos: nuevo apartado de "Cálculos auxiliares" (desplegable) debajo del cuadro, que muestra paso a paso cómo se calcula cada activo (valor neto, UFV inicial/final, coeficiente, incremento, valor actualizado, depreciación e inventario final) para poder revisarlo visualmente. No cambia ningún cálculo, solo lo muestra.'
   ]},
@@ -4519,7 +4523,7 @@ function getUFVForDate(fecha){
   // Serial date (Excel) → skip
   if(/^\d+$/.test(iso))return null;
   const found=S.ufvData.find(u=>u.fecha===iso);
-  return found?parseFloat(found.ufv):null;
+  return found?pn(found.ufv):null; // pn entiende coma decimal ("2,81402" → 2.81402)
 }
 
 function getMesesDesde(fechaCompra, fechaFin){
