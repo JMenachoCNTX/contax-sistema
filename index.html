@@ -173,8 +173,15 @@ body.dark-mode .emp-box{background:#0d2145!important;color:#E2E8F0!important}
 // VERSIÓN DEL SISTEMA — Única fuente de verdad
 // Al aprobar una versión: subir VERSION y agregar una entrada al inicio de CHANGELOG.
 // ══════════════════════════════════════════════════════════
-const VERSION='V60';
+const VERSION='V61';
 const CHANGELOG=[
+  {v:'V61', fecha:'2026-07-14', cambios:[
+    'Lista EEFF (Google Sheets): ahora puedes ORDENAR por cualquier columna (clic en el título) — solo afecta la vista, no la hoja.',
+    'Filtros de búsqueda por columna (Cliente, NIT, Realizado por, etc.) — también solo en pantalla.',
+    'Columnas con lista desplegable: se selecciona en vez de escribir.',
+    'El administrador puede bloquear columnas (no editables) y definir las opciones de los desplegables, en un panel de configuración por columna.',
+    'Aunque ordenes o filtres, cada edición se guarda en la fila correcta de tu hoja.'
+  ]},
   {v:'V60', fecha:'2026-07-14', cambios:[
     'Pestaña "Lista EEFF" conectada a Google Sheets: muestra los datos de la hoja Balance2025 y permite editarla desde el sistema.',
     'La conexión se hace con un pequeño conector (Apps Script) que se publica una vez en tu hoja; la URL del conector se pega en el sistema y se comparte con el equipo.',
@@ -331,7 +338,7 @@ function setPerm(rol,tabId,val){
 function applyReadOnly(){
   var main=document.getElementById('main-cnt');
   if(!main)return;
-  main.querySelectorAll('input,select,textarea').forEach(function(el){el.disabled=true;el.style.background='#F1F5F9';el.style.cursor='not-allowed';el.style.color='#64748B';});
+  main.querySelectorAll('input,select,textarea').forEach(function(el){if(el.classList.contains('view-ctl'))return;el.disabled=true;el.style.background='#F1F5F9';el.style.cursor='not-allowed';el.style.color='#64748B';});
   main.querySelectorAll('.btn-del,.btn-green,.btn-blue,.btn-orange,.btn-purple').forEach(function(el){el.style.pointerEvents='none';el.style.opacity='.4';});
 }
 
@@ -512,7 +519,8 @@ function globalSnapshot(){
     lista_eeff:localStorage.getItem('lista_eeff')||null,
     authusers:localStorage.getItem('cx_authusers')||null,
     perms:localStorage.getItem('cx_perms')||null,
-    gsheet_url:localStorage.getItem('cx_gsheet_url')||null
+    gsheet_url:localStorage.getItem('cx_gsheet_url')||null,
+    gsheet_colcfg:localStorage.getItem('cx_gsheet_colcfg')||null
   };
 }
 function applyGlobal(g){
@@ -526,6 +534,7 @@ function applyGlobal(g){
   if(g.authusers)try{localStorage.setItem('cx_authusers',g.authusers);}catch(e){}
   if(g.perms)try{localStorage.setItem('cx_perms',g.perms);}catch(e){}
   if(g.gsheet_url)try{localStorage.setItem('cx_gsheet_url',g.gsheet_url);}catch(e){}
+  if(g.gsheet_colcfg)try{localStorage.setItem('cx_gsheet_colcfg',g.gsheet_colcfg);}catch(e){}
   try{localStorage.setItem('contax_v2',JSON.stringify({empresas:S.empresas,activeId:S.activeId,planCuentas:S.planCuentas,ufvData:S.ufvData,nits:S.nits}));}catch(e){}
 }
 function fbPushGlobal(){
@@ -567,7 +576,7 @@ function scheduleSyncGlobal(){
       if(syncApplying||!syncReady||!fbDb||typeof k!=='string')return;
       // claves locales/personales que NO se sincronizan
       if(k==='cx_session'||k==='cu'||k==='ca'||k==='cx_darkmode'||k==='ia_msgs'||k==='ai_reporte'||k==='ia_prov'||k==='ia_key'||k==='cx_access'||k==='cx_override_code')return;
-      if(k==='cx_vidautil'||k==='cx_plans'||k==='lista_eeff'||k==='cx_authusers'||k==='cx_perms'||k==='cx_gsheet_url'){scheduleSyncGlobal();return;}
+      if(k==='cx_vidautil'||k==='cx_plans'||k==='lista_eeff'||k==='cx_authusers'||k==='cx_perms'||k==='cx_gsheet_url'||k==='cx_gsheet_colcfg'){scheduleSyncGlobal();return;}
       if(k==='contax_v2'){scheduleSync();scheduleSyncGlobal();return;}
       if(k.indexOf('cx_')===0&&S.activeId&&k.indexOf('_'+S.activeId)>-1){scheduleSync();}
     }catch(e){}
@@ -3377,7 +3386,7 @@ function syncLista(){
   if(idx>=0){lista[idx]={...lista[idx],...item};}else{lista.push({...item,estado:'en-curso',creado:new Date().toISOString()});}
   saveListaEEFF(lista);return lista;
 }
-// ═══ V60 — LISTA EEFF conectada a Google Sheets (Balance2025) ═══
+// ═══ V60/V61 — LISTA EEFF conectada a Google Sheets (Balance2025) ═══
 function gsheetUrl(){return localStorage.getItem('cx_gsheet_url')||'';}
 function setGsheetUrl(){
   var el=document.getElementById('gs-url');if(!el)return;
@@ -3385,6 +3394,13 @@ function setGsheetUrl(){
   S.gsLoaded=false;S.gsData=null;S.gsEdits={};S.gsStatus='';
   re();
 }
+function getColCfg(){try{var s=localStorage.getItem('cx_gsheet_colcfg');if(s){var o=JSON.parse(s);if(o&&typeof o==='object')return o;}}catch(e){}return {};}
+function saveColCfg(o){try{localStorage.setItem('cx_gsheet_colcfg',JSON.stringify(o));}catch(e){}}
+function setColLocked(name,val){if(!isCurrentAdmin())return;var c=getColCfg();c[name]=c[name]||{};c[name].locked=!!val;saveColCfg(c);re();}
+function setColOptions(name,val){if(!isCurrentAdmin())return;var c=getColCfg();c[name]=c[name]||{};c[name].options=val;saveColCfg(c);re();}
+function gsHeaderName(data,ci){var h=data[0];return (h&&h[ci]!=null&&String(h[ci]).trim()!=='')?String(h[ci]):('Columna '+(ci+1));}
+function gsEsc(s){return String(s==null?'':s).replace(/"/g,'&quot;');}
+function gsEscJs(s){return String(s==null?'':s).replace(/\\/g,'\\\\').replace(/'/g,"\\'");}
 function loadGsheet(){
   var url=gsheetUrl();
   if(!url){alert('Primero configura la URL del conector.');return;}
@@ -3413,6 +3429,29 @@ function saveGsheet(){
       S.gsLoaded=false;loadGsheet();
     }).catch(function(e){S.gsStatus='error';S.gsError='No se pudo guardar: '+e.message;re();});
 }
+function gsSort(ci){
+  var s=S.gsSort;
+  if(!s||s.col!==ci)S.gsSort={col:ci,dir:'asc'};
+  else if(s.dir==='asc')S.gsSort={col:ci,dir:'desc'};
+  else S.gsSort=null;
+  re();
+}
+function gsFilter(){
+  var box=document.getElementById('gs-grid');if(!box)return;
+  var fs=box.querySelectorAll('[data-fcol]');var filters={};
+  fs.forEach(function(inp){var v=(inp.value||'').trim().toLowerCase();if(v)filters[inp.getAttribute('data-fcol')]=v;});
+  S.gsFilters=filters;
+  var rows=box.querySelectorAll('tbody tr[data-row]');
+  rows.forEach(function(tr){
+    var show=true;
+    for(var ci in filters){
+      var ctl=tr.querySelector('[data-col="'+ci+'"]');
+      var val=ctl?String(ctl.value||'').toLowerCase():'';
+      if(val.indexOf(filters[ci])<0){show=false;break;}
+    }
+    tr.style.display=show?'':'none';
+  });
+}
 function renderListaEEFF(){
   var isAdm=isCurrentAdmin();
   var url=gsheetUrl();
@@ -3422,7 +3461,7 @@ function renderListaEEFF(){
     '<div class="h3" style="margin-top:0">🔗 Conexión con Google Sheets — hoja Balance2025</div>'+
     (isAdm?
       '<div style="display:flex;gap:8px;align-items:center">'+
-        '<input id="gs-url" type="text" value="'+url.replace(/"/g,'&quot;')+'" placeholder="Pega la URL del conector (termina en /exec)" style="flex:1"/>'+
+        '<input id="gs-url" type="text" value="'+gsEsc(url)+'" placeholder="Pega la URL del conector (termina en /exec)" style="flex:1"/>'+
         '<button class="btn" onclick="setGsheetUrl()">Guardar URL</button>'+
       '</div>'+
       '<div class="nota" style="margin-top:4px">Publica el archivo <strong>CONTAX_Conector_GoogleSheets.gs</strong> en tu hoja (Extensiones → Apps Script → Implementar como Aplicación web) y pega aquí la URL. Se comparte con todo el equipo.</div>'
@@ -3435,9 +3474,33 @@ function renderListaEEFF(){
 
   if(!S.gsLoaded && S.gsStatus!=='cargando' && S.gsStatus!=='guardando' && S.gsStatus!=='error'){loadGsheet();}
 
+  var colCfg=getColCfg();
+  var data=S.gsData||[];
+  var maxCols=data.reduce(function(m,row){return Math.max(m,(row&&row.length)||0);},0);
+
+  // Panel de configuración de columnas (solo admin)
+  var cfgPanel='';
+  if(isAdm && data.length){
+    var cfgRows='';
+    for(var ci=0;ci<maxCols;ci++){
+      var nm=gsHeaderName(data,ci);
+      var cc=colCfg[nm]||{};
+      cfgRows+='<tr><td style="font-size:11px;font-weight:600">'+nm+'</td>'+
+        '<td style="text-align:center"><input type="checkbox" '+(cc.locked?'checked':'')+' onchange="setColLocked(\''+gsEscJs(nm)+'\',this.checked)"/></td>'+
+        '<td><input value="'+gsEsc(cc.options||'')+'" onchange="setColOptions(\''+gsEscJs(nm)+'\',this.value)" placeholder="Opción 1, Opción 2, ..." style="width:100%;font-size:11px"/></td></tr>';
+    }
+    cfgPanel='<div class="card" style="margin-bottom:12px">'+
+      '<div style="display:flex;align-items:center;gap:8px"><div class="h3" style="margin:0;flex:1">⚙️ Configuración de columnas</div>'+
+      '<button onclick="S.gsCfgOpen=!S.gsCfgOpen;re()" style="background:none;border:1px solid #E2E8F0;border-radius:6px;padding:4px 10px;font-size:11px;cursor:pointer">'+(S.gsCfgOpen?'Ocultar':'Mostrar')+'</button></div>'+
+      (S.gsCfgOpen?'<div class="nota" style="margin:8px 0">Marca <strong>Bloqueada</strong> para que una columna no se pueda editar. En <strong>Opciones</strong> escribe las opciones de la lista desplegable separadas por coma (déjalo vacío para texto libre).</div>'+
+        '<div class="tbl-wrap"><table><thead><tr><th style="text-align:left">Columna</th><th>Bloqueada</th><th style="text-align:left">Opciones de lista desplegable</th></tr></thead><tbody>'+cfgRows+'</tbody></table></div>':'')+
+    '</div>';
+  }
+
   var toolbar='<div class="card"><div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;flex-wrap:wrap">'+
     '<div class="h2" style="flex:1;margin:0">📁 Balance 2025</div>'+
     (S.gsEdits&&Object.keys(S.gsEdits).length?'<span style="font-size:11px;color:#F59E0B;font-weight:600">● '+Object.keys(S.gsEdits).length+' cambio(s) sin guardar</span>':'')+
+    (S.gsSort?'<button onclick="S.gsSort=null;re()" style="background:none;border:1px solid #E2E8F0;border-radius:6px;padding:6px 10px;font-size:11px;cursor:pointer">✕ Quitar orden</button>':'')+
     '<button onclick="S.gsLoaded=false;loadGsheet()" style="background:none;border:1px solid #E2E8F0;border-radius:6px;padding:6px 12px;font-size:12px;cursor:pointer">↻ Actualizar</button>'+
     (canEd?'<button class="btn-green" onclick="saveGsheet()">💾 Guardar cambios</button>':'')+
   '</div>';
@@ -3446,28 +3509,61 @@ function renderListaEEFF(){
   if(S.gsStatus==='cargando'){body='<div class="info ib">Cargando datos de la hoja…</div>';}
   else if(S.gsStatus==='guardando'){body='<div class="info ib">Guardando cambios en Google Sheets…</div>';}
   else if(S.gsStatus==='error'){body='<div class="info" style="background:#FEF2F2;border:1px solid #FECACA;color:#DC2626;font-size:12px">⚠️ '+(S.gsError||'Error')+'</div>';}
-  else if(S.gsData){
-    var data=S.gsData;
-    if(!data.length){body='<div class="info iy">La hoja Balance2025 está vacía.</div>';}
-    else{
-      var maxCols=data.reduce(function(m,row){return Math.max(m,row.length);},0);
-      var rowsHtml=data.map(function(row,ri){
-        var cells='';
-        for(var ci=0;ci<maxCols;ci++){
-          var cell=row[ci];
-          var safe=(cell==null?'':String(cell)).replace(/"/g,'&quot;');
-          cells+='<td style="padding:0;border:1px solid #E2E8F0"><input value="'+safe+'" onchange="editGsheet('+ri+','+ci+',this.value)" style="border:none;border-radius:0;background:'+(ri===0?'#EEF2FF':'#fff')+';font-weight:'+(ri===0?'700':'400')+';min-width:110px;font-size:11px;padding:5px 6px"/></td>';
-        }
-        return '<tr>'+cells+'</tr>';
-      }).join('');
-      body='<div style="font-size:11px;color:#77888C;margin-bottom:6px">'+data.length+' filas × '+maxCols+' columnas. Edita las celdas y pulsa "Guardar cambios". Solo se envían las celdas que modifiques.</div>'+
-        '<div class="tbl-wrap" style="max-height:68vh;overflow:auto"><table style="border-collapse:collapse">'+rowsHtml+'</table></div>';
+  else if(data.length){
+    // Cabecera con orden
+    var ths='';var fths='';
+    for(var ci2=0;ci2<maxCols;ci2++){
+      var nm2=gsHeaderName(data,ci2);
+      var arrow=(S.gsSort&&S.gsSort.col===ci2)?(S.gsSort.dir==='asc'?' ▲':' ▼'):' <span style="opacity:.3">⇅</span>';
+      ths+='<th onclick="gsSort('+ci2+')" style="cursor:pointer;white-space:nowrap;background:#031740;color:#fff;padding:6px 8px;font-size:11px;position:sticky;top:0">'+nm2+arrow+'</th>';
+      var fv=(S.gsFilters&&S.gsFilters[ci2])?gsEsc(S.gsFilters[ci2]):'';
+      fths+='<th style="padding:2px;background:#EEF2FF"><input class="view-ctl" data-fcol="'+ci2+'" value="'+fv+'" oninput="gsFilter()" placeholder="filtrar" style="width:100px;font-size:10px;padding:3px 5px;border:1px solid #CBD5E1;border-radius:4px"/></th>';
     }
+    // Filas de datos (con índice real preservado)
+    var dataRows=[];for(var ri=1;ri<data.length;ri++)dataRows.push({orig:ri,cells:data[ri]});
+    if(S.gsSort){
+      var col=S.gsSort.col,dir=S.gsSort.dir;
+      dataRows.sort(function(a,b){
+        var x=a.cells[col],y=b.cells[col];x=(x==null?'':x);y=(y==null?'':y);
+        var nx=parseFloat(String(x).replace(/[^0-9.\-]/g,'')),ny=parseFloat(String(y).replace(/[^0-9.\-]/g,''));
+        var bothNum=!isNaN(nx)&&!isNaN(ny)&&String(x).trim()!==''&&String(y).trim()!=='';
+        var rr=bothNum?(nx-ny):String(x).localeCompare(String(y),'es',{numeric:true});
+        return dir==='desc'?-rr:rr;
+      });
+    }
+    var rowsHtml=dataRows.map(function(dr){
+      var cells='';
+      for(var ci3=0;ci3<maxCols;ci3++){
+        var nm3=gsHeaderName(data,ci3);
+        var cc3=colCfg[nm3]||{};
+        var val=dr.cells[ci3];val=(val==null?'':String(val));
+        var ctl;
+        if(cc3.locked){
+          ctl='<input data-col="'+ci3+'" value="'+gsEsc(val)+'" disabled style="border:none;background:#F1F5F9;color:#64748B;min-width:110px;font-size:11px;padding:5px 6px"/>';
+        }else{
+          var opts=(cc3.options||'').split(',').map(function(o){return o.trim();}).filter(function(o){return o!=='';});
+          if(opts.length){
+            var oo='<option value=""></option>';
+            var found=false;
+            opts.forEach(function(o){var sel=(o===val)?' selected':'';if(o===val)found=true;oo+='<option'+sel+'>'+gsEsc(o)+'</option>';});
+            if(val&&!found)oo+='<option selected>'+gsEsc(val)+'</option>';
+            ctl='<select data-col="'+ci3+'" onchange="editGsheet('+dr.orig+','+ci3+',this.value)" style="border:none;background:#fff;min-width:110px;font-size:11px;padding:5px 6px">'+oo+'</select>';
+          }else{
+            ctl='<input data-col="'+ci3+'" value="'+gsEsc(val)+'" onchange="editGsheet('+dr.orig+','+ci3+',this.value)" style="border:none;min-width:110px;font-size:11px;padding:5px 6px"/>';
+          }
+        }
+        cells+='<td style="padding:0;border:1px solid #E2E8F0">'+ctl+'</td>';
+      }
+      return '<tr data-row="'+dr.orig+'">'+cells+'</tr>';
+    }).join('');
+    body='<div style="font-size:11px;color:#77888C;margin-bottom:6px">'+dataRows.length+' filas × '+maxCols+' columnas. Clic en un título para ordenar; usa las casillas de filtro para buscar. Solo se guardan las celdas que edites.</div>'+
+      '<div class="tbl-wrap" id="gs-grid" style="max-height:66vh;overflow:auto"><table style="border-collapse:collapse">'+
+      '<thead><tr>'+ths+'</tr><tr>'+fths+'</tr></thead><tbody>'+rowsHtml+'</tbody></table></div>';
   } else {
     body='<div class="info iy">Pulsa "Actualizar" para cargar los datos.</div>';
   }
 
-  return urlCard+toolbar+body+'</div>';
+  return urlCard+cfgPanel+toolbar+body+'</div>';
 }
 
 function renderDashboard(c){
@@ -5277,6 +5373,7 @@ function re(){
       applyReadOnly();
     }
   }
+  if(S.tab==='listaeeff'&&typeof gsFilter==='function')setTimeout(gsFilter,0);
 }
 
 
