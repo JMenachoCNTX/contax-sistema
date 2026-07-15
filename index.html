@@ -173,8 +173,13 @@ body.dark-mode .emp-box{background:#0d2145!important;color:#E2E8F0!important}
 // VERSIÓN DEL SISTEMA — Única fuente de verdad
 // Al aprobar una versión: subir VERSION y agregar una entrada al inicio de CHANGELOG.
 // ══════════════════════════════════════════════════════════
-const VERSION='V61';
+const VERSION='V62';
 const CHANGELOG=[
+  {v:'V62', fecha:'2026-07-14', cambios:[
+    'Lista EEFF: ahora se puede OCULTAR columnas (ej. Nro) y FIJAR columnas (ej. Cliente) para que queden fijas al hacer scroll horizontal.',
+    'Protección automática de fórmulas: las celdas que ya tienen una fórmula en tu Google Sheets se detectan solas y quedan bloqueadas (no se pueden sobrescribir desde el sistema; muestran el resultado calculado).',
+    'La detección automática de fórmulas requiere actualizar el conector (nueva versión incluida). Si no lo actualizas, igual puedes proteger esas columnas marcándolas como "Bloqueada".'
+  ]},
   {v:'V61', fecha:'2026-07-14', cambios:[
     'Lista EEFF (Google Sheets): ahora puedes ORDENAR por cualquier columna (clic en el título) — solo afecta la vista, no la hoja.',
     'Filtros de búsqueda por columna (Cliente, NIT, Realizado por, etc.) — también solo en pantalla.',
@@ -3386,28 +3391,32 @@ function syncLista(){
   if(idx>=0){lista[idx]={...lista[idx],...item};}else{lista.push({...item,estado:'en-curso',creado:new Date().toISOString()});}
   saveListaEEFF(lista);return lista;
 }
-// ═══ V60/V61 — LISTA EEFF conectada a Google Sheets (Balance2025) ═══
+// ═══ V60/V61/V62 — LISTA EEFF conectada a Google Sheets (Balance2025) ═══
 function gsheetUrl(){return localStorage.getItem('cx_gsheet_url')||'';}
 function setGsheetUrl(){
   var el=document.getElementById('gs-url');if(!el)return;
   localStorage.setItem('cx_gsheet_url',(el.value||'').trim());
-  S.gsLoaded=false;S.gsData=null;S.gsEdits={};S.gsStatus='';
+  S.gsLoaded=false;S.gsData=null;S.gsFormulas=null;S.gsEdits={};S.gsStatus='';
   re();
 }
 function getColCfg(){try{var s=localStorage.getItem('cx_gsheet_colcfg');if(s){var o=JSON.parse(s);if(o&&typeof o==='object')return o;}}catch(e){}return {};}
 function saveColCfg(o){try{localStorage.setItem('cx_gsheet_colcfg',JSON.stringify(o));}catch(e){}}
-function setColLocked(name,val){if(!isCurrentAdmin())return;var c=getColCfg();c[name]=c[name]||{};c[name].locked=!!val;saveColCfg(c);re();}
-function setColOptions(name,val){if(!isCurrentAdmin())return;var c=getColCfg();c[name]=c[name]||{};c[name].options=val;saveColCfg(c);re();}
+function setColFlag(name,flag,val){if(!isCurrentAdmin())return;var c=getColCfg();c[name]=c[name]||{};c[name][flag]=(flag==='options')?val:!!val;saveColCfg(c);re();}
+function setColLocked(name,val){setColFlag(name,'locked',val);}
+function setColOptions(name,val){setColFlag(name,'options',val);}
+function setColHidden(name,val){setColFlag(name,'hidden',val);}
+function setColFrozen(name,val){setColFlag(name,'frozen',val);}
 function gsHeaderName(data,ci){var h=data[0];return (h&&h[ci]!=null&&String(h[ci]).trim()!=='')?String(h[ci]):('Columna '+(ci+1));}
 function gsEsc(s){return String(s==null?'':s).replace(/"/g,'&quot;');}
 function gsEscJs(s){return String(s==null?'':s).replace(/\\/g,'\\\\').replace(/'/g,"\\'");}
+function gsIsFormula(ri,ci){var F=S.gsFormulas;return !!(F&&F[ri]&&F[ri][ci]!=null&&String(F[ri][ci]).charAt(0)==='=');}
 function loadGsheet(){
   var url=gsheetUrl();
   if(!url){alert('Primero configura la URL del conector.');return;}
   S.gsStatus='cargando';S.gsError='';re();
   fetch(url,{method:'GET'}).then(function(r){return r.json();}).then(function(d){
     if(!d||!d.ok){S.gsStatus='error';S.gsError=(d&&d.error)||'El conector respondió con un error.';re();return;}
-    S.gsData=d.values||[];S.gsEdits={};S.gsLoaded=true;S.gsStatus='ok';S.gsError='';re();
+    S.gsData=d.values||[];S.gsFormulas=d.formulas||null;S.gsEdits={};S.gsLoaded=true;S.gsStatus='ok';S.gsError='';re();
   }).catch(function(e){
     S.gsStatus='error';
     S.gsError='No se pudo conectar con el conector. Revisa que la URL termine en /exec y que esté publicado para "Cualquier usuario". Detalle: '+e.message;
@@ -3456,6 +3465,7 @@ function renderListaEEFF(){
   var isAdm=isCurrentAdmin();
   var url=gsheetUrl();
   var canEd=canEdit('listaeeff');
+  var FCW=150; // ancho de columnas fijadas
 
   var urlCard='<div class="card" style="margin-bottom:12px">'+
     '<div class="h3" style="margin-top:0">🔗 Conexión con Google Sheets — hoja Balance2025</div>'+
@@ -3487,13 +3497,15 @@ function renderListaEEFF(){
       var cc=colCfg[nm]||{};
       cfgRows+='<tr><td style="font-size:11px;font-weight:600">'+nm+'</td>'+
         '<td style="text-align:center"><input type="checkbox" '+(cc.locked?'checked':'')+' onchange="setColLocked(\''+gsEscJs(nm)+'\',this.checked)"/></td>'+
+        '<td style="text-align:center"><input type="checkbox" '+(cc.hidden?'checked':'')+' onchange="setColHidden(\''+gsEscJs(nm)+'\',this.checked)"/></td>'+
+        '<td style="text-align:center"><input type="checkbox" '+(cc.frozen?'checked':'')+' onchange="setColFrozen(\''+gsEscJs(nm)+'\',this.checked)"/></td>'+
         '<td><input value="'+gsEsc(cc.options||'')+'" onchange="setColOptions(\''+gsEscJs(nm)+'\',this.value)" placeholder="Opción 1, Opción 2, ..." style="width:100%;font-size:11px"/></td></tr>';
     }
     cfgPanel='<div class="card" style="margin-bottom:12px">'+
       '<div style="display:flex;align-items:center;gap:8px"><div class="h3" style="margin:0;flex:1">⚙️ Configuración de columnas</div>'+
       '<button onclick="S.gsCfgOpen=!S.gsCfgOpen;re()" style="background:none;border:1px solid #E2E8F0;border-radius:6px;padding:4px 10px;font-size:11px;cursor:pointer">'+(S.gsCfgOpen?'Ocultar':'Mostrar')+'</button></div>'+
-      (S.gsCfgOpen?'<div class="nota" style="margin:8px 0">Marca <strong>Bloqueada</strong> para que una columna no se pueda editar. En <strong>Opciones</strong> escribe las opciones de la lista desplegable separadas por coma (déjalo vacío para texto libre).</div>'+
-        '<div class="tbl-wrap"><table><thead><tr><th style="text-align:left">Columna</th><th>Bloqueada</th><th style="text-align:left">Opciones de lista desplegable</th></tr></thead><tbody>'+cfgRows+'</tbody></table></div>':'')+
+      (S.gsCfgOpen?'<div class="nota" style="margin:8px 0"><strong>Bloqueada</strong>: no se puede editar · <strong>Oculta</strong>: no se muestra · <strong>Fija</strong>: queda fija al hacer scroll horizontal · <strong>Opciones</strong>: lista desplegable (separadas por coma). Las celdas con fórmula se bloquean solas.</div>'+
+        '<div class="tbl-wrap"><table><thead><tr><th style="text-align:left">Columna</th><th>Bloqueada</th><th>Oculta</th><th>Fija</th><th style="text-align:left">Opciones desplegable</th></tr></thead><tbody>'+cfgRows+'</tbody></table></div>':'')+
     '</div>';
   }
 
@@ -3510,16 +3522,26 @@ function renderListaEEFF(){
   else if(S.gsStatus==='guardando'){body='<div class="info ib">Guardando cambios en Google Sheets…</div>';}
   else if(S.gsStatus==='error'){body='<div class="info" style="background:#FEF2F2;border:1px solid #FECACA;color:#DC2626;font-size:12px">⚠️ '+(S.gsError||'Error')+'</div>';}
   else if(data.length){
-    // Cabecera con orden
-    var ths='';var fths='';
+    // columnas visibles (según "Oculta") y desplazamiento de las fijas
+    var visCols=[];var frozenLeft=0;
     for(var ci2=0;ci2<maxCols;ci2++){
-      var nm2=gsHeaderName(data,ci2);
-      var arrow=(S.gsSort&&S.gsSort.col===ci2)?(S.gsSort.dir==='asc'?' ▲':' ▼'):' <span style="opacity:.3">⇅</span>';
-      ths+='<th onclick="gsSort('+ci2+')" style="cursor:pointer;white-space:nowrap;background:#031740;color:#fff;padding:6px 8px;font-size:11px;position:sticky;top:0">'+nm2+arrow+'</th>';
-      var fv=(S.gsFilters&&S.gsFilters[ci2])?gsEsc(S.gsFilters[ci2]):'';
-      fths+='<th style="padding:2px;background:#EEF2FF"><input class="view-ctl" data-fcol="'+ci2+'" value="'+fv+'" oninput="gsFilter()" placeholder="filtrar" style="width:100px;font-size:10px;padding:3px 5px;border:1px solid #CBD5E1;border-radius:4px"/></th>';
+      var nmv=gsHeaderName(data,ci2);
+      var ccv=colCfg[nmv]||{};
+      if(ccv.hidden)continue;
+      var frozen=!!ccv.frozen;
+      visCols.push({ci:ci2,name:nmv,cfg:ccv,frozen:frozen,left:frozen?frozenLeft:null});
+      if(frozen)frozenLeft+=FCW;
     }
-    // Filas de datos (con índice real preservado)
+    function frozenCss(vc,z,bg){return vc.frozen?('position:sticky;left:'+vc.left+'px;min-width:'+FCW+'px;max-width:'+FCW+'px;z-index:'+z+';background:'+bg+';'):'';}
+
+    var ths='';var fths='';
+    visCols.forEach(function(vc){
+      var arrow=(S.gsSort&&S.gsSort.col===vc.ci)?(S.gsSort.dir==='asc'?' ▲':' ▼'):' <span style="opacity:.3">⇅</span>';
+      ths+='<th onclick="gsSort('+vc.ci+')" style="cursor:pointer;white-space:nowrap;background:#031740;color:#fff;padding:6px 8px;font-size:11px;position:sticky;top:0;z-index:'+(vc.frozen?7:5)+';'+(vc.frozen?'left:'+vc.left+'px;min-width:'+FCW+'px;max-width:'+FCW+'px;':'')+'">'+vc.name+arrow+'</th>';
+      var fv=(S.gsFilters&&S.gsFilters[vc.ci])?gsEsc(S.gsFilters[vc.ci]):'';
+      fths+='<th style="padding:2px;background:#EEF2FF;'+frozenCss(vc,6,'#EEF2FF')+'"><input class="view-ctl" data-fcol="'+vc.ci+'" value="'+fv+'" oninput="gsFilter()" placeholder="filtrar" style="width:'+(vc.frozen?(FCW-12):100)+'px;font-size:10px;padding:3px 5px;border:1px solid #CBD5E1;border-radius:4px"/></th>';
+    });
+
     var dataRows=[];for(var ri=1;ri<data.length;ri++)dataRows.push({orig:ri,cells:data[ri]});
     if(S.gsSort){
       var col=S.gsSort.col,dir=S.gsSort.dir;
@@ -3533,18 +3555,18 @@ function renderListaEEFF(){
     }
     var rowsHtml=dataRows.map(function(dr){
       var cells='';
-      for(var ci3=0;ci3<maxCols;ci3++){
-        var nm3=gsHeaderName(data,ci3);
-        var cc3=colCfg[nm3]||{};
+      visCols.forEach(function(vc){
+        var ci3=vc.ci;var cc3=vc.cfg;
         var val=dr.cells[ci3];val=(val==null?'':String(val));
+        var isFormula=gsIsFormula(dr.orig,ci3);
+        var frozenBg=vc.frozen?'#F8FAFC':'#fff';
         var ctl;
-        if(cc3.locked){
-          ctl='<input data-col="'+ci3+'" value="'+gsEsc(val)+'" disabled style="border:none;background:#F1F5F9;color:#64748B;min-width:110px;font-size:11px;padding:5px 6px"/>';
+        if(cc3.locked||isFormula){
+          ctl='<input data-col="'+ci3+'" value="'+gsEsc(val)+'" disabled '+(isFormula?'title="Celda con fórmula (protegida)"':'')+' style="border:none;background:'+(isFormula?'#EFF6FF':'#F1F5F9')+';color:#64748B;min-width:110px;font-size:11px;padding:5px 6px"/>';
         }else{
           var opts=(cc3.options||'').split(',').map(function(o){return o.trim();}).filter(function(o){return o!=='';});
           if(opts.length){
-            var oo='<option value=""></option>';
-            var found=false;
+            var oo='<option value=""></option>';var found=false;
             opts.forEach(function(o){var sel=(o===val)?' selected':'';if(o===val)found=true;oo+='<option'+sel+'>'+gsEsc(o)+'</option>';});
             if(val&&!found)oo+='<option selected>'+gsEsc(val)+'</option>';
             ctl='<select data-col="'+ci3+'" onchange="editGsheet('+dr.orig+','+ci3+',this.value)" style="border:none;background:#fff;min-width:110px;font-size:11px;padding:5px 6px">'+oo+'</select>';
@@ -3552,11 +3574,12 @@ function renderListaEEFF(){
             ctl='<input data-col="'+ci3+'" value="'+gsEsc(val)+'" onchange="editGsheet('+dr.orig+','+ci3+',this.value)" style="border:none;min-width:110px;font-size:11px;padding:5px 6px"/>';
           }
         }
-        cells+='<td style="padding:0;border:1px solid #E2E8F0">'+ctl+'</td>';
-      }
+        cells+='<td style="padding:0;border:1px solid #E2E8F0;'+frozenCss(vc,2,frozenBg)+'">'+ctl+'</td>';
+      });
       return '<tr data-row="'+dr.orig+'">'+cells+'</tr>';
     }).join('');
-    body='<div style="font-size:11px;color:#77888C;margin-bottom:6px">'+dataRows.length+' filas × '+maxCols+' columnas. Clic en un título para ordenar; usa las casillas de filtro para buscar. Solo se guardan las celdas que edites.</div>'+
+    var hiddenN=maxCols-visCols.length;
+    body='<div style="font-size:11px;color:#77888C;margin-bottom:6px">'+dataRows.length+' filas × '+visCols.length+' columnas visibles'+(hiddenN?' ('+hiddenN+' oculta(s))':'')+'. Clic en un título para ordenar; usa las casillas de filtro para buscar. Las celdas con fórmula (🔒 azul) no se editan.</div>'+
       '<div class="tbl-wrap" id="gs-grid" style="max-height:66vh;overflow:auto"><table style="border-collapse:collapse">'+
       '<thead><tr>'+ths+'</tr><tr>'+fths+'</tr></thead><tbody>'+rowsHtml+'</tbody></table></div>';
   } else {
