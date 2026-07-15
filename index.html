@@ -173,8 +173,15 @@ body.dark-mode .emp-box{background:#0d2145!important;color:#E2E8F0!important}
 // VERSIÓN DEL SISTEMA — Única fuente de verdad
 // Al aprobar una versión: subir VERSION y agregar una entrada al inicio de CHANGELOG.
 // ══════════════════════════════════════════════════════════
-const VERSION='V54';
+const VERSION='V55';
 const CHANGELOG=[
+  {v:'V55', fecha:'2026-07-14', cambios:[
+    'Cuadro de Activos Fijos rehecho: las cabeceras ahora coinciden con los datos, siguiendo el mismo formato del cálculo de actualización y depreciación (valor actual, incremento por actualización, valor actualizado, depreciación del año, depreciación acumulada actualizada e inventario final valorado).',
+    'Corrección de cálculo: el valor del activo comprado (RCV) ahora toma el 87% del importe (el 13% de IVA no se activa).',
+    'Corrección de meses de uso: si la compra es después del día 15 del mes, la depreciación empieza el mes siguiente.',
+    'Actualización de activos de gestiones anteriores usa la UFV del 31/12 del año anterior.',
+    'Nueva pestaña "Vida Útil": permite editar los años de vida útil y el porcentaje de cada tipo de activo, y agregar nuevos tipos. Estos valores alimentan automáticamente los cálculos y asientos.'
+  ]},
   {v:'V54', fecha:'2026-07-14', cambios:[
     'Pestaña Verificaciones: nuevo panel superior que muestra si CUADRAN los 6 estados financieros (Balance General, Estado de Resultados, Flujo de Efectivo, Sumas y Saldos, Evolución del Patrimonio y Cuadro de Activos Fijos), con la diferencia en Bs. cuando no cuadran.'
   ]},
@@ -187,6 +194,25 @@ const CHANGELOG=[
   ]},
   {v:'V52', fecha:'—', cambios:['Versión base sobre la que empezamos a trabajar.']}
 ];
+
+// ══════════════════════════════════════════════════════════
+// ACTIVOS FIJOS — Tipos, vida útil y % (fuente única, editable)
+// Alimenta el Cuadro A.F., los asientos y los estados financieros.
+// ══════════════════════════════════════════════════════════
+const AF_TIPOS_DEF=[
+  {tipo:'VEHÍCULO',                cA:'123003001',cD:'124001001',cG:'524001005',anios:5, pct:20, k:'vehiculo',  kD:'depVehiculo'},
+  {tipo:'MUEBLES Y ENSERES',       cA:'123004001',cD:'124001002',cG:'524001004',anios:10,pct:10, k:'muebles',   kD:'depMuebles'},
+  {tipo:'EQUIPOS DE COMPUTACIÓN',  cA:'123006001',cD:'124001003',cG:'524001002',anios:4, pct:25, k:'equComp',   kD:'depEquComp'},
+  {tipo:'EQUIPOS DE COMUNICACIONES',cA:'123007001',cD:'124001004',cG:'524001001',anios:5,pct:20, k:'equCom',    kD:'depEquCom'},
+  {tipo:'EQUIPO DE OFICINA',       cA:'123009001',cD:'124001005',cG:'524001006',anios:10,pct:10, k:'equOficina',kD:'depEquOficina'},
+  {tipo:'EQUIPO ELECTRÓNICO',      cA:'123010001',cD:'124001006',cG:'524001003',anios:4, pct:25, k:'equElec',   kD:'depEquElec'}
+];
+function getAFTipos(){
+  try{var s=localStorage.getItem('cx_vidautil');if(s){var a=JSON.parse(s);if(Array.isArray(a)&&a.length)return a;}}catch(e){}
+  return JSON.parse(JSON.stringify(AF_TIPOS_DEF));
+}
+function saveAFTipos(a){localStorage.setItem('cx_vidautil',JSON.stringify(a));}
+function afTipoFor(tipo){var a=getAFTipos();return a.find(function(x){return x.tipo===tipo;})||null;}
 
 // ══════════════════════════════════════════════════════════
 // FIREBASE — Sincronización en nube
@@ -769,13 +795,14 @@ function genEntries(){
   });
   // También procesar activos manuales (pestaña AF, si hay)
   (e.activos||[]).forEach((af,i)=>{
-    const tab=TAF[af.tipo];if(!tab)return;
+    const tab=afTipoFor(af.tipo);if(!tab)return;
+    const anios=pn(tab.anios)||1;
     const vH=r2(pn(af.valorHistorico)),dAP=r2(pn(af.depAcumAnterior));
     const ajA=ui>0?r2(vH*(uR-1)):0;
     const ajD=ui>0?r2(dAP*(uR-1)):0;
     if(Math.abs(ajA)>0)E.push({id:'UAM'+i,tipo:'T',desc:'UFV ACTIVO (M): '+(af.nombre||af.tipo),lines:[{c:tab.cA,d:ajA,h:0},{c:'441001001',d:0,h:ajA}]});
     if(Math.abs(ajD)>0)E.push({id:'UDM'+i,tipo:'T',desc:'UFV DEP.ACUM (M): '+(af.nombre||af.tipo),lines:[{c:'561001001',d:ajD,h:0},{c:tab.cD,d:0,h:ajD}]});
-    const dep=r2(r2(vH+ajA)*tab.tasa);
+    const dep=r2(r2(vH+ajA)/anios);
     if(dep>0)E.push({id:'DM'+i,tipo:'T',desc:'DEPRECIACIÓN (M): '+(af.nombre||af.tipo),lines:[{c:tab.cG,d:dep,h:0},{c:tab.cD,d:0,h:dep}]});
   });
 
@@ -2210,55 +2237,132 @@ function renderComprobantes(c){
     '</div>';
 }
 
+// ═══ VIDA ÚTIL — Tipos de activos fijos (editable) ═════
+function vidaUtilSet(i,field,val){
+  var a=getAFTipos();
+  if(!a[i])return;
+  a[i][field]=(field==='anios'||field==='pct')?pn(val):val;
+  saveAFTipos(a);re();
+}
+function vidaUtilAdd(){
+  var a=getAFTipos();
+  a.push({tipo:'NUEVO TIPO',cA:'',cD:'',cG:'',anios:5,pct:20,k:'',kD:''});
+  saveAFTipos(a);re();
+}
+function vidaUtilDel(i){
+  if(!confirm('¿Eliminar este tipo de activo fijo?'))return;
+  var a=getAFTipos();a.splice(i,1);saveAFTipos(a);re();
+}
+function vidaUtilReset(){
+  if(!confirm('¿Restaurar los tipos de activos y su vida útil a los valores originales? Se perderán los cambios que hayas hecho aquí.'))return;
+  localStorage.removeItem('cx_vidautil');re();
+}
+function renderVidaUtil(){
+  var a=getAFTipos();
+  var rows=a.map(function(t,i){
+    return '<tr>'+
+      '<td><input value="'+(t.tipo||'')+'" onblur="vidaUtilSet('+i+',\'tipo\',this.value)" style="width:100%;min-width:150px"/></td>'+
+      '<td style="width:80px"><input type="number" min="1" value="'+(t.anios||'')+'" onblur="vidaUtilSet('+i+',\'anios\',this.value)" style="text-align:center"/></td>'+
+      '<td style="width:80px"><input type="number" min="0" step="0.01" value="'+(t.pct!=null?t.pct:'')+'" onblur="vidaUtilSet('+i+',\'pct\',this.value)" style="text-align:center"/></td>'+
+      '<td><input value="'+(t.cA||'')+'" onblur="vidaUtilSet('+i+',\'cA\',this.value)" style="width:110px;font-family:monospace"/></td>'+
+      '<td><input value="'+(t.cD||'')+'" onblur="vidaUtilSet('+i+',\'cD\',this.value)" style="width:110px;font-family:monospace"/></td>'+
+      '<td><input value="'+(t.cG||'')+'" onblur="vidaUtilSet('+i+',\'cG\',this.value)" style="width:110px;font-family:monospace"/></td>'+
+      '<td style="text-align:center"><button class="btn-del" onclick="vidaUtilDel('+i+')" style="padding:3px 8px">✕</button></td>'+
+    '</tr>';
+  }).join('');
+  return '<div class="card"><div class="h2">⏳ Vida Útil de los Activos Fijos</div>'+
+    '<div class="info iy" style="margin-bottom:10px">Estos valores alimentan automáticamente el <strong>Cuadro A.F.</strong>, los asientos de depreciación y los estados financieros. '+
+      'La depreciación se calcula con los <strong>años de vida útil</strong> (Valor Actualizado ÷ años). El <strong>%</strong> es referencial (equivale a 100 ÷ años). '+
+      'Las cuentas deben existir en el <strong>Plan de Cuentas</strong>: Cta. Activo (12x), Cta. Dep. Acumulada (124xxx) y Cta. Gasto Depreciación (524xxx).</div>'+
+    '<div class="tbl-wrap"><table>'+
+      '<thead><tr>'+
+        '<th>Tipo de Activo</th><th>Años Vida Útil</th><th>% Deprec.</th>'+
+        '<th>Cta. Activo</th><th>Cta. Dep. Acum.</th><th>Cta. Gasto Deprec.</th><th></th>'+
+      '</tr></thead><tbody>'+rows+'</tbody></table></div>'+
+    '<div style="display:flex;gap:8px;margin-top:12px">'+
+      '<button class="btn-blue" onclick="vidaUtilAdd()">+ Agregar tipo</button>'+
+      '<button class="btn" onclick="vidaUtilReset()" style="background:#64748B">↻ Restaurar valores originales</button>'+
+    '</div></div>';
+}
+
 function renderCuadroAF(){
   const ui=pn(emp().cfg.ufvInicio),uf=pn(emp().cfg.ufvFin);const uR=ui>0?r2(uf/ui):1;
   const cfg=emp().cfg;
   // Get items from Apertura + RCV (auto) and from Activos tab (manual)
   const autoItems=getAFFromApertura();
   const manualItems=(emp().activos||[]).map(af=>{
-    const TAF2={'VEHÍCULO':{tasa:.20,cA:'123003001',cD:'124001001',cG:'524001005'},'MUEBLES Y ENSERES':{tasa:.10,cA:'123004001',cD:'124001002',cG:'524001004'},'EQUIPOS DE COMPUTACIÓN':{tasa:.25,cA:'123006001',cD:'124001003',cG:'524001002'},'EQUIPOS DE COMUNICACIONES':{tasa:.20,cA:'123007001',cD:'124001004',cG:'524001001'},'EQUIPO DE OFICINA':{tasa:.10,cA:'123009001',cD:'124001005',cG:'524001006'},'EQUIPO ELECTRÓNICO':{tasa:.25,cA:'123010001',cD:'124001006',cG:'524001003'}};
-    const tab=TAF2[af.tipo];if(!tab)return null;
+    const tab=afTipoFor(af.tipo);if(!tab)return null;
+    const anios=pn(tab.anios)||1;
     const vH=r2(pn(af.valorHistorico)),dAP=r2(pn(af.depAcumAnterior));
-    const ajA=ui>0?r2(vH*(uR-1)):0,vAct=r2(vH+ajA),dep=r2(vAct*tab.tasa),ajD=ui>0?r2(dAP*(uR-1)):0;
-    return{tipo:af.tipo,nombre:af.nombre||af.tipo,fuente:'Manual',vH,dAP,ajA,vAct,dep,ajD,dTotal:r2(dAP+ajD+dep),vNeto:r2(vAct-r2(dAP+ajD+dep)),tasa:tab.tasa,cA:tab.cA,cD:tab.cD,cG:tab.cG};
+    const ajA=ui>0?r2(vH*(uR-1)):0,vAct=r2(vH+ajA),dep=r2(vAct/anios),ajD=ui>0?r2(dAP*(uR-1)):0;
+    const jVal=r2(dAP+ajD);
+    return{tipo:af.tipo,nombre:af.nombre||af.tipo,fuente:'Manual',anios:anios,meses:12,vH,dAP,ajA,vAct,dep,ajD,jVal,dTotal:r2(jVal+dep),vNeto:r2(vAct-r2(jVal+dep)),tasa:(pn(tab.pct)||0)/100,cA:tab.cA,cD:tab.cD,cG:tab.cG};
   }).filter(Boolean);
 
   // Merge: auto items first, then manual only if no duplicate type
   const autoTypes=new Set(autoItems.map(a=>a.cA));
   const allItems=[...autoItems,...manualItems.filter(m=>!autoTypes.has(m.cA))];
 
+  function num(v){return v?fmt(r2(v)):'';}
   const rows=allItems.map(af=>'<tr>'+
     '<td>'+af.nombre+'</td>'+
     '<td style="font-size:10px;color:#77888C">'+af.fuente+'</td>'+
+    '<td style="font-size:10px;text-align:center">'+(af.fuente==='Apertura'?'Apertura':(af.fecha||'—'))+'</td>'+
+    '<td style="text-align:center">'+(af.meses!=null?af.meses:12)+'</td>'+
+    '<td style="text-align:center">'+(af.anios||'')+'</td>'+
     '<td class="r">'+fmt(af.vH)+'</td>'+
-    '<td class="r" style="color:#0891B2">'+fmt(af.ajA)+'</td>'+
+    '<td class="r" style="color:#0891B2">'+num(af.ajA)+'</td>'+
     '<td class="r" style="font-weight:600">'+fmt(af.vAct)+'</td>'+
-    '<td class="r" style="color:#92400E">'+(af.dAP?fmt(-af.dAP):'')+'</td>'+
     '<td class="r" style="color:#DC2626">'+fmt(af.dep)+'</td>'+
-    '<td class="r" style="color:#92400E">'+(af.ajD?fmt(-af.ajD):'')+'</td>'+
-    '<td class="r" style="font-weight:700;color:#DC2626">'+fmt(-af.dTotal)+'</td>'+
+    '<td class="r">'+num(af.dAP)+'</td>'+
+    '<td class="r" style="color:#0891B2">'+num(af.ajD)+'</td>'+
+    '<td class="r" style="font-weight:700;color:#DC2626">'+fmt(af.dTotal)+'</td>'+
     '<td class="r" style="font-weight:700;color:#059669">'+fmt(af.vNeto)+'</td>'+
-    '<td class="r" style="font-size:10px">'+Math.round(af.tasa*100)+'%</td>'+
   '</tr>').join('');
 
-  const totVH=r2(allItems.reduce((s,af)=>r2(s+af.vH),0));
-  const totAjA=r2(allItems.reduce((s,af)=>r2(s+af.ajA),0));
-  const totDep=r2(allItems.reduce((s,af)=>r2(s+af.dep),0));
-  const totNeto=r2(allItems.reduce((s,af)=>r2(s+af.vNeto),0));
+  const T=(f)=>r2(allItems.reduce((s,af)=>r2(s+(af[f]||0)),0));
+  const totC=T('vH'),totD=T('ajA'),totF=T('vAct'),totG=T('dep'),totH=T('dAP'),totI=T('ajD'),totK=T('dTotal'),totL=T('vNeto');
 
   const sourceNote=autoItems.length>0
-    ?'<div class="info ig" style="margin-bottom:8px">✓ Datos tomados automáticamente del <strong>Asiento de Apertura</strong>'+(allItems.some(a=>a.fuente==='RCV')?' y <strong>RCV Compras</strong>':'')+'. No necesitas usar la pestaña "Activos Fijos" a menos que quieras registrar datos adicionales.</div>'
-    :'<div class="info iy" style="margin-bottom:8px">Ingresa los activos fijos en el <strong>Asiento de Apertura</strong> (Vehículo, Muebles, Equipos...) y aparecerán aquí automáticamente.</div>';
+    ?'<div class="info ig" style="margin-bottom:8px">✓ Datos tomados automáticamente del <strong>Asiento de Apertura</strong>'+(allItems.some(a=>a.fuente==='RCV')?' y <strong>RCV Compras</strong>':'')+'. El valor de las compras toma el 87% del importe; la actualización usa la UFV del día de compra (o del 31/12 del año anterior para activos de gestiones previas). Los años de vida útil se configuran en la pestaña <strong>Vida Útil</strong>.</div>'
+    :'<div class="info iy" style="margin-bottom:8px">Ingresa los activos fijos en el <strong>Asiento de Apertura</strong> o en <strong>RCV Compras</strong> y aparecerán aquí automáticamente.</div>';
 
   return '<div class="card"><div class="h2">🏭 Cuadro de Activos Fijos</div>'+
     sourceNote+
     '<div class="ee-sub" style="margin-bottom:10px">'+cfg.razonSocial+' | '+cfg.gestion+' | Del '+cfg.fechaInicio+' al '+cfg.fechaFin+'</div>'+
-    (allItems.length>0?'<div class="tbl-wrap"><table><thead>'+
-      '<tr><th rowspan="2">DESCRIPCIÓN</th><th rowspan="2">Fuente</th><th rowspan="2">Fecha Compra</th><th rowspan="2">UFV Compra</th><th rowspan="2">Meses</th><th class="r" rowspan="2">VALOR HIST.</th><th class="r" rowspan="2">UFV ACTIVO</th><th class="r" rowspan="2">VALOR ACTUAL.</th><th class="r" colspan="3">DEPRECIACIÓN</th><th class="r" rowspan="2">DEP.ACUM TOTAL</th><th class="r" rowspan="2">VALOR NETO</th><th class="r" rowspan="2">TASA</th></tr>'+
-      '<tr><th class="r">Acum. Ant.</th><th class="r">Del Año</th><th class="r">UFV Dep.Acum</th></tr>'+
+    (allItems.length>0?'<div class="tbl-wrap"><table style="font-size:11px"><thead>'+
+      '<tr>'+
+        '<th rowspan="2">DESCRIPCIÓN</th>'+
+        '<th rowspan="2">Fuente</th>'+
+        '<th rowspan="2">Fecha<br>Compra</th>'+
+        '<th rowspan="2">Meses<br>Uso</th>'+
+        '<th rowspan="2">Años<br>V.Ú.</th>'+
+        '<th class="r" rowspan="2">Valor Neto<br>(87%)</th>'+
+        '<th class="r" rowspan="2">Increm. por<br>Actualiz.</th>'+
+        '<th class="r" rowspan="2">Valor<br>Actualizado</th>'+
+        '<th class="r" colspan="3">DEPRECIACIÓN</th>'+
+        '<th class="r" rowspan="2">Inventario<br>Final Valorado</th>'+
+      '</tr>'+
+      '<tr>'+
+        '<th class="r">Del Año</th>'+
+        '<th class="r">Acum. Ant.</th>'+
+        '<th class="r">Increm. Acum.</th>'+
+        '<th class="r">Dep. Acum.<br>Actualizada</th>'+
+      '</tr>'+
     '</thead><tbody>'+rows+'</tbody>'+
-    '<tfoot><tr class="tr-f"><td colspan="2">TOTALES</td><td class="r">'+fmt(totVH)+'</td><td class="r">'+fmt(totAjA)+'</td><td colspan="5"></td><td class="r">'+fmt(totDep)+'</td><td class="r">'+fmt(totNeto)+'</td><td></td></tr></tfoot></table></div>'
-    :'<div class="info iy">No hay activos fijos registrados en el Asiento de Apertura.</div>')+
+    '<tfoot><tr class="tr-f">'+
+      '<td colspan="5" style="text-align:right">TOTALES</td>'+
+      '<td class="r">'+fmt(totC)+'</td>'+
+      '<td class="r">'+fmt(totD)+'</td>'+
+      '<td class="r">'+fmt(totF)+'</td>'+
+      '<td class="r">'+fmt(totG)+'</td>'+
+      '<td class="r">'+fmt(totH)+'</td>'+
+      '<td class="r">'+fmt(totI)+'</td>'+
+      '<td class="r">'+fmt(totK)+'</td>'+
+      '<td class="r">'+fmt(totL)+'</td>'+
+    '</tr></tfoot></table></div>'+
+    '<div style="margin-top:8px;font-size:10px;color:#77888C">Columnas: <strong>Valor Neto</strong> = base del activo · <strong>Increm. por Actualiz.</strong> = Valor Neto × ((UFV final / UFV inicial) − 1) · <strong>Valor Actualizado</strong> = Valor Neto + Incremento · <strong>Dep. del Año</strong> = (Valor Actualizado ÷ años) × (meses ÷ 12) · <strong>Dep. Acum. Actualizada</strong> = Dep. del Año + Acum. Anterior + Increm. Acum. · <strong>Inventario Final</strong> = Valor Actualizado − Dep. Acum. Actualizada.</div>'
+    :'<div class="info iy">No hay activos fijos registrados. Agrégalos en el Asiento de Apertura o en RCV Compras.</div>')+
   '</div>';
 }
 
@@ -3710,45 +3814,51 @@ function getUFVForDate(fecha){
 }
 
 function getMesesDesde(fechaCompra, fechaFin){
-  // Meses desde fecha de compra hasta fin del período (inclusive)
+  // Meses de uso desde la compra hasta el fin del período.
+  // Regla del día 15: si se compra el día 15 o antes, cuenta el mes de compra completo;
+  // si se compra después del 15, la depreciación empieza el mes siguiente.
   if(!fechaCompra)return 12;
   let sC=String(fechaCompra).trim(),sF=String(fechaFin||'').trim();
-  let mC,yC,mF,yF;
-  if(/^\d{1,2}\/\d{1,2}\/\d{4}/.test(sC)){const p=sC.split('/');mC=parseInt(p[1]);yC=parseInt(p[2]);}
-  else if(/^\d{4}-\d{2}-\d{2}/.test(sC)){const p=sC.split('-');yC=parseInt(p[0]);mC=parseInt(p[1]);}
+  let dC,mC,yC,mF,yF;
+  if(/^\d{1,2}\/\d{1,2}\/\d{4}/.test(sC)){const p=sC.split('/');dC=parseInt(p[0]);mC=parseInt(p[1]);yC=parseInt(p[2]);}
+  else if(/^\d{4}-\d{2}-\d{2}/.test(sC)){const p=sC.split('-');yC=parseInt(p[0]);mC=parseInt(p[1]);dC=parseInt(p[2]);}
   else return 12;
   if(/^\d{4}-\d{2}-\d{2}/.test(sF)){const p=sF.split('-');yF=parseInt(p[0]);mF=parseInt(p[1]);}
   else{yF=new Date().getFullYear();mF=12;}
-  const meses=(yF-yC)*12+(mF-mC)+1;
-  return Math.max(1,Math.min(12,meses));
+  let mesInicio=mC;
+  if(dC>15)mesInicio=mC+1; // comprado después del 15 → empieza el mes siguiente
+  const meses=(yF-yC)*12+(mF-mesInicio)+1;
+  return Math.max(0,Math.min(12,meses));
 }
 
 function getAFFromApertura(){
   const tr=emp().traspaso;
   const ui=pn(emp().cfg.ufvInicio),uf=pn(emp().cfg.ufvFin);
-  const uR=ui>0?r2(uf/ui):1;
-  const defs=[
-    {tipo:'VEHÍCULO',     cA:'123003001',cD:'124001001',cG:'524001005',tasa:.20,k:'vehiculo',   kD:'depVehiculo'},
-    {tipo:'MUEBLES Y ENSERES',  cA:'123004001',cD:'124001002',cG:'524001004',tasa:.10,k:'muebles',    kD:'depMuebles'},
-    {tipo:'EQUIPOS DE COMPUTACIÓN',cA:'123006001',cD:'124001003',cG:'524001002',tasa:.25,k:'equComp',kD:'depEquComp'},
-    {tipo:'EQUIPOS DE COMUNICACIONES',cA:'123007001',cD:'124001004',cG:'524001001',tasa:.20,k:'equCom',kD:'depEquCom'},
-    {tipo:'EQUIPO DE OFICINA',  cA:'123009001',cD:'124001005',cG:'524001006',tasa:.10,k:'equOficina',kD:'depEquOficina'},
-    {tipo:'EQUIPO ELECTRÓNICO', cA:'123010001',cD:'124001006',cG:'524001003',tasa:.25,k:'equElec',  kD:'depEquElec'},
-  ];
+  const uR=ui>0?(uf/ui):1;   // coeficiente UFV con precisión completa (no redondear a 2 decimales)
+  const defs=getAFTipos();
   const items=[];
+  // ── Activos de gestiones anteriores (Asiento de Apertura) ──
+  // Actualización con UFV inicio (31/12 año anterior) / UFV fin. Depreciación año completo.
   defs.forEach(d=>{
+    if(!d.k)return;
     const vH=r2(pn(tr[d.k]||0));
     if(!vH)return;
+    const anios=pn(d.anios)||1;
     const dAP=r2(pn(tr[d.kD]||0));
     const ajA=ui>0?r2(vH*(uR-1)):0;
     const vAct=r2(vH+ajA);
-    const dep=r2(vAct*d.tasa);
-    const ajD=ui>0?r2(dAP*(uR-1)):0;
-    items.push({tipo:d.tipo,nombre:d.tipo,fuente:'Apertura',vH,dAP,ajA,vAct,dep,ajD,dTotal:r2(dAP+ajD+dep),vNeto:r2(vAct-r2(dAP+ajD+dep)),tasa:d.tasa,cA:d.cA,cD:d.cD,cG:d.cG});
+    const dep=r2(vAct/anios);                 // depreciación de un año completo (valor actualizado / años)
+    const ajD=ui>0?r2(dAP*(uR-1)):0;          // actualización de la depreciación acumulada anterior
+    const jVal=r2(dAP+ajD);
+    items.push({tipo:d.tipo,nombre:d.tipo,fuente:'Apertura',anios:anios,meses:12,
+      vH,dAP,ajA,vAct,dep,ajD,jVal,dTotal:r2(jVal+dep),vNeto:r2(vAct-r2(jVal+dep)),
+      tasa:(pn(d.pct)||0)/100,cA:d.cA,cD:d.cD,cG:d.cG});
   });
-  // Activos Fijos del RCV — UFV y depreciación desde fecha de compra
+  // ── Activos comprados en la gestión (RCV Compras) ──
+  // Valor = 87% del importe. Actualización con UFV del día de compra / UFV fin.
+  // Depreciación proporcional a los meses de uso (regla del día 15).
   const allRCV=(emp().rcvData&&emp().rcvData.length>0)?emp().rcvData:[];
-  const AFcodes={'123003001':'VEHÍCULO','123004001':'MUEBLES Y ENSERES','123006001':'EQUIPOS DE COMPUTACIÓN','123007001':'EQUIPOS DE COMUNICACIONES','123009001':'EQUIPO DE OFICINA','123010001':'EQUIPO ELECTRÓNICO'};
+  const AFcodes={};defs.forEach(d=>{if(d.cA)AFcodes[d.cA]=d.tipo;});
   const cfg=emp().cfg;
   allRCV.forEach((r,i)=>{
     const overrides=emp().rcvOverrides||{};
@@ -3757,23 +3867,26 @@ function getAFFromApertura(){
     const code=overrides[i]||autoCode;
     if(!AFcodes[code])return;
     const def=defs.find(d=>d.cA===code);if(!def)return;
-    const vH=r2(r.total-r.ice-r.iehd-r.ipj-r.tasas);
+    const anios=pn(def.anios)||1;
+    // Valor neto del activo = 87% del importe (el 13% de IVA es crédito fiscal, no se activa)
+    const baseNeto=r2(r.total-(r.ice||0)-(r.iehd||0)-(r.ipj||0)-(r.tasas||0));
+    const vH=r2(baseNeto*0.87);
     if(!vH)return;
     // UFV específica del día de compra
     const ufvCompra=getUFVForDate(r.fecha)||uf; // fallback: UFV fin período
-    const uRcv=uf>0&&ufvCompra>0?r2(uf/ufvCompra):1;
+    const uRcv=uf>0&&ufvCompra>0?(uf/ufvCompra):1; // coeficiente UFV con precisión completa
     const ajA=ufvCompra>0&&uRcv!==1?r2(vH*(uRcv-1)):0;
     const vAct=r2(vH+ajA);
-    // Depreciación proporcional desde mes de compra hasta fin del período
+    // Depreciación proporcional a los meses de uso
     const meses=getMesesDesde(r.fecha,cfg.fechaFin);
-    const dep=r2(vAct*def.tasa*(meses/12));
-    const label=AFcodes[code]+' — '+(r.fecha||'')+(r.razon?' ('+r.razon.substring(0,20)+')':'');
+    const dep=r2(vAct/anios*(meses/12));
+    const label=def.tipo+' — '+(r.fecha||'')+(r.razon?' ('+r.razon.substring(0,20)+')':'');
     items.push({
-      tipo:AFcodes[code],nombre:label,fuente:'RCV',
-      fecha:r.fecha,ufvCompra,meses,
-      vH,dAP:0,ajA,vAct,dep,ajD:0,
+      tipo:def.tipo,nombre:label,fuente:'RCV',
+      fecha:r.fecha,ufvCompra,meses,anios:anios,
+      vH,dAP:0,ajA,vAct,dep,ajD:0,jVal:0,
       dTotal:dep,vNeto:r2(vAct-dep),
-      tasa:def.tasa,cA:def.cA,cD:def.cD,cG:def.cG
+      tasa:(pn(def.pct)||0)/100,cA:def.cA,cD:def.cD,cG:def.cG
     });
   });
   return items;
@@ -4598,6 +4711,7 @@ function re(){
     else if(S.tab==='plan')main=renderPlan();
     else if(S.tab==='nits')main=renderNITs();
     else if(S.tab==='ufvs')main=renderUFVs();
+    else if(S.tab==='vidautil')main=renderVidaUtil();
     else if(S.tab==='listaeeff')main=renderListaEEFF();
     else if(S.tab==='dashboard')main=renderDashboard(c);
     else if(S.tab==='nomina')main=renderNomina();
@@ -4643,6 +4757,7 @@ function re(){
       {id:'plan',ic:'📋',lb:'Plan de Cuentas'},
       {id:'nits',ic:'🔢',lb:"NIT's"},
       {id:'ufvs',ic:'📈',lb:"UFV's"},
+      {id:'vidautil',ic:'⏳',lb:'Vida Útil'},
     ]},
     {sec:'Sistema',items:[
       {id:'listaeeff',ic:'📁',lb:'Lista EEFF'},
