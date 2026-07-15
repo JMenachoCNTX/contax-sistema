@@ -173,8 +173,14 @@ body.dark-mode .emp-box{background:#0d2145!important;color:#E2E8F0!important}
 // VERSIÓN DEL SISTEMA — Única fuente de verdad
 // Al aprobar una versión: subir VERSION y agregar una entrada al inicio de CHANGELOG.
 // ══════════════════════════════════════════════════════════
-const VERSION='V62';
+const VERSION='V63';
 const CHANGELOG=[
+  {v:'V63', fecha:'2026-07-14', cambios:[
+    'Cuentas por Cobrar/Pagar: al marcar una cuenta como COBRADA o PAGADA, ahora se genera automáticamente el asiento de cancelación.',
+    'Cobro de CxC: aumenta Caja (efectivo) o Banco (transferencia) y baja "Cuentas por Cobrar Clientes" → deja de figurar en el Balance.',
+    'Pago de CxP: baja "Cuentas por Pagar Proveedores" contra Caja o Banco → deja de figurar en el Balance.',
+    'El Flujo de Efectivo ahora refleja estas variaciones de cuentas por cobrar y por pagar, y vuelve a cuadrar con la Caja del Balance.'
+  ]},
   {v:'V62', fecha:'2026-07-14', cambios:[
     'Lista EEFF: ahora se puede OCULTAR columnas (ej. Nro) y FIJAR columnas (ej. Cliente) para que queden fijas al hacer scroll horizontal.',
     'Protección automática de fórmulas: las celdas que ya tienen una fórmula en tu Google Sheets se detectan solas y quedan bloqueadas (no se pueden sobrescribir desde el sistema; muestran el resultado calculado).',
@@ -1122,6 +1128,22 @@ function genEntries(){
     if(dep>0)E.push({id:'DM'+i,tipo:'T',desc:'DEPRECIACIÓN (M): '+(af.nombre||af.tipo),lines:[{c:tab.cG,d:dep,h:0},{c:tab.cD,d:0,h:dep}]});
   });
 
+  // V63 — Cancelación automática de Cuentas por Cobrar / Pagar según estado y forma de pago
+  (typeof getCxC==='function'?(getCxC()||[]):[]).forEach(function(x,i){
+    if(x&&x.estado==='cobrado'){
+      var m=r2(pn(x.monto));if(!m)return;
+      var caja=(x.formaPago==='transferencia'||x.formaPago==='banco')?'111002001':'111001001';
+      E.push({id:'COB'+i,tipo:'T',desc:'Cobro CxC: '+(x.razon||''),lines:[{c:caja,d:m,h:0},{c:(x.cuenta||'113001001'),d:0,h:m}]});
+    }
+  });
+  (typeof getCxP==='function'?(getCxP()||[]):[]).forEach(function(x,i){
+    if(x&&x.estado==='pagado'){
+      var m=r2(pn(x.monto));if(!m)return;
+      var caja=(x.formaPago==='transferencia'||x.formaPago==='banco')?'111002001':'111001001';
+      E.push({id:'PAG'+i,tipo:'T',desc:'Pago CxP: '+(x.proveedor||x.razon||''),lines:[{c:(x.cuenta||'212004001'),d:m,h:0},{c:caja,d:0,h:m}]});
+    }
+  });
+
   // UFV CAPITAL
   const capT=r2(pn(tr.capitalSocial)+pn(tr.ajusteCapital));
   const ajC=ui>0?r2(capT*(uR-1)):0;
@@ -1216,7 +1238,9 @@ function calcAll(){
     const k2=TRAF[af.tipo];const sAnt=r2(pn(e.traspaso[k2]||0));
     const compra=r2(vH-sAnt-ajA);if(compra>0)inv=r2(inv-compra);
   });
-  const fOp=r2(util+dep+gUFV-iUFV-vCF-vIC+vDF+vIT+vIUE);
+  const vCxC=r2(gs('113001001')-pn(e.traspaso.cxc||0)); // variación cuentas por cobrar
+  const vCxP=r2(gs('212004001')-pn(e.traspaso.cxp||0)); // variación cuentas por pagar
+  const fOp=r2(util+dep+gUFV-iUFV-vCF-vIC+vDF+vIT+vIUE-vCxC+vCxP);
   const fFin=r2(-vPr),difF=r2(fOp+inv+fFin);
   const sI=r2(pn(e.traspaso.caja)),sF=r2(sI+difF),cajaMN=gs('111001001');
   const ssA=Object.keys(M).filter(k=>M[k].debe>0||M[k].haber>0).sort();
@@ -1224,7 +1248,7 @@ function calcAll(){
   const ssTH=r2(ssA.reduce((s,k)=>r2(s+r2(M[k].haber)),0));
   const ssTSD=r2(ssA.reduce((s,k)=>r2(s+r2(M[k].sD||0)),0));
   const ssTSH=r2(ssA.reduce((s,k)=>r2(s+r2(M[k].sH||0)),0));
-  return{E,M,gs,util,tI,tG,aC,aNC,tA,tP,tPT,difBG,dep,gUFV,iUFV,vCF,vIC,vDF,vIT,vIUE,vPr,inv,fOp,fFin,difF,sI,sF,cajaMN,ajC,ssA,ssTD,ssTH,ssTSD,ssTSH,bgOK:difBG===0,ssOK:r2(ssTSD-ssTSH)===0,fOK:r2(sF-cajaMN)===0};
+  return{E,M,gs,util,tI,tG,aC,aNC,tA,tP,tPT,difBG,dep,gUFV,iUFV,vCF,vIC,vDF,vIT,vIUE,vPr,inv,fOp,fFin,difF,sI,sF,cajaMN,ajC,vCxC,vCxP,ssA,ssTD,ssTH,ssTSD,ssTSH,bgOK:difBG===0,ssOK:r2(ssTSD-ssTSH)===0,fOK:r2(sF-cajaMN)===0};
 }
 
 // HELPERS
@@ -2919,6 +2943,8 @@ function renderEE(c){
       (vDF!==0?'<tr><td style="padding-left:18px">Variación DF IVA</td><td class="r">'+fmt(vDF)+'</td></tr>':'')+
       (vIT!==0?'<tr><td style="padding-left:18px">Variación IT Por Pagar</td><td class="r">'+fmt(vIT)+'</td></tr>':'')+
       (vIUE!==0?'<tr><td style="padding-left:18px">Variación IUE Por Pagar</td><td class="r">'+fmt(vIUE)+'</td></tr>':'')+
+      (c.vCxC!==0?'<tr><td style="padding-left:18px">Variación Cuentas por Cobrar</td><td class="r">'+fmt(-c.vCxC)+'</td></tr>':'')+
+      (c.vCxP!==0?'<tr><td style="padding-left:18px">Variación Cuentas por Pagar</td><td class="r">'+fmt(c.vCxP)+'</td></tr>':'')+
       '<tr class="tr-t"><td>TOTAL OPERACIÓN</td><td class="r">'+fmt(fOp)+'</td></tr>'+
       '<tr class="tr-g"><td colspan="2">ACTIVIDADES DE INVERSIÓN</td></tr>'+
       '<tr><td style="padding-left:18px">Compras activos fijos (efectivo real)</td><td class="r">'+fmt(inv)+'</td></tr>'+
