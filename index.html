@@ -173,8 +173,13 @@ body.dark-mode .emp-box{background:#0d2145!important;color:#E2E8F0!important}
 // VERSIÓN DEL SISTEMA — Única fuente de verdad
 // Al aprobar una versión: subir VERSION y agregar una entrada al inicio de CHANGELOG.
 // ══════════════════════════════════════════════════════════
-const VERSION='V63';
+const VERSION='V64';
 const CHANGELOG=[
+  {v:'V64', fecha:'2026-07-14', cambios:[
+    'Volvió el chat flotante de la IA (botón 🤖 abajo a la derecha) para consultar sin ir a la pestaña CONTAX IA.',
+    'La IA ahora sí lee los datos REALES de la empresa que estás viendo: se le pasan los saldos por cuenta, cuentas por cobrar/pagar, RCV y el cuadre de los estados.',
+    'Se le indica a la IA que responda solo con esos datos y que no invente si un dato no está.'
+  ]},
   {v:'V63', fecha:'2026-07-14', cambios:[
     'Cuentas por Cobrar/Pagar: al marcar una cuenta como COBRADA o PAGADA, ahora se genera automáticamente el asiento de cancelación.',
     'Cobro de CxC: aumenta Caja (efectivo) o Banco (transferencia) y baja "Cuentas por Cobrar Clientes" → deja de figurar en el Balance.',
@@ -3367,25 +3372,61 @@ function renderIAApi(c){
     '</div>'+
     '<div class="info iy" style="margin-top:8px;font-size:10px">API keys se guardan solo en tu navegador. Claude: console.anthropic.com | OpenAI: platform.openai.com</div></div>';
 }
+// V64 — Contexto real de la empresa activa para la IA
+function iaContext(){
+  try{
+    var c=calcAll();var e=emp();var cfg=e.cfg;var L=[];
+    L.push('=== EMPRESA ACTIVA (usa SOLO estos datos) ===');
+    L.push('Razón social: '+(cfg.razonSocial||'—')+' | NIT: '+(cfg.nit||'—')+' | Gestión: '+(cfg.gestion||'—'));
+    L.push('Período: '+(cfg.fechaInicio||'')+' al '+(cfg.fechaFin||'')+' | UFV inicio: '+(cfg.ufvInicio||'—')+' | UFV fin: '+(cfg.ufvFin||'—'));
+    L.push('');
+    L.push('=== RESUMEN (Bs) ===');
+    L.push('Total Ingresos: '+fmt(c.tI)+' | Total Gastos: '+fmt(c.tG)+' | '+(c.util>=0?'Utilidad':'Pérdida')+': '+fmt(Math.abs(c.util)));
+    L.push('Total Activo: '+fmt(c.tA)+' (Corriente '+fmt(c.aC)+' / No Corriente '+fmt(c.aNC)+')');
+    L.push('Total Pasivo: '+fmt(c.tP)+' | Patrimonio: '+fmt(c.tPT));
+    L.push('Caja M/N: '+fmt(c.cajaMN)+' | Saldo final Flujo: '+fmt(c.sF));
+    L.push('Cuadre → Balance: '+(c.bgOK?'OK':'NO ('+fmt(c.difBG)+')')+' | Sumas y Saldos: '+(c.ssOK?'OK':'NO')+' | Flujo: '+(c.fOK?'OK':'NO'));
+    L.push('');
+    L.push('=== SALDOS POR CUENTA (saldo ≠ 0) ===');
+    Object.keys(c.M).filter(function(k){return c.gs(k)!==0;}).sort().forEach(function(k){
+      L.push(k+' '+acctName(k)+': '+fmt(c.gs(k)));
+    });
+    try{
+      var cxc=(typeof getCxC==='function')?(getCxC()||[]):[];
+      var cxp=(typeof getCxP==='function')?(getCxP()||[]):[];
+      if(cxc.length){L.push('');L.push('=== CUENTAS POR COBRAR ===');
+        cxc.forEach(function(x){L.push('- '+(x.razon||'')+': '+fmt(pn(x.monto))+' ['+(x.estado||'pendiente')+(x.formaPago?'/'+x.formaPago:'')+']');});}
+      if(cxp.length){L.push('');L.push('=== CUENTAS POR PAGAR ===');
+        cxp.forEach(function(x){L.push('- '+(x.proveedor||x.razon||'')+': '+fmt(pn(x.monto))+' ['+(x.estado||'pendiente')+(x.formaPago?'/'+x.formaPago:'')+']');});}
+    }catch(err){}
+    try{
+      var rcv=(e.rcvData||[]);
+      if(rcv.length){var tot=rcv.reduce(function(s,r){return s+pn(r.total);},0);
+        L.push('');L.push('=== RCV COMPRAS: '+rcv.length+' facturas, total Bs '+fmt(tot)+' ===');}
+    }catch(err){}
+    return L.join('\n');
+  }catch(e){return 'No se pudo leer el contexto de la empresa: '+e.message;}
+}
+
 async function sendIA(){
   const inp=document.getElementById('ia-i');const msg=inp?.value?.trim();if(!msg)return;
   const key=localStorage.getItem('ia_key')||'';const prov=localStorage.getItem('ia_prov')||'claude';
   if(!key){alert('Configura tu API key primero');return;}
   const msgs=JSON.parse(localStorage.getItem('ia_msgs')||'[]');
   const c=calcAll();const cfg=emp().cfg;
-  const ctx='Datos contables — Empresa: '+cfg.razonSocial+' NIT: '+cfg.nit+' Gestión: '+cfg.gestion+'\nPeríodo: '+cfg.fechaInicio+' al '+cfg.fechaFin+'\nIngresos: '+fmt(c.tI)+' | Gastos: '+fmt(c.tG)+' | Utilidad: '+fmt(c.util)+'\nActivo: '+fmt(c.tA)+' | Pasivo: '+fmt(c.tP)+' | Patrimonio: '+fmt(c.tPT)+'\nBG cuadra: '+(c.bgOK?'SÍ':'NO (dif: '+fmt(c.difBG)+')')+' | Flujo cuadra: '+(c.fOK?'SÍ':'NO');
+  const ctx=iaContext();
   msgs.push({role:'user',content:msg});localStorage.setItem('ia_msgs',JSON.stringify(msgs));re();
   inp.value='...enviando...';
   try{
     let resp='';
     if(prov==='claude'){
-      const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01'},body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:1000,system:'Eres experto contador boliviano. Analiza los datos y da respuestas precisas y concisas.',messages:[{role:'user',content:ctx+'\n\n'+msgs.map(m=>m.role+': '+m.content).join('\n')}]})});
+      const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01'},body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:1000,system:'Eres un contador experto boliviano. Responde SOLO con base en los datos reales del sistema CONTAX que se te dan a continuación; si un dato no aparece en el contexto, dilo claramente y NO lo inventes. Todos los montos están en Bolivianos (Bs). Analiza los datos y da respuestas precisas y concisas.',messages:[{role:'user',content:ctx+'\n\n'+msgs.map(m=>m.role+': '+m.content).join('\n')}]})});
       const d=await r.json();resp=d.content?.[0]?.text||d.error?.message||JSON.stringify(d);
     } else if(prov==='openai'){
-      const r=await fetch('https://api.openai.com/v1/chat/completions',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+key},body:JSON.stringify({model:'gpt-4o-mini',messages:[{role:'system',content:'Eres experto contador boliviano. Contexto: '+ctx},...msgs]})});
+      const r=await fetch('https://api.openai.com/v1/chat/completions',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+key},body:JSON.stringify({model:'gpt-4o-mini',messages:[{role:'system',content:'Eres un contador experto boliviano. Responde SOLO con base en los datos reales del sistema CONTAX que se te dan a continuación; si un dato no aparece en el contexto, dilo claramente y NO lo inventes. Todos los montos están en Bolivianos (Bs). Contexto: '+ctx},...msgs]})});
       const d=await r.json();resp=d.choices?.[0]?.message?.content||d.error?.message||'Error';
     } else if(prov==='deepseek'){
-      const r=await fetch('https://api.deepseek.com/v1/chat/completions',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+key},body:JSON.stringify({model:'deepseek-chat',messages:[{role:'system',content:'Eres experto contador boliviano. Contexto: '+ctx},...msgs]})});
+      const r=await fetch('https://api.deepseek.com/v1/chat/completions',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+key},body:JSON.stringify({model:'deepseek-chat',messages:[{role:'system',content:'Eres un contador experto boliviano. Responde SOLO con base en los datos reales del sistema CONTAX que se te dan a continuación; si un dato no aparece en el contexto, dilo claramente y NO lo inventes. Todos los montos están en Bolivianos (Bs). Contexto: '+ctx},...msgs]})});
       const d=await r.json();resp=d.choices?.[0]?.message?.content||'Error';
     } else {
       const r=await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key='+key,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({contents:[{parts:[{text:ctx+'\n\nConversación:\n'+msgs.map(m=>m.role+': '+m.content).join('\n')}]}]})});
@@ -4007,13 +4048,13 @@ async function sendFloatIA(){
   if(!key){alert('Configura tu API key en la pestaña CONTAX IA');return;}
   const msgs=JSON.parse(localStorage.getItem('ia_msgs')||'[]');
   const c=calcAll();const cfg=emp().cfg;
-  const ctx='Empresa: '+cfg.razonSocial+' | Gestión: '+cfg.gestion+' | Ingresos: '+fmt(c.tI)+' | Gastos: '+fmt(c.tG)+' | Utilidad: '+fmt(c.util)+' | BG: '+(c.bgOK?'OK':'ERROR')+' | Flujo: '+(c.fOK?'OK':'ERROR');
+  const ctx=iaContext();
   msgs.push({role:'user',content:msg});localStorage.setItem('ia_msgs',JSON.stringify(msgs));re();
   inp.value='';
   try{
     let resp='';
-    if(prov==='claude'){const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01'},body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:500,system:'Eres experto contador boliviano. Contexto: '+ctx,messages:msgs})});const d=await r.json();resp=d.content?.[0]?.text||'Error';}
-    else if(prov==='openai'){const r=await fetch('https://api.openai.com/v1/chat/completions',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+key},body:JSON.stringify({model:'gpt-4o-mini',messages:[{role:'system',content:'Eres experto contador boliviano. '+ctx},...msgs]})});const d=await r.json();resp=d.choices?.[0]?.message?.content||'Error';}
+    if(prov==='claude'){const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01'},body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:500,system:'Eres un contador experto boliviano. Responde SOLO con base en los datos reales del sistema CONTAX que se te dan a continuación; si un dato no aparece en el contexto, dilo claramente y NO lo inventes. Todos los montos están en Bolivianos (Bs). Contexto: '+ctx,messages:msgs})});const d=await r.json();resp=d.content?.[0]?.text||'Error';}
+    else if(prov==='openai'){const r=await fetch('https://api.openai.com/v1/chat/completions',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+key},body:JSON.stringify({model:'gpt-4o-mini',messages:[{role:'system',content:'Eres un contador experto boliviano. Responde SOLO con base en los datos reales del sistema CONTAX que se te dan a continuación; si un dato no aparece en el contexto, dilo claramente y NO lo inventes. Todos los montos están en Bolivianos (Bs). '+ctx},...msgs]})});const d=await r.json();resp=d.choices?.[0]?.message?.content||'Error';}
     else if(prov==='deepseek'){const r=await fetch('https://api.deepseek.com/v1/chat/completions',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+key},body:JSON.stringify({model:'deepseek-chat',messages:[{role:'system',content:ctx},...msgs]})});const d=await r.json();resp=d.choices?.[0]?.message?.content||'Error';}
     else{const r=await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key='+key,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({contents:[{parts:[{text:ctx+' '+msgs.map(m=>m.role+': '+m.content).join(' ')}]}]})});const d=await r.json();resp=d.candidates?.[0]?.content?.parts?.[0]?.text||'Error';}
     msgs.push({role:'assistant',content:resp});
@@ -5410,7 +5451,8 @@ function re(){
     '<div class="layout">'+
     (S.navOpen?'<nav class="nav">'+navHTML+'</nav>':'')+
     '<main class="cnt" id="main-cnt">'+main+'</main>'+
-    '</div>';
+    '</div>'+
+    (typeof renderFloatChat==='function'?renderFloatChat():'');
   // V59: aplicar modo solo lectura si el usuario no puede editar esta pestaña.
   if(!canEdit(S.tab)){
     var _mc=document.getElementById('main-cnt');
