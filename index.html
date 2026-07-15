@@ -173,8 +173,15 @@ body.dark-mode .emp-box{background:#0d2145!important;color:#E2E8F0!important}
 // VERSIÓN DEL SISTEMA — Única fuente de verdad
 // Al aprobar una versión: subir VERSION y agregar una entrada al inicio de CHANGELOG.
 // ══════════════════════════════════════════════════════════
-const VERSION='V57';
+const VERSION='V58';
 const CHANGELOG=[
+  {v:'V58', fecha:'2026-07-14', cambios:[
+    'Lista de correos autorizados: en la pestaña Usuarios, el administrador agrega los correos que pueden acceder. Si un correo no está en la lista, no puede ingresar.',
+    'El primer usuario que entra queda automáticamente como Administrador.',
+    'Se puede bloquear/habilitar cada correo y eliminarlo de la lista.',
+    'Cada correo tiene un tipo de usuario (Administrador, Auditor, Contador, Auxiliar) — los permisos por pestaña de cada tipo se activan en V59.',
+    'Panel de "quién está activo": muestra los usuarios conectados en tiempo real.'
+  ]},
   {v:'V57', fecha:'2026-07-14', cambios:[
     'Inicio de sesión único con Firebase: ahora se entra al sistema con correo y contraseña. Solo quien tenga una cuenta puede ingresar.',
     'Se reemplazó el acceso por avatares y el código de acceso por este login único.',
@@ -233,11 +240,69 @@ function afTipoFor(tipo){var a=getAFTipos();return a.find(function(x){return x.t
 var fbDb=null,fbAuth=null,fbUser=null,fbListener=null,fbGlobalListener=null;
 var syncApplying=false,syncTimer=null,syncGlobalTimer=null,syncReady=false,_lastListenId=null;
 var fbAuthResolved=false,fbUnavailable=false;
+var authDenied=false,authDeniedEmail='',presenceTimer=null;
 
 function fbSetStatus(txt){var el=document.getElementById('fb-status');if(el)el.textContent='☁️ '+txt;}
 function fbUserName(){
   var c=(typeof getCurrentUser==='function')?getCurrentUser():null;
   return (c&&(c.nombre||c.username))||(fbUser&&(fbUser.displayName||fbUser.email))||'anón';
+}
+
+// ═══ V58 — CORREOS AUTORIZADOS (whitelist) Y PRESENCIA ═══
+function normEmail(e){return (e||'').toString().trim().toLowerCase();}
+function getAuthUsers(){try{var s=localStorage.getItem('cx_authusers');if(s){var a=JSON.parse(s);if(Array.isArray(a))return a;}}catch(e){}return [];}
+function saveAuthUsers(a){try{localStorage.setItem('cx_authusers',JSON.stringify(a));}catch(e){}}
+function authUserFor(email){var e=normEmail(email);return getAuthUsers().find(function(u){return normEmail(u.email)===e;})||null;}
+function currentRol(){
+  if(!fbUser)return null;
+  var u=authUserFor(fbUser.email);
+  if(u)return u.rol||'Contador';
+  return getAuthUsers().length===0?'Administrador':null; // bootstrap: primer usuario = admin
+}
+function isCurrentAdmin(){return currentRol()==='Administrador';}
+
+// Verifica contra la nube si el correo está autorizado.
+function checkAuthorized(user,cb){
+  var email=normEmail(user.email);
+  function decide(list){
+    if(!list||!list.length)return cb(true,'bootstrap');
+    var f=list.find(function(u){return normEmail(u.email)===email;});
+    if(f&&f.habilitado!==false)return cb(true,f);
+    return cb(false);
+  }
+  if(fbDb){
+    fbDb.collection('contax_config').doc('global').get().then(function(snap){
+      var list=[];
+      if(snap.exists){try{var g=JSON.parse(snap.data().data||'{}');if(g.authusers){try{list=JSON.parse(g.authusers);}catch(e){}}}catch(e){}}
+      if(list&&list.length){try{localStorage.setItem('cx_authusers',JSON.stringify(list));}catch(e){}}
+      decide(list);
+    }).catch(function(){decide(getAuthUsers());});
+  }else decide(getAuthUsers());
+}
+
+// Presencia: cada cliente escribe su "última vez visto".
+function writePresence(){
+  if(!fbDb||!fbUser)return;
+  var id=normEmail(fbUser.email||fbUser.uid).replace(/[^a-z0-9]/g,'_');
+  try{
+    fbDb.collection('contax_presence').doc(id).set({
+      email:fbUser.email||'',nombre:fbUser.displayName||fbUser.email||'',
+      lastSeen:firebase.firestore.FieldValue.serverTimestamp()
+    },{merge:true}).catch(function(){});
+  }catch(e){}
+}
+function startPresence(){
+  if(!fbDb||!fbUser)return;
+  writePresence();
+  if(presenceTimer)clearInterval(presenceTimer);
+  presenceTimer=setInterval(writePresence,45000);
+}
+function loadPresence(){
+  if(!fbDb){S.presenceLoaded=true;return;}
+  fbDb.collection('contax_presence').get().then(function(qs){
+    var arr=[];qs.forEach(function(d){var v=d.data()||{};var ls=(v.lastSeen&&v.lastSeen.toDate)?v.lastSeen.toDate().getTime():0;arr.push({email:v.email||'',nombre:v.nombre||'',lastSeen:ls});});
+    S.presence=arr;S.presenceLoaded=true;re();
+  }).catch(function(){S.presenceLoaded=true;});
 }
 
 function initFirebase(){
@@ -259,16 +324,35 @@ function initFirebase(){
       if(user&&user.isAnonymous){fbAuth.signOut();return;}
       fbUser=user||null;
       if(fbUser){
-        // Mapear el usuario de Firebase a la sesión que usa el resto del sistema.
-        setSession({username:fbUser.email,nombre:fbUser.displayName||fbUser.email,email:fbUser.email,fbUid:fbUser.uid});
-        localStorage.setItem('cu',fbUser.displayName||fbUser.email||'Usuario');
-        fbSetStatus('nube: '+(fbUser.email||''));
-        startSync();
+        // V58: verificar que el correo esté autorizado antes de entrar.
+        checkAuthorized(fbUser,function(ok,info){
+          if(!ok){
+            authDenied=true;authDeniedEmail=fbUser.email||'';
+            fbSetStatus('acceso no autorizado');
+            re();
+            return;
+          }
+          // bootstrap: el primer usuario queda como Administrador.
+          if(info==='bootstrap'){
+            var list=getAuthUsers();
+            if(!list.length){
+              list.push({email:normEmail(fbUser.email),nombre:fbUser.displayName||fbUser.email,rol:'Administrador',habilitado:true});
+              saveAuthUsers(list);
+            }
+          }
+          authDenied=false;
+          setSession({username:fbUser.email,nombre:fbUser.displayName||fbUser.email,email:fbUser.email,fbUid:fbUser.uid});
+          localStorage.setItem('cu',fbUser.displayName||fbUser.email||'Usuario');
+          fbSetStatus('nube: '+(fbUser.email||''));
+          startSync();
+          startPresence();
+          re();
+        });
       }else{
         localStorage.removeItem('cx_session');
         fbSetStatus('sin iniciar sesión');
+        re();
       }
-      re();
     });
     console.log('✅ Firebase OK');
   }catch(e){console.warn('Firebase init:',e.message);fbUnavailable=true;fbAuthResolved=true;fbSetStatus('error');}
@@ -351,7 +435,8 @@ function globalSnapshot(){
     planCuentas:S.planCuentas||[],
     vidautil:localStorage.getItem('cx_vidautil')||null,
     plans:localStorage.getItem('cx_plans')||null,
-    lista_eeff:localStorage.getItem('lista_eeff')||null
+    lista_eeff:localStorage.getItem('lista_eeff')||null,
+    authusers:localStorage.getItem('cx_authusers')||null
   };
 }
 function applyGlobal(g){
@@ -362,6 +447,7 @@ function applyGlobal(g){
   if(g.vidautil)try{localStorage.setItem('cx_vidautil',g.vidautil);}catch(e){}
   if(g.plans)try{localStorage.setItem('cx_plans',g.plans);}catch(e){}
   if(g.lista_eeff)try{localStorage.setItem('lista_eeff',g.lista_eeff);}catch(e){}
+  if(g.authusers)try{localStorage.setItem('cx_authusers',g.authusers);}catch(e){}
   try{localStorage.setItem('contax_v2',JSON.stringify({empresas:S.empresas,activeId:S.activeId,planCuentas:S.planCuentas,ufvData:S.ufvData,nits:S.nits}));}catch(e){}
 }
 function fbPushGlobal(){
@@ -403,7 +489,7 @@ function scheduleSyncGlobal(){
       if(syncApplying||!syncReady||!fbDb||typeof k!=='string')return;
       // claves locales/personales que NO se sincronizan
       if(k==='cx_session'||k==='cu'||k==='ca'||k==='cx_darkmode'||k==='ia_msgs'||k==='ai_reporte'||k==='ia_prov'||k==='ia_key'||k==='cx_access'||k==='cx_override_code')return;
-      if(k==='cx_vidautil'||k==='cx_plans'||k==='lista_eeff'){scheduleSyncGlobal();return;}
+      if(k==='cx_vidautil'||k==='cx_plans'||k==='lista_eeff'||k==='cx_authusers'){scheduleSyncGlobal();return;}
       if(k==='contax_v2'){scheduleSync();scheduleSyncGlobal();return;}
       if(k.indexOf('cx_')===0&&S.activeId&&k.indexOf('_'+S.activeId)>-1){scheduleSync();}
     }catch(e){}
@@ -3025,106 +3111,107 @@ function renderReporte(c){
 }
 
 function renderUsuarios(){
-  var fbCard='<div class="card" style="margin-bottom:12px;border:2px solid '+(fbUser?'#4ADE80':'#E2E8F0')+';border-radius:12px">'+
-    '<div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">'+
-      '<span style="font-size:24px">☁️</span>'+
-      '<div>'+
-        '<div style="font-weight:700;font-size:14px;color:#031740">Firebase — Sincronización en Nube</div>'+
-        '<div style="font-size:11px;color:#77888C">'+(fbUser?'Conectado y sincronizando automáticamente':'Sin conexión — los datos solo se guardan localmente')+'</div>'+
-      '</div>'+
-      '<div style="margin-left:auto;background:'+(fbUser?'#D1FAE5':'#FEF3C7')+';color:'+(fbUser?'#065F46':'#92400E')+';border-radius:20px;padding:4px 12px;font-size:11px;font-weight:700">'+
-        (fbUser?'● EN LÍNEA':'● LOCAL')+
-      '</div>'+
-    '</div>'+
-    (fbUser?
-      '<div style="background:#F0FDF4;border-radius:8px;padding:10px;display:flex;align-items:center;gap:10px">'+
-        '<div style="flex:1">'+
-          '<div style="font-size:12px;font-weight:600;color:#059669">'+fbUser.email+'</div>'+
-          '<div style="font-size:10px;color:#77888C">Última sync: '+new Date().toLocaleTimeString('es-BO')+'</div>'+
-        '</div>'+
-        '<button onclick="fbLogout();re()" style="background:#FEF2F2;border:1px solid #FECACA;border-radius:6px;padding:6px 12px;font-size:11px;cursor:pointer;color:#DC2626">Cerrar sesión Firebase</button>'+
-      '</div>':
-      '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">'+
-        '<div><label style="font-size:10px;color:#77888C;display:block;margin-bottom:3px">Email</label>'+
-          '<input id="fb-email2" type="email" placeholder="tu@email.com" style="width:100%;border:1px solid #E2E8F0;border-radius:6px;padding:6px 8px;font-size:11px;box-sizing:border-box"/></div>'+
-        '<div><label style="font-size:10px;color:#77888C;display:block;margin-bottom:3px">Contraseña</label>'+
-          '<input id="fb-pass2" type="password" placeholder="Mínimo 6 caracteres" style="width:100%;border:1px solid #E2E8F0;border-radius:6px;padding:6px 8px;font-size:11px;box-sizing:border-box"/></div>'+
-        '<div style="display:flex;align-items:flex-end;gap:6px;padding-bottom:0">'+
-          '<button onclick="fbLogin((document.getElementById(\'fb-email2\')||{value:\'\'}).value,(document.getElementById(\'fb-pass2\')||{value:\'\'}).value)" style="flex:1;background:#F57C00;color:#fff;border:none;border-radius:6px;padding:7px 8px;font-size:11px;cursor:pointer;font-weight:600">☁️ Entrar</button>'+
-          '<button onclick="fbRegister((document.getElementById(\'fb-email2\')||{value:\'\'}).value,(document.getElementById(\'fb-pass2\')||{value:\'\'}).value)" style="background:#031740;color:#fff;border:none;border-radius:6px;padding:7px 8px;font-size:11px;cursor:pointer">Registrarse</button>'+
-        '</div>'+
-      '</div>')+
-  '</div>';
-  const cu=getCurrentUser();
-  const isAdm=isAdmin();
-  const users=getUsers();
-  const activos=JSON.parse(localStorage.getItem('cx_activos')||'[]');
+  var isAdm=isCurrentAdmin();
+  var list=getAuthUsers();
+  var myEmail=normEmail(fbUser&&fbUser.email);
+  var roles=['Administrador','Auditor','Contador','Auxiliar'];
 
-  // Admin code change section
-  const adminCodeSection=isAdm?
-    '<div class="card" style="border:2px solid #7C3AED;margin-bottom:12px"><div class="h2" style="color:#7C3AED">🔑 Control de Acceso (Solo Admin)</div>'+
-    '<div class="g2">'+
-    '<div><label>Código de Acceso Actual</label>'+
-      '<div style="display:flex;gap:8px">'+
-        '<input type="password" id="new-code" placeholder="Nuevo código..." style="background:#FFFDE7;border:1.5px solid #7C3AED;border-radius:5px;padding:5px 8px;font-size:12px;flex:1"/>'+
-        '<button onclick="changeAccessCode()" class="btn-purple">Cambiar</button>'+
-      '</div>'+
-      '<div class="nota" style="margin-top:4px">El código actual está en el archivo HTML (ACCESS_CODE). Al cambiar aquí se guarda en el navegador de este dispositivo y sobrescribe el del archivo.</div>'+
-    '</div>'+
-    '<div><label>Usuarios Activos Hoy</label>'+
-      '<div class="info ib">'+users.filter(function(u){return u.active!==false;}).length+' usuarios activos de '+users.length+' totales</div>'+
-    '</div>'+
-    '</div></div>':'';
+  if(!S.presenceLoaded)loadPresence();
+  var pres={};(S.presence||[]).forEach(function(p){pres[normEmail(p.email)]=p.lastSeen;});
+  var now=Date.now();
+  function presLabel(email){
+    var ls=pres[normEmail(email)];
+    if(!ls)return '<span style="font-size:10px;color:#94A3B8">—</span>';
+    var diff=now-ls;
+    if(diff<120000)return '<span style="font-size:11px;color:#059669;font-weight:600">🟢 En línea</span>';
+    var mins=Math.round(diff/60000);
+    var txt=mins<60?('hace '+mins+' min'):('hace '+Math.round(mins/60)+' h');
+    return '<span style="font-size:10px;color:#94A3B8">⚪ '+txt+'</span>';
+  }
 
-  // User list with toggle
-  const userRows=users.map(function(u,i){
-    const active=u.active!==false;
-    const isCurrent=cu&&cu.username===u.username;
-    return '<div style="display:flex;align-items:center;gap:10px;padding:10px 14px;background:'+(active?'#fff':'#FEF2F2')+';border:1px solid '+(active?'#E2E8F0':'#FCA5A5')+';border-radius:8px;margin-bottom:6px">'+
-      '<div style="width:40px;height:40px;background:'+u.color+';border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0">'+u.avatar+'</div>'+
-      '<div style="flex:1">'+
-        '<div style="font-weight:700;font-size:13px">'+u.nombre+(isCurrent?' <span style="background:#031740;color:#fff;padding:1px 8px;border-radius:10px;font-size:10px">TÚ</span>':'')+
-          (u.code==='ADMIN'?' <span style="background:#7C3AED;color:#fff;padding:1px 8px;border-radius:10px;font-size:10px">ADMIN</span>':'')+
-        '</div>'+
-        '<div style="font-size:11px;color:#888">@'+u.username+'</div>'+
+  var myCard='<div class="card" style="margin-bottom:12px;border:2px solid #4ADE80">'+
+    '<div style="display:flex;align-items:center;gap:12px">'+
+      '<span style="font-size:24px">👤</span>'+
+      '<div style="flex:1"><div style="font-weight:700;color:#031740">'+((fbUser&&(fbUser.displayName||fbUser.email))||'')+'</div>'+
+        '<div style="font-size:11px;color:#77888C">'+((fbUser&&fbUser.email)||'')+' · '+(currentRol()||'—')+'</div></div>'+
+      '<button onclick="logout()" style="background:#FEF2F2;border:1px solid #FECACA;border-radius:6px;padding:6px 14px;font-size:11px;cursor:pointer;color:#DC2626">Salir</button>'+
+    '</div></div>';
+
+  var activos=(S.presence||[]).filter(function(p){return (now-p.lastSeen)<120000;}).length;
+
+  var addForm=isAdm?
+    '<div class="card" style="margin-bottom:12px;border:1.5px solid #3B82F6">'+
+      '<div class="h3" style="margin-top:0">➕ AGREGAR CORREO AUTORIZADO</div>'+
+      '<div class="g3" style="align-items:end">'+
+        '<div><label>Correo</label><input id="au-email" type="email" placeholder="correo@ejemplo.com"/></div>'+
+        '<div><label>Nombre</label><input id="au-nombre" type="text" placeholder="Nombre completo"/></div>'+
+        '<div><label>Tipo de usuario</label><select id="au-rol">'+roles.map(function(r){return '<option value="'+r+'">'+r+'</option>';}).join('')+'</select></div>'+
       '</div>'+
-      '<div style="font-size:10px;color:#888">'+new Date(u.creado||Date.now()).toLocaleDateString('es-BO')+'</div>'+
-      (isAdm&&!isCurrent?
-        '<button onclick="toggleUser('+i+')" style="padding:4px 12px;border-radius:20px;border:1.5px solid '+(active?'#10B981':'#EF4444')+';background:'+(active?'#F0FDF4':'#FEF2F2')+';color:'+(active?'#065F46':'#DC2626')+';font-size:11px;cursor:pointer;font-weight:600">'+
-          (active?'✓ Activo':'✗ Bloqueado')+
-        '</button>':
-        (active?'<span class="badge-ok">Activo</span>':'<span class="badge-err">Bloqueado</span>')+
-      '')+
+      '<div style="margin-top:10px;text-align:right"><button class="btn-green" onclick="addAuthUser()">Agregar</button></div>'+
+    '</div>':'';
+
+  var rows=list.map(function(u,i){
+    var hab=u.habilitado!==false;
+    var isMe=normEmail(u.email)===myEmail;
+    var rolSel=isAdm&&!isMe
+      ? '<select onchange="setAuthRol('+i+',this.value)" style="font-size:11px;padding:3px 6px">'+roles.map(function(r){return '<option'+(u.rol===r?' selected':'')+'>'+r+'</option>';}).join('')+'</select>'
+      : '<span style="font-size:11px;font-weight:600;color:#031740">'+(u.rol||'—')+'</span>';
+    return '<tr style="background:'+(hab?'#fff':'#FEF2F2')+'">'+
+      '<td>'+presLabel(u.email)+'</td>'+
+      '<td style="font-weight:600">'+(u.nombre||'—')+(isMe?' <span style="background:#031740;color:#fff;padding:1px 7px;border-radius:10px;font-size:9px">TÚ</span>':'')+'</td>'+
+      '<td style="font-size:11px;color:#555">'+u.email+'</td>'+
+      '<td>'+rolSel+'</td>'+
+      '<td style="text-align:center">'+
+        (isAdm&&!isMe
+          ? '<button onclick="toggleAuthUser('+i+')" style="padding:3px 10px;border-radius:20px;border:1.5px solid '+(hab?'#10B981':'#EF4444')+';background:'+(hab?'#F0FDF4':'#FEF2F2')+';color:'+(hab?'#065F46':'#DC2626')+';font-size:10px;cursor:pointer;font-weight:600">'+(hab?'✓ Habilitado':'✗ Bloqueado')+'</button>'
+          : (hab?'<span class="badge-ok">Habilitado</span>':'<span class="badge-err">Bloqueado</span>'))+
+      '</td>'+
+      '<td style="text-align:center">'+(isAdm&&!isMe?'<button class="btn-del" style="padding:3px 8px" onclick="delAuthUser('+i+')">✕</button>':'')+'</td>'+
+    '</tr>';
+  }).join('');
+
+  var bootstrapNote=(list.length<=1&&isAdm)?
+    '<div class="info iy" style="margin-bottom:10px">Estás como <strong>Administrador</strong>. Agrega los correos de tu equipo para que puedan ingresar. Los correos que NO estén en esta lista no podrán entrar.</div>':'';
+
+  return myCard+
+    '<div class="card">'+
+      '<div style="display:flex;align-items:center;gap:12px;margin-bottom:12px">'+
+        '<div class="h2" style="flex:1;margin:0">👥 Usuarios Autorizados</div>'+
+        '<div style="background:#D1FAE5;color:#065F46;border-radius:20px;padding:5px 12px;font-size:12px;font-weight:700">🟢 '+activos+' en línea</div>'+
+        '<button onclick="S.presenceLoaded=false;re()" style="background:none;border:1px solid #E2E8F0;border-radius:6px;padding:5px 10px;font-size:11px;cursor:pointer">↻ Actualizar</button>'+
+      '</div>'+
+      bootstrapNote+
+      addForm+
+      '<div class="tbl-wrap"><table><thead><tr>'+
+        '<th>Estado</th><th>Nombre</th><th>Correo</th><th>Tipo</th><th style="text-align:center">Acceso</th><th></th>'+
+      '</tr></thead><tbody>'+(rows||'<tr><td colspan="6" style="text-align:center;color:#888">Sin usuarios en la lista</td></tr>')+'</tbody></table></div>'+
+      (!isAdm?'<div class="info iy" style="margin-top:10px;font-size:11px">Solo el administrador puede agregar o quitar usuarios.</div>':'')+
     '</div>';
-  }).join('');
-
-  // Activity log
-  const logRows=activos.slice(0,15).map(function(a){
-    return '<tr><td>'+a.user+'</td><td>'+(a.e||'—')+'</td><td>'+a.a+'</td><td style="font-size:10px;color:#888">'+new Date(a.t).toLocaleString('es-BO')+'</td></tr>';
-  }).join('');
-
-  return fbCard+'<div class="card"><div class="h2">👥 Usuarios</div>'+
-    adminCodeSection+
-    '<div class="h3">USUARIOS REGISTRADOS '+(isAdm?'(ADMIN: puedes activar/desactivar)':'')+'</div>'+
-    '<div style="margin-bottom:12px">'+(userRows||'<div class="info iy">No hay usuarios registrados.</div>')+'</div>'+
-    '<div class="h3">ACTIVIDAD RECIENTE</div>'+
-    '<div class="tbl-wrap" style="max-height:250px">'+
-    '<table><thead><tr><th>Usuario</th><th>Empresa</th><th>Acción</th><th>Fecha/Hora</th></tr></thead>'+
-    '<tbody>'+(logRows||'<tr><td colspan="4" style="text-align:center;color:#888">Sin actividad</td></tr>')+'</tbody></table></div>'+
-    (isAdm?'<div class="info iy" style="margin-top:10px;font-size:11px">Eres administrador. Puedes desactivar usuarios que no reconozcas — verán "Usuario No Identificado" y no podrán usar el sistema.</div>':'')+
-  '</div>';
 }
-function toggleUser(idx){
-  const users=getUsers();
-  users[idx].active=users[idx].active===false?true:false;
-  saveUsers(users);re();
+function addAuthUser(){
+  if(!isCurrentAdmin())return alert('Solo el administrador puede agregar usuarios.');
+  var em=normEmail((document.getElementById('au-email')||{}).value);
+  var nm=((document.getElementById('au-nombre')||{}).value||'').trim();
+  var rol=(document.getElementById('au-rol')||{}).value||'Contador';
+  if(!em||em.indexOf('@')<0)return alert('Ingresa un correo válido.');
+  var list=getAuthUsers();
+  if(list.find(function(u){return normEmail(u.email)===em;}))return alert('Ese correo ya está en la lista.');
+  list.push({email:em,nombre:nm||em,rol:rol,habilitado:true});
+  saveAuthUsers(list);re();
 }
-function changeAccessCode(){
-  const inp=document.getElementById('new-code');
-  if(!inp||!inp.value.trim()){alert('Ingresa el nuevo código');return;}
-  localStorage.setItem('cx_override_code',inp.value.trim());
-  alert('✓ Código cambiado a: '+inp.value.trim()+'. Los usuarios necesitarán el nuevo código al próximo inicio.');
-  inp.value='';
+function setAuthRol(i,rol){
+  if(!isCurrentAdmin())return;
+  var list=getAuthUsers();if(!list[i])return;list[i].rol=rol;saveAuthUsers(list);re();
+}
+function toggleAuthUser(i){
+  if(!isCurrentAdmin())return;
+  var list=getAuthUsers();if(!list[i])return;list[i].habilitado=list[i].habilitado===false;saveAuthUsers(list);re();
+}
+function delAuthUser(i){
+  if(!isCurrentAdmin())return;
+  var list=getAuthUsers();if(!list[i])return;
+  if(!confirm('¿Quitar a '+(list[i].nombre||list[i].email)+' de la lista? No podrá volver a ingresar.'))return;
+  list.splice(i,1);saveAuthUsers(list);re();
 }
 
 function renderIAApi(c){
@@ -3329,6 +3416,17 @@ function logout(){
 }
 
 // ═══ V57 — LOGIN ÚNICO CON FIREBASE ══════════════════════
+function renderUnauthorized(){
+  return '<div style="min-height:100vh;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#031740,#0a2a5c);padding:24px">'+
+    '<div style="background:#fff;border-radius:16px;padding:36px 30px;max-width:420px;width:100%;text-align:center;box-shadow:0 10px 40px rgba(0,0,0,.3)">'+
+      '<div style="font-size:56px;margin-bottom:10px">🚫</div>'+
+      '<div style="font-size:20px;font-weight:700;color:#031740;margin-bottom:8px">Acceso no autorizado</div>'+
+      '<div style="font-size:13px;color:#555;line-height:1.5;margin-bottom:6px">El correo <strong>'+(authDeniedEmail||'')+'</strong> no está en la lista de usuarios autorizados.</div>'+
+      '<div style="font-size:12px;color:#77888C;margin-bottom:20px">Pide al administrador que agregue tu correo en la pestaña Usuarios.</div>'+
+      '<button onclick="authDenied=false;logout()" style="background:#031740;color:#fff;border:none;border-radius:8px;padding:11px 22px;font-size:13px;font-weight:700;cursor:pointer">Volver al inicio de sesión</button>'+
+    '</div>'+
+  '</div>';
+}
 function renderFbLoading(){
   return '<div style="position:fixed;inset:0;background:#031740;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:2000;color:#fff">'+
     '<img src="'+CONTAX_ISOTIPO+'" style="height:60px;width:auto;filter:brightness(0) invert(1);margin-bottom:16px"/>'+
@@ -4897,6 +4995,7 @@ function renderExportModal(){
 // ═══ MAIN RENDER FUNCTION ══════════════════════════════
 function re(){
   // V57: Inicio de sesión único con Firebase Auth
+  if(authDenied){document.getElementById('root').innerHTML=renderUnauthorized();return;}
   if(!fbAuthResolved){document.getElementById('root').innerHTML=renderFbLoading();return;}
   if(!fbUser){document.getElementById('root').innerHTML=renderFbLogin();return;}
   const _cu=getCurrentUser&&getCurrentUser();
