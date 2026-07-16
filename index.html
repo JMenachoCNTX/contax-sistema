@@ -173,8 +173,15 @@ body.dark-mode .emp-box{background:#0d2145!important;color:#E2E8F0!important}
 // VERSIÓN DEL SISTEMA — Única fuente de verdad
 // Al aprobar una versión: subir VERSION y agregar una entrada al inicio de CHANGELOG.
 // ══════════════════════════════════════════════════════════
-const VERSION='V83';
+const VERSION='V84';
 const CHANGELOG=[
+  {v:'V84', fecha:'2026-07-14', cambios:[
+    'Acceso simplificado con PIN: ahora el administrador, al agregar un usuario, define su PIN. La persona entra con su correo + PIN (ya no tiene que "crear cuenta" en Firebase).',
+    'Esto resuelve el caso en que un usuario quedaba trabado (no podía crear cuenta ni ingresar).',
+    'El administrador puede cambiar el PIN de cualquier usuario en la pestaña Usuarios.',
+    'La sincronización en la nube sigue funcionando por detrás (conexión anónima).',
+    'Nota de seguridad: los PIN se guardan en la nube compartida del equipo; es un acceso básico pensado para un equipo de confianza.'
+  ]},
   {v:'V83', fecha:'2026-07-14', cambios:[
     'Exportación PDF del Resumen Tributario y del Reporte ahora salen tal cual se ven en el sistema (se incluyen los estilos de la app en el PDF, antes salían sin formato).',
     'Los Gráficos ahora SÍ se incluyen al exportar (PDF Análisis = Resumen Tributario + Gráficos + Reporte), con sus gráficos.',
@@ -371,10 +378,11 @@ function getAuthUsers(){try{var s=localStorage.getItem('cx_authusers');if(s){var
 function saveAuthUsers(a){try{localStorage.setItem('cx_authusers',JSON.stringify(a));}catch(e){}}
 function authUserFor(email){var e=normEmail(email);return getAuthUsers().find(function(u){return normEmail(u.email)===e;})||null;}
 function currentRol(){
-  if(!fbUser)return null;
-  var u=authUserFor(fbUser.email);
+  var s=(typeof getCurrentUser==='function')?getCurrentUser():null;
+  if(!s)return null;
+  var u=authUserFor(s.email||s.username);
   if(u)return u.rol||'Contador';
-  return getAuthUsers().length===0?'Administrador':null; // bootstrap: primer usuario = admin
+  return getAuthUsers().length===0?'Administrador':(s.rol||null);
 }
 function isCurrentAdmin(){return currentRol()==='Administrador';}
 
@@ -460,17 +468,19 @@ function checkAuthorized(user,cb){
 
 // Presencia: cada cliente escribe su "última vez visto".
 function writePresence(){
-  if(!fbDb||!fbUser)return;
-  var id=normEmail(fbUser.email||fbUser.uid).replace(/[^a-z0-9]/g,'_');
+  if(!fbDb)return;
+  var s=(typeof getCurrentUser==='function')?getCurrentUser():null;
+  if(!s||!s.email)return;
+  var id=normEmail(s.email).replace(/[^a-z0-9]/g,'_');
   try{
     fbDb.collection('contax_presence').doc(id).set({
-      email:fbUser.email||'',nombre:fbUser.displayName||fbUser.email||'',
+      email:s.email||'',nombre:s.nombre||s.email||'',
       lastSeen:firebase.firestore.FieldValue.serverTimestamp()
     },{merge:true}).catch(function(){});
   }catch(e){}
 }
 function startPresence(){
-  if(!fbDb||!fbUser)return;
+  if(!fbDb)return;
   writePresence();
   if(presenceTimer)clearInterval(presenceTimer);
   presenceTimer=setInterval(writePresence,45000);
@@ -498,38 +508,18 @@ function initFirebase(){
     fbAuth=firebase.auth();
     fbAuth.onAuthStateChanged(function(user){
       fbAuthResolved=true;
-      // Limpiar sesiones anónimas heredadas de V56: ahora se requiere login real.
-      if(user&&user.isAnonymous){fbAuth.signOut();return;}
-      fbUser=user||null;
-      if(fbUser){
-        // V58: verificar que el correo esté autorizado antes de entrar.
-        checkAuthorized(fbUser,function(ok,info){
-          if(!ok){
-            authDenied=true;authDeniedEmail=fbUser.email||'';
-            fbSetStatus('acceso no autorizado');
-            re();
-            return;
-          }
-          // bootstrap: el primer usuario queda como Administrador.
-          if(info==='bootstrap'){
-            var list=getAuthUsers();
-            if(!list.length){
-              list.push({email:normEmail(fbUser.email),nombre:fbUser.displayName||fbUser.email,rol:'Administrador',habilitado:true});
-              saveAuthUsers(list);
-            }
-          }
-          authDenied=false;
-          setSession({username:fbUser.email,nombre:fbUser.displayName||fbUser.email,email:fbUser.email,fbUid:fbUser.uid});
-          localStorage.setItem('cu',fbUser.displayName||fbUser.email||'Usuario');
-          fbSetStatus('nube: '+(fbUser.email||''));
-          startSync();
-          startPresence();
-          re();
-        });
-      }else{
-        localStorage.removeItem('cx_session');
-        fbSetStatus('sin iniciar sesión');
+      // V84: acceso por correo+PIN. Firebase solo se usa (de forma anónima) para sincronizar.
+      if(user){
+        fbUser=user;
+        fbSetStatus('nube activa');
+        startSync();
+        if(typeof getCurrentUser==='function'&&getCurrentUser())startPresence();
         re();
+      }else{
+        fbUser=null;
+        if(fbAuth.signInAnonymously){
+          fbAuth.signInAnonymously().catch(function(e){console.warn('anon:',e.message);fbSetStatus('nube no disponible');re();});
+        }else{fbSetStatus('nube no disponible');re();}
       }
     });
     console.log('✅ Firebase OK');
@@ -3435,11 +3425,13 @@ function renderUsuarios(){
   var addForm=isAdm?
     '<div class="card" style="margin-bottom:12px;border:1.5px solid #3B82F6">'+
       '<div class="h3" style="margin-top:0">➕ AGREGAR CORREO AUTORIZADO</div>'+
-      '<div class="g3" style="align-items:end">'+
+      '<div class="g4" style="align-items:end">'+
         '<div><label>Correo</label><input id="au-email" type="email" placeholder="correo@ejemplo.com"/></div>'+
         '<div><label>Nombre</label><input id="au-nombre" type="text" placeholder="Nombre completo"/></div>'+
         '<div><label>Tipo de usuario</label><select id="au-rol">'+roles.map(function(r){return '<option value="'+r+'">'+r+'</option>';}).join('')+'</select></div>'+
+        '<div><label>PIN / Contraseña</label><input id="au-pin" type="text" placeholder="Mínimo 4 caracteres"/></div>'+
       '</div>'+
+      '<div class="nota" style="margin-top:6px">La persona ingresará con su <strong>correo + este PIN</strong>. Puedes cambiar el PIN después con el botón 🔑 de cada usuario.</div>'+
       '<div style="margin-top:10px;text-align:right"><button class="btn-green" onclick="addAuthUser()">Agregar</button></div>'+
     '</div>':'';
 
@@ -3459,7 +3451,7 @@ function renderUsuarios(){
           ? '<button onclick="toggleAuthUser('+i+')" style="padding:3px 10px;border-radius:20px;border:1.5px solid '+(hab?'#10B981':'#EF4444')+';background:'+(hab?'#F0FDF4':'#FEF2F2')+';color:'+(hab?'#065F46':'#DC2626')+';font-size:10px;cursor:pointer;font-weight:600">'+(hab?'✓ Habilitado':'✗ Bloqueado')+'</button>'
           : (hab?'<span class="badge-ok">Habilitado</span>':'<span class="badge-err">Bloqueado</span>'))+
       '</td>'+
-      '<td style="text-align:center">'+(isAdm&&!isMe?'<button class="btn-del" style="padding:3px 8px" onclick="delAuthUser('+i+')">✕</button>':'')+'</td>'+
+      '<td style="text-align:center;white-space:nowrap">'+(isAdm?'<button title="Cambiar PIN" onclick="setAuthPin('+i+')" style="background:#EEF2FF;border:1px solid #C7D2FE;border-radius:5px;padding:3px 7px;font-size:11px;cursor:pointer;margin-right:4px">🔑</button>':'')+(isAdm&&!isMe?'<button class="btn-del" style="padding:3px 8px" onclick="delAuthUser('+i+')">✕</button>':'')+'</td>'+
     '</tr>';
   }).join('');
 
@@ -3501,11 +3493,23 @@ function addAuthUser(){
   var em=normEmail((document.getElementById('au-email')||{}).value);
   var nm=((document.getElementById('au-nombre')||{}).value||'').trim();
   var rol=(document.getElementById('au-rol')||{}).value||'Contador';
+  var pin=((document.getElementById('au-pin')||{}).value||'').trim();
   if(!em||em.indexOf('@')<0)return alert('Ingresa un correo válido.');
+  if(pin.length<4)return alert('Ingresa un PIN de al menos 4 caracteres para este usuario.');
   var list=getAuthUsers();
   if(list.find(function(u){return normEmail(u.email)===em;}))return alert('Ese correo ya está en la lista.');
-  list.push({email:em,nombre:nm||em,rol:rol,habilitado:true});
+  list.push({email:em,nombre:nm||em,rol:rol,habilitado:true,pin:pin});
   saveAuthUsers(list);re();
+}
+function setAuthPin(i){
+  if(!isCurrentAdmin())return;
+  var list=getAuthUsers();if(!list[i])return;
+  var np=prompt('Nuevo PIN / contraseña para '+(list[i].nombre||list[i].email)+' (mínimo 4 caracteres):',list[i].pin||'');
+  if(np==null)return;
+  np=String(np).trim();
+  if(np.length<4)return alert('El PIN debe tener al menos 4 caracteres.');
+  list[i].pin=np;saveAuthUsers(list);re();
+  alert('✓ PIN actualizado.');
 }
 function setAuthRol(i,rol){
   if(!isCurrentAdmin())return;
@@ -3987,11 +3991,9 @@ function saveUsers(u){localStorage.setItem('cx_users',JSON.stringify(u));}
 function getCurrentUser(){const s=localStorage.getItem('cx_session');return s?JSON.parse(s):null;}
 function setSession(u){localStorage.setItem('cx_session',JSON.stringify(u));}
 function logout(){
+  // V84: solo cierra la sesión local (correo+PIN). La nube sigue conectada (anónima) para sincronizar.
   localStorage.removeItem('cx_session');
-  if(fbAuth){try{fbAuth.signOut();}catch(e){}}
-  if(fbListener){fbListener();fbListener=null;}
-  if(fbGlobalListener){fbGlobalListener();fbGlobalListener=null;}
-  syncReady=false;fbUser=null;_lastListenId=null;
+  if(presenceTimer){clearInterval(presenceTimer);presenceTimer=null;}
   re();
 }
 
@@ -4006,6 +4008,78 @@ function renderUnauthorized(){
       '<button onclick="authDenied=false;logout()" style="background:#031740;color:#fff;border:none;border-radius:8px;padding:11px 22px;font-size:13px;font-weight:700;cursor:pointer">Volver al inicio de sesión</button>'+
     '</div>'+
   '</div>';
+}
+// ═══ V84 — LOGIN POR CORREO + PIN ═══
+function _pinInput(id,type,label,ph){
+  return '<div style="margin-bottom:10px"><label style="font-size:11px;font-weight:600;color:#555">'+label+'</label>'+
+    '<input id="'+id+'" type="'+type+'" placeholder="'+ph+'" style="width:100%;border:1.5px solid #E2E8F0;border-radius:8px;padding:9px 11px;font-size:13px;margin-top:3px"/></div>';
+}
+function renderPinLogin(){
+  var list=getAuthUsers();
+  // Esperar la conexión a la nube antes de decidir (para no mostrar "crear admin" en un dispositivo nuevo)
+  if(!list.length && fbDb && !fbUser && !fbUnavailable){ return renderFbLoading(); }
+  // Traer la lista de usuarios desde la nube (dispositivos nuevos)
+  if(!list.length && fbDb && fbUser && !S.authFetched){
+    S.authFetched=true;
+    fbDb.collection('contax_config').doc('global').get().then(function(snap){
+      try{if(snap.exists){var g=JSON.parse(snap.data().data||'{}');if(g.authusers)localStorage.setItem('cx_authusers',g.authusers);if(g.perms)localStorage.setItem('cx_perms',g.perms);}}catch(e){}
+      re();
+    }).catch(function(){re();});
+    return renderFbLoading();
+  }
+  function box(inner){return '<div style="min-height:100vh;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#031740,#0a2a5c);padding:24px">'+
+    '<div style="background:#fff;border-radius:16px;padding:34px 30px;max-width:400px;width:100%;box-shadow:0 10px 40px rgba(0,0,0,.3)">'+
+    '<div style="text-align:center;margin-bottom:22px"><img src="'+CONTAX_ISOTIPO+'" style="height:56px;width:auto;display:block;margin:0 auto 10px"/>'+
+    '<div style="font-size:26px;font-weight:700;color:#031740;letter-spacing:.04em">CONTAX</div>'+
+    '<div style="font-size:12px;color:#77888C;margin-top:2px">Sistema Contable — '+VERSION+'</div></div>'+inner+'</div></div>';}
+  if(!list.length){
+    return box('<div style="font-size:15px;font-weight:700;color:#031740;margin-bottom:6px">Configura el primer usuario (Administrador)</div>'+
+      '<p class="nota" style="margin-bottom:12px">Será la cuenta principal. Después podrás agregar más usuarios desde la pestaña Usuarios.</p>'+
+      _pinInput('adm-nombre','text','Nombre completo','Tu nombre')+
+      _pinInput('adm-email','email','Correo','correo@ejemplo.com')+
+      _pinInput('adm-pin','password','PIN / Contraseña','Mínimo 4 caracteres')+
+      '<div id="pin-err" style="font-size:12px;color:#DC2626;min-height:16px;margin-bottom:8px"></div>'+
+      '<button onclick="setupFirstAdmin()" style="width:100%;background:#031740;color:#fff;border:none;border-radius:8px;padding:11px;font-size:14px;font-weight:700;cursor:pointer">Crear administrador e ingresar</button>');
+  }
+  return box('<div style="font-size:15px;font-weight:700;color:#031740;margin-bottom:14px">Iniciar sesión</div>'+
+    _pinInput('pin-email','email','Correo','correo@ejemplo.com')+
+    '<div style="margin-bottom:12px"><label style="font-size:11px;font-weight:600;color:#555">PIN / Contraseña</label>'+
+      '<input id="pin-pin" type="password" placeholder="Tu PIN" style="width:100%;border:1.5px solid #E2E8F0;border-radius:8px;padding:9px 11px;font-size:13px;margin-top:3px" onkeydown="if(event.key===\'Enter\')doPinLogin()"/></div>'+
+    '<div id="pin-err" style="font-size:12px;color:#DC2626;min-height:16px;margin-bottom:10px"></div>'+
+    '<button onclick="doPinLogin()" style="width:100%;background:#031740;color:#fff;border:none;border-radius:8px;padding:11px;font-size:14px;font-weight:700;cursor:pointer">Ingresar</button>');
+}
+function doPinLogin(){
+  var em=normEmail((document.getElementById('pin-email')||{}).value);
+  var pin=((document.getElementById('pin-pin')||{}).value||'');
+  var err=document.getElementById('pin-err');
+  if(!em||!pin){if(err)err.textContent='Ingresa correo y PIN.';return;}
+  var u=authUserFor(em);
+  if(!u){if(err)err.textContent='Este correo no está autorizado. Pide al administrador que te agregue.';return;}
+  if(u.habilitado===false){if(err)err.textContent='Tu acceso está bloqueado. Contacta al administrador.';return;}
+  if(!u.pin){
+    // Usuario sin PIN (creado antes de esta versión): lo establece en este primer ingreso.
+    if(pin.length<4){if(err)err.textContent='Aún no tienes PIN. Crea uno de al menos 4 caracteres para ingresar.';return;}
+    var list=getAuthUsers();var idx=list.findIndex(function(x){return normEmail(x.email)===em;});
+    if(idx>=0){list[idx].pin=pin;saveAuthUsers(list);u=list[idx];}
+  } else if(String(u.pin)!==String(pin)){if(err)err.textContent='PIN incorrecto.';return;}
+  setSession({username:u.email,email:u.email,nombre:u.nombre||u.email,rol:u.rol});
+  localStorage.setItem('cu',u.nombre||u.email);
+  if(typeof startPresence==='function')startPresence();
+  re();
+}
+function setupFirstAdmin(){
+  var nm=((document.getElementById('adm-nombre')||{}).value||'').trim();
+  var em=normEmail((document.getElementById('adm-email')||{}).value);
+  var pin=((document.getElementById('adm-pin')||{}).value||'');
+  var err=document.getElementById('pin-err');
+  if(!nm||!em||em.indexOf('@')<0||pin.length<4){if(err)err.textContent='Completa nombre, correo válido y un PIN de al menos 4 caracteres.';return;}
+  var list=getAuthUsers();
+  list.push({email:em,nombre:nm,rol:'Administrador',habilitado:true,pin:pin});
+  saveAuthUsers(list);
+  setSession({username:em,email:em,nombre:nm,rol:'Administrador'});
+  localStorage.setItem('cu',nm);
+  if(typeof startPresence==='function')startPresence();
+  re();
 }
 function renderFbLoading(){
   return '<div style="position:fixed;inset:0;background:#031740;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:2000;color:#fff">'+
@@ -5715,9 +5789,9 @@ function renderExportModal(){
 // ═══ MAIN RENDER FUNCTION ══════════════════════════════
 function re(){
   // V57: Inicio de sesión único con Firebase Auth
-  if(authDenied){document.getElementById('root').innerHTML=renderUnauthorized();return;}
-  if(!fbAuthResolved){document.getElementById('root').innerHTML=renderFbLoading();return;}
-  if(!fbUser){document.getElementById('root').innerHTML=renderFbLogin();return;}
+  // V84 — acceso por correo + PIN (la sesión es local; la nube sincroniza aparte)
+  var _sess=(typeof getCurrentUser==='function')?getCurrentUser():null;
+  if(!_sess){document.getElementById('root').innerHTML=renderPinLogin();return;}
   const _cu=getCurrentUser&&getCurrentUser();
   if(typeof checkAccess==='function')checkAccess();
   // Al cambiar de empresa activa, reconectar la escucha de la nube a ese documento.
