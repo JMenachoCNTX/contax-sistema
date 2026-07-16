@@ -173,8 +173,12 @@ body.dark-mode .emp-box{background:#0d2145!important;color:#E2E8F0!important}
 // VERSIÓN DEL SISTEMA — Única fuente de verdad
 // Al aprobar una versión: subir VERSION y agregar una entrada al inicio de CHANGELOG.
 // ══════════════════════════════════════════════════════════
-const VERSION='V84';
+const VERSION='V85';
 const CHANGELOG=[
+  {v:'V85', fecha:'2026-07-14', cambios:[
+    'ARREGLO del acceso por PIN (V84 no dejaba entrar a los usuarios nuevos): la lista de usuarios y permisos se movió a su propio espacio en la nube, aislado del resto, para que ningún dispositivo la sobrescriba con una copia vacía.',
+    'Al iniciar sesión, la lista de usuarios se lee directamente de la nube, así el usuario recién creado por el administrador siempre está disponible.'
+  ]},
   {v:'V84', fecha:'2026-07-14', cambios:[
     'Acceso simplificado con PIN: ahora el administrador, al agregar un usuario, define su PIN. La persona entra con su correo + PIN (ya no tiene que "crear cuenta" en Firebase).',
     'Esto resuelve el caso en que un usuario quedaba trabado (no podía crear cuenta ni ingresar).',
@@ -361,7 +365,7 @@ function afTipoFor(tipo){var a=getAFTipos();return a.find(function(x){return x.t
 // ══════════════════════════════════════════════════════════
 // FIREBASE — Sincronización en nube
 // ══════════════════════════════════════════════════════════
-var fbDb=null,fbAuth=null,fbUser=null,fbListener=null,fbGlobalListener=null;
+var fbDb=null,fbAuth=null,fbUser=null,fbListener=null,fbGlobalListener=null,fbAccesoListener=null,_accesoTimer=null;
 var syncApplying=false,syncTimer=null,syncGlobalTimer=null,syncReady=false,_lastListenId=null;
 var fbAuthResolved=false,fbUnavailable=false;
 var authDenied=false,authDeniedEmail='',presenceTimer=null;
@@ -529,8 +533,46 @@ function initFirebase(){
 function startSync(){
   syncReady=true;
   fbListenGlobal();
+  fbListenAcceso();
   fbListenEmp(S.activeId);
   _lastListenId=S.activeId;
+}
+
+// ── ACCESO (usuarios + permisos) en su propio documento, aislado del sync general ──
+function fbPushAcceso(){
+  if(!fbDb||!fbUser||syncApplying)return;
+  try{
+    fbDb.collection('contax_config').doc('acceso').set({
+      authusers:localStorage.getItem('cx_authusers')||'[]',
+      perms:localStorage.getItem('cx_perms')||'{}',
+      by:(typeof fbUserName==='function'?fbUserName():'anón'),
+      at:firebase.firestore.FieldValue.serverTimestamp()
+    },{merge:true}).catch(function(e){console.warn('push acceso:',e.message);});
+  }catch(e){}
+}
+function fbListenAcceso(){
+  if(fbAccesoListener){fbAccesoListener();fbAccesoListener=null;}
+  if(!fbDb)return;
+  fbAccesoListener=fbDb.collection('contax_config').doc('acceso').onSnapshot(function(snap){
+    if(snap.metadata.hasPendingWrites)return;
+    if(!snap.exists){
+      // Migración: si este dispositivo ya tiene la lista, súbela.
+      try{if((JSON.parse(localStorage.getItem('cx_authusers')||'[]')).length)fbPushAcceso();}catch(e){}
+      return;
+    }
+    if(snap.metadata.fromCache)return;
+    try{
+      var d=snap.data()||{};var changed=false;
+      if(d.authusers!=null&&d.authusers!==localStorage.getItem('cx_authusers')){syncApplying=true;localStorage.setItem('cx_authusers',d.authusers);syncApplying=false;changed=true;}
+      if(d.perms!=null&&d.perms!==localStorage.getItem('cx_perms')){syncApplying=true;localStorage.setItem('cx_perms',d.perms);syncApplying=false;changed=true;}
+      if(changed)re();
+    }catch(e){}
+  },function(e){console.warn('listen acceso:',e.message);});
+}
+function scheduleAcceso(){
+  if(!fbDb||syncApplying)return;
+  if(_accesoTimer)clearTimeout(_accesoTimer);
+  _accesoTimer=setTimeout(function(){_accesoTimer=null;fbPushAcceso();},500);
 }
 
 // ── Snapshot de una empresa: su objeto + todas sus claves locales ──
@@ -604,8 +646,6 @@ function globalSnapshot(){
     vidautil:localStorage.getItem('cx_vidautil')||null,
     plans:localStorage.getItem('cx_plans')||null,
     lista_eeff:localStorage.getItem('lista_eeff')||null,
-    authusers:localStorage.getItem('cx_authusers')||null,
-    perms:localStorage.getItem('cx_perms')||null,
     gsheet_url:localStorage.getItem('cx_gsheet_url')||null,
     gsheet_colcfg:localStorage.getItem('cx_gsheet_colcfg')||null,
     ia_key:localStorage.getItem('ia_key')||null,
@@ -620,8 +660,6 @@ function applyGlobal(g){
   if(g.vidautil)try{localStorage.setItem('cx_vidautil',g.vidautil);}catch(e){}
   if(g.plans)try{localStorage.setItem('cx_plans',g.plans);}catch(e){}
   if(g.lista_eeff)try{localStorage.setItem('lista_eeff',g.lista_eeff);}catch(e){}
-  if(g.authusers)try{localStorage.setItem('cx_authusers',g.authusers);}catch(e){}
-  if(g.perms)try{localStorage.setItem('cx_perms',g.perms);}catch(e){}
   if(g.gsheet_url)try{localStorage.setItem('cx_gsheet_url',g.gsheet_url);}catch(e){}
   if(g.gsheet_colcfg)try{localStorage.setItem('cx_gsheet_colcfg',g.gsheet_colcfg);}catch(e){}
   if(g.ia_key)try{localStorage.setItem('ia_key',g.ia_key);}catch(e){}
@@ -667,7 +705,8 @@ function scheduleSyncGlobal(){
       if(syncApplying||!syncReady||!fbDb||typeof k!=='string')return;
       // claves locales/personales que NO se sincronizan
       if(k==='cx_session'||k==='cu'||k==='ca'||k==='cx_darkmode'||k==='ai_reporte'||k==='cx_access'||k==='cx_override_code'||k.indexOf('ia_msgs')===0)return;
-      if(k==='cx_vidautil'||k==='cx_plans'||k==='lista_eeff'||k==='cx_authusers'||k==='cx_perms'||k==='cx_gsheet_url'||k==='cx_gsheet_colcfg'||k==='ia_key'||k==='ia_prov'){scheduleSyncGlobal();return;}
+      if(k==='cx_authusers'||k==='cx_perms'){scheduleAcceso();return;}
+      if(k==='cx_vidautil'||k==='cx_plans'||k==='lista_eeff'||k==='cx_gsheet_url'||k==='cx_gsheet_colcfg'||k==='ia_key'||k==='ia_prov'){scheduleSyncGlobal();return;}
       if(k==='contax_v2'){scheduleSync();scheduleSyncGlobal();return;}
       if(k.indexOf('cx_')===0&&S.activeId&&k.indexOf('_'+S.activeId)>-1){scheduleSync();}
     }catch(e){}
@@ -4021,8 +4060,8 @@ function renderPinLogin(){
   // Traer la lista de usuarios desde la nube (dispositivos nuevos)
   if(!list.length && fbDb && fbUser && !S.authFetched){
     S.authFetched=true;
-    fbDb.collection('contax_config').doc('global').get().then(function(snap){
-      try{if(snap.exists){var g=JSON.parse(snap.data().data||'{}');if(g.authusers)localStorage.setItem('cx_authusers',g.authusers);if(g.perms)localStorage.setItem('cx_perms',g.perms);}}catch(e){}
+    fbDb.collection('contax_config').doc('acceso').get().then(function(snap){
+      try{if(snap.exists){var d=snap.data()||{};if(d.authusers)localStorage.setItem('cx_authusers',d.authusers);if(d.perms)localStorage.setItem('cx_perms',d.perms);}}catch(e){}
       re();
     }).catch(function(){re();});
     return renderFbLoading();
@@ -4053,6 +4092,17 @@ function doPinLogin(){
   var pin=((document.getElementById('pin-pin')||{}).value||'');
   var err=document.getElementById('pin-err');
   if(!em||!pin){if(err)err.textContent='Ingresa correo y PIN.';return;}
+  // Traer la lista de usuarios fresca de la nube antes de validar
+  if(fbDb&&fbUser){
+    if(err){err.style.color='#64748B';err.textContent='Verificando…';}
+    fbDb.collection('contax_config').doc('acceso').get().then(function(snap){
+      try{if(snap.exists){var d=snap.data()||{};syncApplying=true;if(d.authusers)localStorage.setItem('cx_authusers',d.authusers);if(d.perms)localStorage.setItem('cx_perms',d.perms);syncApplying=false;}}catch(e){syncApplying=false;}
+      if(err){err.style.color='#DC2626';err.textContent='';}
+      _finishPinLogin(em,pin,err);
+    }).catch(function(){if(err){err.style.color='#DC2626';err.textContent='';}_finishPinLogin(em,pin,err);});
+  } else _finishPinLogin(em,pin,err);
+}
+function _finishPinLogin(em,pin,err){
   var u=authUserFor(em);
   if(!u){if(err)err.textContent='Este correo no está autorizado. Pide al administrador que te agregue.';return;}
   if(u.habilitado===false){if(err)err.textContent='Tu acceso está bloqueado. Contacta al administrador.';return;}
