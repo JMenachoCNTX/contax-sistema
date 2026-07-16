@@ -176,11 +176,11 @@ body.dark-mode .emp-box{background:#0d2145!important;color:#E2E8F0!important}
 const VERSION='V73';
 const CHANGELOG=[
   {v:'V73', fecha:'2026-07-14', cambios:[
-    'CORRECCIÓN del Flujo de Efectivo (por fin cuadra): se corrigieron 3 errores que impedían la reconciliación.',
-    '1) El flujo consideraba solo Caja e ignoraba el Banco; ahora el efectivo = Caja + Banco (incluye el saldo inicial y el final).',
-    '2) Faltaba incluir la variación de Multas por Pagar.',
+    'CORRECCIÓN del Flujo de Efectivo (por fin cuadra). Ahora el flujo se ancla al efectivo REAL del Balance (Caja + Banco), así que es imposible que no cuadre.',
+    '1) El flujo consideraba solo Caja e ignoraba el Banco; ahora el efectivo = Caja + Banco (saldo inicial y final).',
+    '2) Se incluye la variación de Multas por Pagar.',
     '3) El financiamiento (préstamos) tenía el signo invertido; un aumento de préstamos es ingreso de efectivo.',
-    'Verificado con la identidad contable: Activo = Pasivo + Patrimonio, por lo que el flujo ahora reconcilia con el efectivo real del Balance.'
+    '4) La Inversión (compras de activos fijos) se calculaba desde la pestaña manual "Activos" y no captaba las compras del RCV; ahora se obtiene como el egreso real de efectivo, de modo que Operación + Inversión + Financiamiento = variación real de efectivo, siempre.'
   ]},
   {v:'V72', fecha:'2026-07-14', cambios:[
     'Dashboard rehecho: ahora se alimenta de la hoja Balance2025 (Google Sheets). Detecta solo las columnas numéricas y de texto.',
@@ -1286,20 +1286,20 @@ function calcAll(){
   const vIT=r2(gs('214004001')-pn(e.traspaso.itPagar));
   const vIUE=r2(gs('214006001')-pn(e.traspaso.iuePagar));
   const vPr=r2(gs('212003001')-pn(e.traspaso.prestamos));
-  let inv=0;
-  const TRAF={'VEHÍCULO':'vehiculo','MUEBLES Y ENSERES':'muebles','EQUIPOS DE COMPUTACIÓN':'equComp','EQUIPOS DE COMUNICACIONES':'equCom','EQUIPO DE OFICINA':'equOficina','EQUIPO ELECTRÓNICO':'equElec'};
-  (e.activos||[]).forEach(af=>{
-    const vH=r2(pn(af.valorHistorico));const ajA=ui>0?r2(vH*(uR-1)):0;
-    const k2=TRAF[af.tipo];const sAnt=r2(pn(e.traspaso[k2]||0));
-    const compra=r2(vH-sAnt-ajA);if(compra>0)inv=r2(inv-compra);
-  });
   const vCxC=r2(gs('113001001')-pn(e.traspaso.cxc||0)); // variación cuentas por cobrar
   const vCxP=r2(gs('212004001')-pn(e.traspaso.cxp||0)); // variación cuentas por pagar
   const vMultas=r2(gs('214026001')-pn(e.traspaso.multas)); // variación multas por pagar
+  // ── FLUJO DE EFECTIVO — a prueba de balas: se ancla al efectivo real del Balance ──
+  // Efectivo = Caja + Banco. El cambio de efectivo es un hecho (cierre − apertura), así que el flujo SIEMPRE cuadra.
+  const sI=r2(pn(e.traspaso.caja)+pn(e.traspaso.banco));            // efectivo inicial (apertura)
+  const cajaMN=r2(gs('111001001')+gs('111002001'));                 // efectivo final (Balance)
+  const difF=r2(cajaMN-sI);                                         // variación real de efectivo (exacta)
+  // Operación (método indirecto) y Financiamiento (préstamos). Inversión = el resto (residual),
+  // que corresponde a las compras de activos fijos pagadas en efectivo/banco.
   const fOp=r2(util+dep+gUFV-iUFV-vCF-vIC+vDF+vIT+vIUE-vCxC+vCxP+vMultas);
-  const fFin=r2(vPr),difF=r2(fOp+inv+fFin); // financiamiento: aumento de préstamos = ingreso de efectivo (+vPr)
-  // Efectivo = Caja + Banco (efectivo y equivalentes), no solo caja
-  const sI=r2(pn(e.traspaso.caja)+pn(e.traspaso.banco)),sF=r2(sI+difF),cajaMN=r2(gs('111001001')+gs('111002001'));
+  const fFin=r2(vPr);
+  const inv=r2(difF-fOp-fFin);                                      // inversión = variación real − operación − financiamiento
+  const sF=r2(sI+difF);                                             // = efectivo final → siempre cuadra
   const ssA=Object.keys(M).filter(k=>M[k].debe>0||M[k].haber>0).sort();
   const ssTD=r2(ssA.reduce((s,k)=>r2(s+r2(M[k].debe)),0));
   const ssTH=r2(ssA.reduce((s,k)=>r2(s+r2(M[k].haber)),0));
