@@ -173,8 +173,13 @@ body.dark-mode .emp-box{background:#0d2145!important;color:#E2E8F0!important}
 // VERSIÓN DEL SISTEMA — Única fuente de verdad
 // Al aprobar una versión: subir VERSION y agregar una entrada al inicio de CHANGELOG.
 // ══════════════════════════════════════════════════════════
-const VERSION='V85';
+const VERSION='V86';
 const CHANGELOG=[
+  {v:'V86', fecha:'2026-07-16', cambios:[
+    'DIRECTORIO COMPARTIDO DE EMPRESAS: ahora todas las empresas creadas por cualquier usuario aparecen para todo el equipo. En la ventana de empresas sale el listado completo y cualquiera puede abrir una empresa para colaborar en sus estados financieros, sin necesidad de compartir archivo ni acceso.',
+    'Al elegir una empresa que aún no tienes cargada, sus datos se descargan de la nube al instante.',
+    'El nombre de cada empresa se registra en el directorio compartido en cuanto se guarda.'
+  ]},
   {v:'V85', fecha:'2026-07-14', cambios:[
     'ARREGLO del acceso por PIN (V84 no dejaba entrar a los usuarios nuevos): la lista de usuarios y permisos se movió a su propio espacio en la nube, aislado del resto, para que ningún dispositivo la sobrescriba con una copia vacía.',
     'Al iniciar sesión, la lista de usuarios se lee directamente de la nube, así el usuario recién creado por el administrador siempre está disponible.'
@@ -365,7 +370,7 @@ function afTipoFor(tipo){var a=getAFTipos();return a.find(function(x){return x.t
 // ══════════════════════════════════════════════════════════
 // FIREBASE — Sincronización en nube
 // ══════════════════════════════════════════════════════════
-var fbDb=null,fbAuth=null,fbUser=null,fbListener=null,fbGlobalListener=null,fbAccesoListener=null,_accesoTimer=null;
+var fbDb=null,fbAuth=null,fbUser=null,fbListener=null,fbGlobalListener=null,fbAccesoListener=null,_accesoTimer=null,fbDirListener=null;
 var syncApplying=false,syncTimer=null,syncGlobalTimer=null,syncReady=false,_lastListenId=null;
 var fbAuthResolved=false,fbUnavailable=false;
 var authDenied=false,authDeniedEmail='',presenceTimer=null;
@@ -534,6 +539,7 @@ function startSync(){
   syncReady=true;
   fbListenGlobal();
   fbListenAcceso();
+  fbListenEmpDir();
   fbListenEmp(S.activeId);
   _lastListenId=S.activeId;
 }
@@ -599,10 +605,58 @@ function applyEmpSnapshot(id,snap){
   if(snap.extra)Object.keys(snap.extra).forEach(function(k){try{localStorage.setItem(k,snap.extra[k]);}catch(e){}});
   try{localStorage.setItem('contax_v2',JSON.stringify({empresas:S.empresas,activeId:S.activeId,planCuentas:S.planCuentas,ufvData:S.ufvData,nits:S.nits}));}catch(e){}
 }
+function fbPushEmpMeta(e){
+  if(!fbDb||!fbUser||!e)return;
+  try{
+    var meta={id:e.id,razon:(e.cfg&&e.cfg.razonSocial)||'',nit:(e.cfg&&e.cfg.nit)||'',gestion:(e.cfg&&e.cfg.gestion)||''};
+    var payload={emps:{}};payload.emps[e.id]=meta;
+    fbDb.collection('contax_config').doc('empresas').set(payload,{merge:true}).catch(function(er){console.warn('push dir:',er.message);});
+  }catch(er){}
+}
+function fbListenEmpDir(){
+  if(fbDirListener){fbDirListener();fbDirListener=null;}
+  if(!fbDb)return;
+  fbDirListener=fbDb.collection('contax_config').doc('empresas').onSnapshot(function(snap){
+    if(!snap.exists){
+      // Directorio aún no existe → sembrar con lo local
+      try{(S.empresas||[]).forEach(function(e){fbPushEmpMeta(e);});}catch(e){}
+      return;
+    }
+    try{
+      var emps=(snap.data()||{}).emps||{};
+      S.empDir=Object.keys(emps).map(function(k){return emps[k];}).filter(function(x){return x&&x.id;});
+      if(S.showEmp)re();
+    }catch(e){console.warn('dir:',e.message);}
+  },function(e){console.warn('listen dir:',e.message);});
+}
+// Devuelve la lista unificada: directorio de la nube + empresas locales (metadata)
+function empDirList(){
+  var m={};
+  (S.empDir||[]).forEach(function(e){if(e&&e.id)m[e.id]=e;});
+  (S.empresas||[]).forEach(function(e){if(e&&e.id)m[e.id]={id:e.id,razon:(e.cfg&&e.cfg.razonSocial)||'',nit:(e.cfg&&e.cfg.nit)||'',gestion:(e.cfg&&e.cfg.gestion)||''};});
+  return Object.keys(m).map(function(k){return m[k];});
+}
+// Abrir una empresa: si no está local, se descarga de la nube
+function openEmpresa(id){
+  if((S.empresas||[]).find(function(e){return e.id===id;})){S.activeId=id;S.showEmp=false;saveLS();re();return;}
+  if(fbDb){
+    showNotif('⬇️ Cargando empresa desde la nube…');
+    fbDb.collection('contax').doc(id).get().then(function(snap){
+      if(snap.exists){
+        try{var incoming=JSON.parse((snap.data()||{}).data||'{}');
+          if(incoming&&incoming.emp){syncApplying=true;applyEmpSnapshot(id,incoming);syncApplying=false;}
+        }catch(e){syncApplying=false;}
+      }
+      if(!(S.empresas||[]).find(function(e){return e.id===id;})){alert('Esta empresa aún no tiene datos en la nube.');re();return;}
+      S.activeId=id;S.showEmp=false;saveLS();re();
+    }).catch(function(){alert('No se pudo cargar la empresa desde la nube.');});
+  } else {alert('Sin conexión a la nube: no se puede abrir una empresa de otro usuario.');}
+}
 function fbPushEmp(id){
   if(!fbDb||!id||syncApplying)return;
   var snap=empSnapshot(id);
   if(!snap.emp)return;
+  fbPushEmpMeta(snap.emp);
   fbDb.collection('contax').doc(id).set({
     data:JSON.stringify(snap),
     rz:(snap.emp.cfg&&snap.emp.cfg.razonSocial)||'',
@@ -1048,6 +1102,7 @@ function saveLS(){
 const saved=loadLS();
 let S={tab:'splash',showImportPreview:false,showExport:false,darkMode:false,sub:'bg',showEmp:false,showLogin:true,navOpen:true,subComp:'all',
   empresas:saved&&saved.empresas?saved.empresas:[newEmp('emp_1')],
+  empDir:[],
   activeId:saved&&saved.activeId?saved.activeId:'emp_1',
   planCuentas:[...PLAN_DEFAULT],
   ufvData:saved&&saved.ufvData?saved.ufvData:[],
@@ -3987,19 +4042,42 @@ function renderDashboard(c){
   return '<div>'+banner+kpis+analysis+'</div>';
 }
 
+function fbDeleteEmp(id){
+  if(!confirm('¿Eliminar esta empresa para TODO el equipo? Esta acción no se puede deshacer.'))return;
+  try{
+    if(fbDb){
+      fbDb.collection('contax').doc(id).delete().catch(function(){});
+      var upd={};upd['emps.'+id]=firebase.firestore.FieldValue.delete();
+      fbDb.collection('contax_config').doc('empresas').update(upd).catch(function(){});
+    }
+  }catch(e){}
+  S.empresas=(S.empresas||[]).filter(function(x){return x.id!==id;});
+  S.empDir=(S.empDir||[]).filter(function(x){return x.id!==id;});
+  if(S.activeId===id)S.activeId=(S.empresas[0]||{}).id;
+  saveLS();re();
+}
 function renderEmpModal(){
-  const rows=S.empresas.map(e=>'<div class="emp-item'+(e.id===S.activeId?' ea':'')+'" onclick="S.activeId=\''+e.id+'\';S.showEmp=false;saveLS();re()">'+
-    '<div><strong>'+(e.cfg.razonSocial||'(Sin nombre)')+'</strong><br><span style="font-size:10px;color:#888">NIT: '+(e.cfg.nit||'—')+' | '+e.cfg.gestion+'</span></div>'+
-    (e.id!==S.activeId?'<button class="btn-del" onclick="event.stopPropagation();if(confirm(\'¿Eliminar?\')){S.empresas=S.empresas.filter(x=>x.id!==\''+e.id+'\');if(S.activeId===\''+e.id+'\')S.activeId=S.empresas[0]?.id;saveLS();re()}">✕</button>':'')+
-    '</div>').join('');
+  var isAdmin=(typeof currentRol==='function'&&currentRol()==='Administrador');
+  var localIds={};(S.empresas||[]).forEach(function(e){localIds[e.id]=true;});
+  var list=empDirList().sort(function(a,b){return (a.razon||'').localeCompare(b.razon||'');});
+  var rows=list.map(function(e){
+    var active=e.id===S.activeId;
+    var tag=active?'<span style="font-size:9px;background:#16A34A;color:#fff;padding:1px 6px;border-radius:8px;margin-left:6px">activa</span>':(localIds[e.id]?'':'<span style="font-size:9px;background:#E0E7FF;color:#3730A3;padding:1px 6px;border-radius:8px;margin-left:6px">☁ nube</span>');
+    var del=(isAdmin&&!active)?'<button class="btn-del" onclick="event.stopPropagation();fbDeleteEmp(\''+e.id+'\')">✕</button>':'';
+    return '<div class="emp-item'+(active?' ea':'')+'" onclick="openEmpresa(\''+e.id+'\')">'+
+      '<div><strong>'+(e.razon||'(Sin nombre)')+'</strong>'+tag+'<br><span style="font-size:10px;color:#888">NIT: '+(e.nit||'—')+' | '+(e.gestion||'—')+'</span></div>'+
+      del+'</div>';
+  }).join('');
+  if(!rows)rows='<div class="nota" style="padding:8px">No hay empresas todavía. Crea la primera.</div>';
   return '<div class="emp-modal" onclick="S.showEmp=false;re()"><div class="emp-box" onclick="event.stopPropagation()">'+
-    '<div style="font-size:15px;font-weight:700;color:#1C2B4B;margin-bottom:12px">Gestión Multi-Empresa</div>'+
+    '<div style="font-size:15px;font-weight:700;color:#1C2B4B;margin-bottom:4px">Gestión Multi-Empresa</div>'+
+    '<p class="nota" style="margin:0 0 10px">📂 Todas las empresas del equipo. Elige una para trabajar; se comparte y edita en la nube.</p>'+
     rows+'<div class="sep"></div>'+
     '<div style="display:flex;gap:8px;flex-wrap:wrap">'+
-    '<button class="btn-green" onclick="const id=\'emp_\'+Date.now();S.empresas.push(newEmp(id));S.activeId=id;S.showEmp=false;saveLS();re()">+ Nueva Empresa</button>'+
+    '<button class="btn-green" onclick="const id=\'emp_\'+Date.now();S.empresas.push(newEmp(id));S.activeId=id;S.showEmp=false;saveLS();fbPushEmpMeta(S.empresas.find(function(x){return x.id===id;}));re()">+ Nueva Empresa</button>'+
     '<button class="btn-orange" onclick="importJSON()">📥 Importar JSON</button>'+
     '<button class="btn" onclick="S.showEmp=false;re()">Cerrar</button>'+
-    '</div><p class="nota" style="margin-top:10px">💡 Para compartir: botón "Guardar JSON" → envía el archivo → tu colega importa.</p>'+
+    '</div><p class="nota" style="margin-top:10px">💡 Las empresas se sincronizan automáticamente en la nube. El JSON queda como respaldo.</p>'+
     '</div></div>';
 }
 
