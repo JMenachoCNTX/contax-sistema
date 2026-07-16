@@ -173,8 +173,20 @@ body.dark-mode .emp-box{background:#0d2145!important;color:#E2E8F0!important}
 // VERSIÓN DEL SISTEMA — Única fuente de verdad
 // Al aprobar una versión: subir VERSION y agregar una entrada al inicio de CHANGELOG.
 // ══════════════════════════════════════════════════════════
-const VERSION='V73';
+const VERSION='V76';
 const CHANGELOG=[
+  {v:'V76', fecha:'2026-07-14', cambios:[
+    'Dashboard rediseñado, más profesional: banner de encabezado, tarjetas KPI con acento de color, gráfico de barras con degradado y porcentajes, y una tabla ranking con % del total.',
+    'Sigue siendo adaptable a las columnas de tu hoja Balance2025 (agrupar por / medir).'
+  ]},
+  {v:'V75', fecha:'2026-07-14', cambios:[
+    'Nuevo panel de "Cálculos auxiliares — Ajuste de Capital" en la pestaña Otros Asientos: muestra paso a paso el ajuste del Capital Social, del Ajuste del Capital y de Resultados Acumulados por UFV.',
+    'Corrección: el coeficiente UFV de los ajustes de capital/resultados/compensaciones usaba 2 decimales; ahora usa precisión completa, igual que el Cuadro A.F. (ajustes ligeramente más exactos).'
+  ]},
+  {v:'V74', fecha:'2026-07-14', cambios:[
+    'Ingresos: selección múltiple. Marca varias facturas con las casillas y aplica de una sola vez la cuenta contable, la forma de pago y/o un comentario a todas las seleccionadas (ya no hay que hacerlo una por una).',
+    'Incluye "seleccionar todas".'
+  ]},
   {v:'V73', fecha:'2026-07-14', cambios:[
     'CORRECCIÓN del Flujo de Efectivo (por fin cuadra). Ahora el flujo se ancla al efectivo REAL del Balance (Caja + Banco), así que es imposible que no cuadre.',
     '1) El flujo consideraba solo Caja e ignoraba el Banco; ahora el efectivo = Caja + Banco (saldo inicial y final).',
@@ -1044,7 +1056,7 @@ function buildM(entries){
 function genEntries(){
   const E=[];const e=emp();const tr=e.traspaso;
   const ui=pn(e.cfg.ufvInicio),uf=pn(e.cfg.ufvFin);
-  const uR=ui>0?r2(uf/ui):1;
+  const uR=ui>0?(uf/ui):1;
 
   // ASIENTO DE APERTURA
   const aL=[];
@@ -1276,7 +1288,7 @@ function calcAll(){
   const tPT=r2(Object.keys(M).filter(k=>acctTipo(k)==='PT').reduce((s,k)=>r2(s+gs(k)),0)+util);
   const difBG=r2(tA-tP-tPT);
   const dep=r2(Object.keys(M).filter(k=>k.startsWith('524')).reduce((s,k)=>r2(s+gs(k)),0));
-  const e=emp();const ui=pn(e.cfg.ufvInicio),uf=pn(e.cfg.ufvFin);const uR=ui>0?r2(uf/ui):1;
+  const e=emp();const ui=pn(e.cfg.ufvInicio),uf=pn(e.cfg.ufvFin);const uR=ui>0?(uf/ui):1;
   const capT=r2(pn(e.traspaso.capitalSocial)+pn(e.traspaso.ajusteCapital));
   const ajC=ui>0?r2(capT*(uR-1)):0;
   const gUFV=gs('561001001'),iUFV=gs('441001001');
@@ -1375,7 +1387,7 @@ function importJSON(){
 function renderConfig(c){
   const cfg=emp().cfg;
   const ui=pn(cfg.ufvInicio),uf=pn(cfg.ufvFin);
-  const uR=ui>0?r2(uf/ui):1;
+  const uR=ui>0?(uf/ui):1;
   const plans=getPlans();const curPlan=cfg.planId||'plan_default';
   const acts=getActs();
   const COL2='display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:8px';
@@ -1739,6 +1751,17 @@ function renderIngresos(){
     '</div>'+
     (ventas.length?
       '<div class="info ig" style="margin-bottom:6px">Total ventas: <strong>'+fmt(totVentas)+' Bs</strong></div>'+
+      '<div style="background:#EEF2FF;border-radius:6px;padding:8px 10px;margin-bottom:6px;display:flex;gap:8px;align-items:center;flex-wrap:wrap">'+
+        '<label style="font-size:11px;cursor:pointer;display:flex;align-items:center;gap:5px"><input type="checkbox" id="iselall" onchange="toggleAllVentas(this.checked)" style="cursor:pointer"/> Todas</label>'+
+        '<span id="vsel-count" style="font-size:11px;color:#1E40AF;font-weight:600"></span>'+
+        '<div id="vbulk-actions" style="display:none;gap:6px;align-items:center;flex-wrap:wrap">'+
+          '<span style="font-size:11px;color:#1E40AF">→ Aplicar a seleccionadas:</span>'+
+          sdMake('ibulk-acct','','vBulkApply',true,'I')+
+          '<select id="ibulk-pay" style="font-size:11px;border:1px solid #C7D2FE;border-radius:4px;padding:3px 6px;background:#fff"><option value="">Forma de pago…</option><option value="efectivo">💵 Efectivo</option><option value="qr">📱 QR</option><option value="transferencia">🏦 Transferencia</option><option value="porcobrar">📋 Por Cobrar</option></select>'+
+          '<input id="ibulk-comment" type="text" placeholder="Comentario…" style="font-size:11px;border:1px solid #C7D2FE;border-radius:4px;padding:3px 6px;width:130px"/>'+
+          '<button onclick="applyBulkVentasAll()" class="btn-blue" style="font-size:11px;padding:5px 12px">✓ Aplicar</button>'+
+        '</div>'+
+      '</div>'+
       '<div style="margin-bottom:6px"><input type="text" placeholder="🔍 Filtrar por cliente o factura..." value="'+(_venFilter||'')+'" oninput="filterVenInPlace(this.value)" style="width:100%;padding:6px 10px;border:1px solid #E2E8F0;border-radius:6px;font-size:12px;outline:none"/></div>'+
       '<div class="tbl-wrap" style="max-height:400px">'+
       '<table><thead><tr><th style="width:28px"></th><th>Nº</th><th>Fecha</th><th>Factura</th><th>Cliente</th><th class="r">Total</th><th class="r">Neto 87%</th><th class="r">DF IVA</th>'+
@@ -1750,7 +1773,7 @@ function renderIngresos(){
 
 
 function renderActivos(){
-  const ui=pn(emp().cfg.ufvInicio),uf=pn(emp().cfg.ufvFin);const uR=ui>0?r2(uf/ui):1;
+  const ui=pn(emp().cfg.ufvInicio),uf=pn(emp().cfg.ufvFin);const uR=ui>0?(uf/ui):1;
   const tipos=Object.keys(TAF);
   const rows=(emp().activos||[]).map((af,i)=>{
     const tab=TAF[af.tipo];const vH=r2(pn(af.valorHistorico)),dAP=r2(pn(af.depAcumAnterior));
@@ -2298,15 +2321,36 @@ function vBulkApply(code,sdId){_vBulkCode=code;sdSet(code,sdId);}
 function applyBulkVentas(){
   if(!_vBulkCode||_ventaSel.size===0){alert('Selecciona facturas y una cuenta contable');return;}
   if(!emp().ventasOverrides)emp().ventasOverrides={};
+  var n=_ventaSel.size;
   _ventaSel.forEach(i=>emp().ventasOverrides[i]=_vBulkCode);
   _ventaSel=new Set();_vBulkCode='';saveLS();re();
-  alert('✓ Cuenta asignada a '+_ventaSel.size+' facturas');
+  alert('✓ Cuenta asignada a '+n+' facturas');
+}
+// V74 — aplica cuenta + forma de pago + comentario a las facturas seleccionadas (Ingresos)
+function applyBulkVentasAll(){
+  if(_ventaSel.size===0){alert('Selecciona al menos una factura (marca las casillas).');return;}
+  var payEl=document.getElementById('ibulk-pay');var pay=payEl?payEl.value:'';
+  var comEl=document.getElementById('ibulk-comment');var com=comEl?(comEl.value||'').trim():'';
+  if(!_vBulkCode&&!pay&&!com){alert('Elige una cuenta, una forma de pago o escribe un comentario para aplicar.');return;}
+  var n=_ventaSel.size;
+  if(!emp().ventasOverrides)emp().ventasOverrides={};
+  var pays=getVentasPayments();var coms=getVentasComments();
+  _ventaSel.forEach(function(i){
+    if(_vBulkCode)emp().ventasOverrides[i]=_vBulkCode;
+    if(pay)pays[i]=pay;
+    if(com)coms[i]=com;
+  });
+  if(pay)localStorage.setItem('cx_ven_pay_'+S.activeId,JSON.stringify(pays));
+  if(com)localStorage.setItem('cx_ven_cmt_'+S.activeId,JSON.stringify(coms));
+  _ventaSel=new Set();_vBulkCode='';
+  saveLS();re();
+  alert('✓ Aplicado a '+n+' factura(s).');
 }
 
 function calcAutoOA(){
   const tr=emp().traspaso;
   const ui=pn(emp().cfg.ufvInicio),uf=pn(emp().cfg.ufvFin);
-  const uR=ui>0?r2(uf/ui):1;
+  const uR=ui>0?(uf/ui):1;
   // AJUSTE DE CAPITAL
   const capSoc=r2(pn(tr.capitalSocial));
   const ajCap2=r2(pn(tr.ajusteCapital));
@@ -2583,6 +2627,16 @@ function renderOtrosAsientos(){
   const autoC=calcAutoOA();
   const afSection=buildAFSection();
 
+  // V75 — cálculos auxiliares del ajuste de capital
+  var _tr=emp().traspaso;
+  var _capSoc=r2(pn(_tr.capitalSocial)),_ajCap=r2(pn(_tr.ajusteCapital)),_resAc=r2(pn(_tr.resAcum));
+  var capAux='<div style="font-size:10px;color:#77888C;padding:4px 0">Coeficiente UFV = UFV final ÷ UFV inicial = <strong>'+(ui>0?uR.toFixed(6):'—')+'</strong></div>'+
+    auxLine('Capital Social','',_capSoc)+
+    auxLine('Ajuste s/ Capital Social','Capital Social × (coef − 1)',ajCapSoc)+
+    auxLine('Ajuste del Capital (saldo apertura)','',_ajCap)+
+    auxLine('Ajuste s/ Ajuste del Capital','Ajuste del Capital × (coef − 1)',ajCapAj)+
+    auxLine('= Total Ajuste de Capital','Debe 561001001 / Haber 311002001',totalAjCap)+
+    (ajResAcum>0?(auxLine('Resultados Acumulados','',_resAc)+auxLine('Ajuste Resultados Acumulados','Res.Acum. × (coef − 1)',ajResAcum)):'');
   return '<div class="card"><div class="h2">📝 Otros Asientos</div>'+
     afSection+
     autoHTML+
@@ -2593,7 +2647,8 @@ function renderOtrosAsientos(){
     '<button class="btn-blue" onclick="addFreeOA()">+ Asiento Libre</button>'+
     (hasAny?'<button class="btn-orange" onclick="if(confirm(\'¿Limpiar TODOS los asientos predeterminados?\'))clrAllOA()">🗑 Limpiar todos predeterminados</button>':'')+
     '</div>'+
-    cards+'</div>';
+    cards+'</div>'+
+    (ui>0&&(totalAjCap!==0||ajResAcum>0)?auxPanel('Cálculos auxiliares — Ajuste de Capital','capAuxOpen',capAux):'');
 }
 
 function clrOA(i){(emp().otrosAsientos[i].lines||[]).forEach(l=>{l.v=0;});emp().otrosAsientos[i].activo=false;saveLS();re();}
@@ -2688,7 +2743,7 @@ function renderVidaUtil(){
 }
 
 function renderCuadroAF(){
-  const ui=pn(emp().cfg.ufvInicio),uf=pn(emp().cfg.ufvFin);const uR=ui>0?r2(uf/ui):1;
+  const ui=pn(emp().cfg.ufvInicio),uf=pn(emp().cfg.ufvFin);const uR=ui>0?(uf/ui):1;
   const cfg=emp().cfg;
   // Get items from Apertura + RCV (auto) and from Activos tab (manual)
   const autoItems=getAFFromApertura();
@@ -3765,7 +3820,7 @@ function renderListaEEFF(){
   return urlCard+cfgPanel+toolbar+body+'</div>';
 }
 
-// ═══ V72 — DASHBOARD alimentado de Lista EEFF (Balance2025) ═══
+// ═══ V72/V76 — DASHBOARD alimentado de Lista EEFF (Balance2025) ═══
 function dashNum(x){
   var s=String(x==null?'':x).trim();
   if(s==='')return null;
@@ -3773,8 +3828,12 @@ function dashNum(x){
   if(s===''||s==='-'||s==='.')return null;
   var n=parseFloat(s);return isNaN(n)?null:n;
 }
-function kpiCard(label,val,bg,col){
-  return '<div style="background:'+bg+';border-radius:10px;padding:14px"><div style="font-size:20px;font-weight:700;color:'+col+'">'+val+'</div><div style="font-size:11px;color:#555;margin-top:3px">'+label+'</div></div>';
+function kpiCard(icon,val,label,accent){
+  return '<div style="background:#fff;border-radius:12px;padding:14px 16px;box-shadow:0 1px 5px rgba(0,0,0,.07);border-top:3px solid '+accent+'">'+
+    '<div style="font-size:16px;margin-bottom:2px">'+icon+'</div>'+
+    '<div style="font-size:21px;font-weight:800;color:#031740;line-height:1.15">'+val+'</div>'+
+    '<div style="font-size:11px;color:#77888C;font-weight:500;margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="'+label+'">'+label+'</div>'+
+  '</div>';
 }
 function renderDashboard(c){
   var url=(typeof gsheetUrl==='function')?gsheetUrl():'';
@@ -3799,12 +3858,23 @@ function renderDashboard(c){
   }
   function sumCol(ci){var s=0;for(var i=0;i<rows.length;i++){var n=dashNum(rows[i][ci]);if(n!=null)s+=n;}return r2(s);}
 
-  var kpis='<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;margin-bottom:4px">';
-  kpis+=kpiCard('Registros', rows.length, '#EEF2FF','#031740');
-  numericCols.slice(0,7).forEach(function(col){ kpis+=kpiCard(col.name, fmt(sumCol(col.ci)), '#F0FDF4','#059669'); });
+  // ── Banner ──
+  var banner='<div style="background:linear-gradient(135deg,#031740,#0a2a5c);border-radius:14px;padding:18px 22px;color:#fff;margin-bottom:14px;display:flex;align-items:center;gap:16px;flex-wrap:wrap">'+
+    '<div style="flex:1;min-width:200px">'+
+      '<div style="font-size:19px;font-weight:800;letter-spacing:.02em">📊 Dashboard — Balance 2025</div>'+
+      '<div style="font-size:12px;opacity:.75;margin-top:3px">'+rows.length+' registros · '+numericCols.length+' columnas numéricas · fuente: Google Sheets</div>'+
+    '</div>'+
+    '<button onclick="S.gsLoaded=false;loadGsheet()" style="background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);color:#fff;border-radius:8px;padding:8px 14px;font-size:12px;cursor:pointer">↻ Actualizar</button>'+
+  '</div>';
+
+  // ── KPIs ──
+  var accents=['#3B82F6','#059669','#7C3AED','#F59E0B','#0891B2','#DC2626'];
+  var kpis='<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:16px">';
+  kpis+=kpiCard('📄',rows.length,'Registros','#031740');
+  numericCols.slice(0,6).forEach(function(col,idx){ kpis+=kpiCard('💰',fmt(sumCol(col.ci)),'Σ '+col.name,accents[idx%accents.length]); });
   kpis+='</div>';
 
-  // Análisis configurable (agrupar por / medir)
+  // ── Análisis configurable ──
   var groupBy=(S.dashGroupBy!=null&&S.dashGroupBy<maxCols)?S.dashGroupBy:(textCols.length?textCols[0].ci:0);
   var aggCol=(S.dashAgg!=null)?S.dashAgg:'count';
   var groups={};
@@ -3817,31 +3887,41 @@ function renderDashboard(c){
   var arr=Object.keys(groups).map(function(k){var g=groups[k];g.val=(aggCol==='count')?g.count:r2(g.sum);return g;});
   arr.sort(function(a,b){return Math.abs(b.val)-Math.abs(a.val);});
   var maxVal=Math.max.apply(null,arr.map(function(g){return Math.abs(g.val);}).concat([1]));
-  var barsHTML=arr.slice(0,25).map(function(g){
-    var w=Math.max(2,Math.round(Math.abs(g.val)/maxVal*100));
-    return '<div style="display:flex;align-items:center;gap:8px;margin-bottom:5px">'+
-      '<div style="width:150px;font-size:11px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="'+g.label+'">'+g.label+'</div>'+
-      '<div style="flex:1;background:#F1F5F9;border-radius:4px;height:18px"><div style="width:'+w+'%;background:#3B82F6;height:100%;border-radius:4px"></div></div>'+
-      '<div style="width:110px;text-align:right;font-family:monospace;font-size:11px;font-weight:600">'+fmt(g.val)+'</div>'+
+  var totalAbs=arr.reduce(function(s,g){return s+Math.abs(g.val);},0)||1;
+
+  var bars=arr.slice(0,15).map(function(g){
+    var pct=Math.max(2,Math.round(Math.abs(g.val)/maxVal*100));
+    var pctTot=(Math.abs(g.val)/totalAbs*100);
+    return '<div style="margin-bottom:9px">'+
+      '<div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:3px;gap:8px">'+
+        '<span style="font-weight:600;color:#031740;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="'+g.label+'">'+g.label+'</span>'+
+        '<span style="font-family:monospace;font-weight:700;white-space:nowrap">'+fmt(g.val)+' <span style="color:#94A3B8;font-weight:400">'+pctTot.toFixed(1)+'%</span></span>'+
+      '</div>'+
+      '<div style="background:#F1F5F9;border-radius:5px;height:12px;overflow:hidden"><div style="width:'+pct+'%;height:100%;border-radius:5px;background:linear-gradient(90deg,#3B82F6,#7C3AED)"></div></div>'+
     '</div>';
   }).join('');
+
   var gbOpts=textCols.concat(numericCols).map(function(col){return '<option value="'+col.ci+'"'+(col.ci===groupBy?' selected':'')+'>'+col.name+'</option>';}).join('');
   var aggOpts='<option value="count"'+(aggCol==='count'?' selected':'')+'>Cantidad de registros</option>'+numericCols.map(function(col){return '<option value="'+col.ci+'"'+(String(col.ci)===String(aggCol)?' selected':'')+'>Suma de '+col.name+'</option>';}).join('');
-  var pivot='<div class="card"><div class="h2">📊 Análisis por columna</div>'+
-    '<div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:12px">'+
-      '<div style="min-width:180px"><label>Agrupar por</label><select onchange="S.dashGroupBy=parseInt(this.value);re()">'+gbOpts+'</select></div>'+
-      '<div style="min-width:180px"><label>Medir</label><select onchange="var v=this.value;S.dashAgg=(v===\'count\'?\'count\':parseInt(v));re()">'+aggOpts+'</select></div>'+
+
+  var rankTable='<div class="tbl-wrap" style="max-height:280px;margin-top:12px"><table style="font-size:11px"><thead><tr>'+
+    '<th style="text-align:left">'+colName(groupBy)+'</th><th class="r">Valor</th><th class="r">% del total</th></tr></thead><tbody>'+
+    arr.slice(0,50).map(function(g){var p=(Math.abs(g.val)/totalAbs*100);
+      return '<tr><td>'+g.label+'</td><td class="r" style="font-family:monospace">'+fmt(g.val)+'</td>'+
+        '<td class="r" style="color:#3B82F6;font-weight:600">'+p.toFixed(1)+'%</td></tr>';
+    }).join('')+'</tbody></table></div>';
+
+  var analysis='<div class="card">'+
+    '<div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:14px">'+
+      '<div class="h2" style="flex:1;margin:0;border:none;padding:0">Análisis por columna</div>'+
+      '<div><label style="font-size:10px">Agrupar por</label><select onchange="S.dashGroupBy=parseInt(this.value);re()" style="min-width:150px">'+gbOpts+'</select></div>'+
+      '<div><label style="font-size:10px">Medir</label><select onchange="var v=this.value;S.dashAgg=(v===\'count\'?\'count\':parseInt(v));re()" style="min-width:150px">'+aggOpts+'</select></div>'+
     '</div>'+
-    (barsHTML||'<div class="info iy">Sin datos para graficar.</div>')+
-    (arr.length>25?'<div class="nota" style="margin-top:6px">Mostrando los 25 grupos más grandes de '+arr.length+' en total.</div>':'')+
+    (bars?('<div style="font-size:11px;color:#77888C;margin-bottom:8px">Top 15 · '+arr.length+' grupos en total</div>'+bars):'<div class="info iy">Sin datos para graficar.</div>')+
+    rankTable+
   '</div>';
 
-  return '<div>'+
-    '<div class="card"><div style="display:flex;align-items:center;gap:10px;margin-bottom:8px"><div class="h2" style="flex:1;margin:0">📊 Dashboard — Balance 2025</div>'+
-      '<button onclick="S.gsLoaded=false;loadGsheet()" style="background:none;border:1px solid #E2E8F0;border-radius:6px;padding:5px 10px;font-size:11px;cursor:pointer">↻ Actualizar</button></div>'+
-      '<div class="ee-sub" style="margin-bottom:10px">'+rows.length+' registros · '+numericCols.length+' columnas numéricas · fuente: Google Sheets (Balance2025)</div>'+
-      kpis+'</div>'+
-    pivot+'</div>';
+  return '<div>'+banner+kpis+analysis+'</div>';
 }
 
 function renderEmpModal(){
@@ -4765,7 +4845,7 @@ function iueAuxInner(){
 function calcCompensaciones(c){
   const{gs,M}=c;
   const ui=pn(emp().cfg.ufvInicio),uf=pn(emp().cfg.ufvFin);
-  const uR=ui>0?r2(uf/ui):1;
+  const uR=ui>0?(uf/ui):1;
 
   // Current balances FROM MAYORES (antes de compensar)
   const cfSaldo  = r2(gs('116001001')); // Crédito Fiscal IVA (activo)
