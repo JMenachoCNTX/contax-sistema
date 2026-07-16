@@ -173,8 +173,16 @@ body.dark-mode .emp-box{background:#0d2145!important;color:#E2E8F0!important}
 // VERSIÓN DEL SISTEMA — Única fuente de verdad
 // Al aprobar una versión: subir VERSION y agregar una entrada al inicio de CHANGELOG.
 // ══════════════════════════════════════════════════════════
-const VERSION='V76';
+const VERSION='V78';
 const CHANGELOG=[
+  {v:'V78', fecha:'2026-07-14', cambios:[
+    'La compensación ya NO es automática: se eliminó el asiento automático de actualización del Crédito Fiscal (AJCF) y la compensación automática de DF vs CF, IT y multas.',
+    'Ahora los asientos de compensación se generan a partir de lo que ingresas en la pestaña Compensaciones (por mes): actualización del CF, DF, IT, multas (Debe) y CF usado, IUE a compensar, caja y ajuste UFV (Haber).',
+    'Importante: cada mes debe cuadrar (Debe = Haber) en la pestaña Compensaciones; si no, el Balance/Sumas y Saldos lo reflejará. El IUE sigue calculándose automáticamente.'
+  ]},
+  {v:'V77', fecha:'2026-07-14', cambios:[
+    'Corrección de las diferencias por redondeo en los comprobantes (RCV Compras, Ventas e Ingresos): antes usaba la cuenta de GASTO (561004001) en el Haber, lo cual es incorrecto. Ahora, si el ajuste va al Haber usa la cuenta de INGRESO por redondeo (441004001), y si va al Debe usa la de GASTO (561004001).'
+  ]},
   {v:'V76', fecha:'2026-07-14', cambios:[
     'Dashboard rediseñado, más profesional: banner de encabezado, tarjetas KPI con acento de color, gráfico de barras con degradado y porcentajes, y una tabla ranking con % del total.',
     'Sigue siendo adaptable a las columnas de tu hoja Balance2025 (agrupar por / medir).'
@@ -1122,8 +1130,8 @@ function genEntries(){
     const th=r2(Object.values(con).reduce((s,v)=>r2(s+v.h),0));
     const diff=r2(td-th);
     if(Math.abs(diff)>0.001){
-      if(diff>0){if(!con['561004001'])con['561004001']={d:0,h:0};con['561004001'].h=r2((con['561004001'].h||0)+diff);}
-      else{if(!con['441004001'])con['441004001']={d:0,h:0};con['441004001'].d=r2((con['441004001'].d||0)-diff);}
+      if(diff>0){if(!con['441004001'])con['441004001']={d:0,h:0};con['441004001'].h=r2((con['441004001'].h||0)+diff);}
+      else{if(!con['561004001'])con['561004001']={d:0,h:0};con['561004001'].d=r2((con['561004001'].d||0)-diff);}
     }
     E.push({id:'RCVE',tipo:'E',desc:'COMPROBANTE DE EGRESOS — RCV COMPRAS',lines:Object.entries(con).map(([c,v])=>({c,d:v.d,h:v.h}))});
   }
@@ -1147,7 +1155,7 @@ function genEntries(){
     const tdV=r2(Object.values(conV).reduce((s,v)=>r2(s+v.d),0));
     const thV=r2(Object.values(conV).reduce((s,v)=>r2(s+v.h),0));
     const diffV=r2(tdV-thV);
-    if(Math.abs(diffV)>0.001){if(diffV>0){if(!conV['561004001'])conV['561004001']={d:0,h:0};conV['561004001'].h=r2((conV['561004001'].h||0)+diffV);}else{if(!conV['441004001'])conV['441004001']={d:0,h:0};conV['441004001'].d=r2((conV['441004001'].d||0)-diffV);}}
+    if(Math.abs(diffV)>0.001){if(diffV>0){if(!conV['441004001'])conV['441004001']={d:0,h:0};conV['441004001'].h=r2((conV['441004001'].h||0)+diffV);}else{if(!conV['561004001'])conV['561004001']={d:0,h:0};conV['561004001'].d=r2((conV['561004001'].d||0)-diffV);}}
     E.push({id:'VXLS',tipo:'I',desc:'COMPROBANTE DE INGRESOS — VENTAS (XLSX)',lines:Object.entries(conV).map(([c,v])=>({c,d:v.d,h:v.h}))});
   }
 
@@ -1159,7 +1167,7 @@ function genEntries(){
     const it=r2(tot*0.03);
     const diff=r2(tot-ingNeto-dfIva);
     const lines=[{c:'111001001',d:tot,h:0},{c:ing.cuenta||'411002004',d:0,h:ingNeto},{c:'214001001',d:0,h:dfIva},{c:'525002001',d:it,h:0},{c:'214004001',d:0,h:it}];
-    if(Math.abs(diff)>0.001)lines.push(diff>0?{c:'561004001',d:0,h:diff}:{c:'441004001',d:-diff,h:0});
+    if(Math.abs(diff)>0.001)lines.push(diff>0?{c:'441004001',d:0,h:diff}:{c:'561004001',d:-diff,h:0});
     E.push({id:'ING'+i,tipo:'I',desc:'INGRESO '+(MESES[(ing.mes||1)-1]||'').toUpperCase(),lines});
   });
 
@@ -1226,30 +1234,24 @@ function genEntries(){
   const resTrib2=r2(util2+gasNoDed2-perdNComp2); // E70: Resultado Tributario
   // IUE se calcula al final con todos los asientos incluidos (ver más abajo)
 
-  // COMPENSACIONES (CF UFV + DF vs CF + IT + Multas)
-  const m2=buildM(E);
-  const cfS2=r2(m2['116001001']?.saldo||0);
-  const dfS2=r2(m2['214001001']?.saldo||0);
-  const itS2=r2(m2['214004001']?.saldo||0);
-  const multaS2=r2(m2['214026001']?.saldo||0);
-  const iueC2=r2(m2['116006001']?.saldo||0);
-  const ui2=pn(e.cfg.ufvInicio),uf2=pn(e.cfg.ufvFin);
-  const uR2=ui2>0?r2(uf2/ui2):1;
-  // 1. Ajuste CF con UFV
-  const ajCF2=ui2>0?r2(cfS2*(uR2-1)):0;
-  if(ajCF2>0)E.push({id:'AJCF',tipo:'T',desc:'AJUSTE CRÉDITO FISCAL CON UFV',lines:[{c:'116001001',d:ajCF2,h:0},{c:'441001001',d:0,h:ajCF2}]});
-  const cfAct=r2(cfS2+ajCF2);
-  // 2. Compensación DF vs CF
-  const cmpDF=r2(Math.min(dfS2,cfAct));
-  const dfRest=r2(dfS2-cmpDF);
-  const iueParIT=r2(Math.min(iueC2,itS2));
-  const itCaja=r2(itS2-iueParIT);
-  const compLines=[];
-  if(cmpDF>0){compLines.push({c:'214001001',d:cmpDF,h:0});compLines.push({c:'116001001',d:0,h:cmpDF});}
-  if(dfRest>0){compLines.push({c:'214001001',d:dfRest,h:0});compLines.push({c:'111001001',d:0,h:dfRest});}
-  if(itS2>0){compLines.push({c:'214004001',d:itS2,h:0});if(iueParIT>0)compLines.push({c:'116006001',d:0,h:iueParIT});if(itCaja>0)compLines.push({c:'111001001',d:0,h:itCaja});}
-  if(multaS2>0){compLines.push({c:'214026001',d:multaS2,h:0});compLines.push({c:'111001001',d:0,h:multaS2});}
-  if(compLines.length>0)E.push({id:'COMP',tipo:'T',desc:'COMPENSACIONES IVA / IT / MULTAS',lines:compLines});
+  // COMPENSACIONES — MANUALES: se generan desde la pestaña Compensaciones (valores que ingresa el usuario por mes)
+  // Debe: actualización CF (116001001), DF (214001001), IT (214004001), Multas (214026001)
+  // Haber: ingreso ajuste UFV (441001001), CF usado (116001001), IUE a compensar (116006001), Caja (111001001)
+  (typeof getCompData==='function'?(getCompData()||[]):[]).forEach(function(m,idx){
+    var lines=[];
+    var ajCF=r2(pn(m.ajCF)),ajUFV=r2(pn(m.ajUFV));
+    var cDF=r2(pn(m.compDF)),cCF=r2(pn(m.compCF)),cIT=r2(pn(m.compIT));
+    var cIUE=r2(pn(m.compIUE)),cMul=r2(pn(m.compMultas)),cCaja=r2(pn(m.compCaja));
+    if(ajCF>0)lines.push({c:'116001001',d:ajCF,h:0});
+    if(cDF>0)lines.push({c:'214001001',d:cDF,h:0});
+    if(cIT>0)lines.push({c:'214004001',d:cIT,h:0});
+    if(cMul>0)lines.push({c:'214026001',d:cMul,h:0});
+    if(ajUFV>0)lines.push({c:'441001001',d:0,h:ajUFV});
+    if(cCF>0)lines.push({c:'116001001',d:0,h:cCF});
+    if(cIUE>0)lines.push({c:'116006001',d:0,h:cIUE});
+    if(cCaja>0)lines.push({c:'111001001',d:0,h:cCaja});
+    if(lines.length>0)E.push({id:'COMPM'+idx,tipo:'T',desc:'COMPENSACIÓN '+((MESES[idx]||('MES '+(idx+1)))+'').toUpperCase(),lines:lines});
+  });
 
   // ── ASIENTO IUE AUTOMÁTICO (25% Resultado Tributario) ──
   // Calcular utilidad con el estado actual de E
