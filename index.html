@@ -173,8 +173,27 @@ body.dark-mode .emp-box{background:#0d2145!important;color:#E2E8F0!important}
 // VERSIÓN DEL SISTEMA — Única fuente de verdad
 // Al aprobar una versión: subir VERSION y agregar una entrada al inicio de CHANGELOG.
 // ══════════════════════════════════════════════════════════
-const VERSION='V78';
+const VERSION='V83';
 const CHANGELOG=[
+  {v:'V83', fecha:'2026-07-14', cambios:[
+    'Exportación PDF del Resumen Tributario y del Reporte ahora salen tal cual se ven en el sistema (se incluyen los estilos de la app en el PDF, antes salían sin formato).',
+    'Los Gráficos ahora SÍ se incluyen al exportar (PDF Análisis = Resumen Tributario + Gráficos + Reporte), con sus gráficos.',
+    'El Resumen Tributario en PDF sale en horizontal para que entren todas las columnas.'
+  ]},
+  {v:'V82', fecha:'2026-07-14', cambios:[
+    'Reporte Ejecutivo: se corrigió un error de maquetación por el que el "Análisis IA — Interpretación para el Cliente" salía metido en una columna angosta (la grilla de indicadores no se cerraba). Ahora ocupa todo el ancho.',
+    'Al exportar en PDF ya no se desperdician tantas hojas, y se agregó/recuperó la firma profesional al final del reporte.'
+  ]},
+  {v:'V81', fecha:'2026-07-14', cambios:[
+    'Cuadro de Activos Fijos: la exportación (Excel y PDF) ahora sale COMPLETA con todas las columnas (valor neto, incremento por actualización, valor actualizado, depreciación del año, acumulada anterior, incremento acumulado, dep. acumulada actualizada e inventario final).',
+    'En el PDF, la hoja del Cuadro A.F. sale en HORIZONTAL (landscape) para que entren todas las columnas; las demás hojas siguen verticales. (Funciona mejor imprimiendo desde Chrome.)'
+  ]},
+  {v:'V80', fecha:'2026-07-14', cambios:[
+    'Exportación del Flujo de Efectivo (Excel y PDF) ahora sale COMPLETO: todas las filas que se ven en el sistema (operación con cada variación, inversión, financiamiento, saldos y la verificación de cuadre).'
+  ]},
+  {v:'V79', fecha:'2026-07-14', cambios:[
+    'Arreglados los Asientos Libres (Otros Asientos): antes, al editar un asiento libre se modificaba el equivocado por un desajuste de índices entre lo mostrado y lo guardado. Ahora la lista es una sola fuente ordenada (asientos fijos + libres) y cada edición afecta al asiento correcto.'
+  ]},
   {v:'V78', fecha:'2026-07-14', cambios:[
     'La compensación ya NO es automática: se eliminó el asiento automático de actualización del Crédito Fiscal (AJCF) y la compensación automática de DF vs CF, IT y multas.',
     'Ahora los asientos de compensación se generan a partir de lo que ingresas en la pestaña Compensaciones (por mes): actualización del CF, DF, IT, multas (Debe) y CF usado, IUE a compensar, caja y ajuste UFV (Haber).',
@@ -2459,19 +2478,17 @@ function renderOtrosAsientos(){
   // Read saved amounts from the stored entry that matches by nombre
   const stored=emp().otrosAsientos||[];
   const storedByName={};stored.forEach(function(o){storedByName[o.nombre]=o;});
-  // Build fixed entries from DEF_OA, using stored values
+  // V79 — Reconciliar otrosAsientos como fuente única: fijos (DEF_OA, preservando valores/activo) + libres.
+  // Así el índice de cada tarjeta coincide con el índice guardado, y editar un asiento libre afecta al correcto.
   const fixedOas=DEF_OA.map(function(defEntry){
     const sv=storedByName[defEntry.nombre];
-    if(!sv)return JSON.parse(JSON.stringify(defEntry));
-    // Copy stored line values into DEF_OA structure
-    var entry=JSON.parse(JSON.stringify(defEntry));
-    entry.activo=sv.activo||false;
-    (entry.lines||[]).forEach(function(l,i){if(sv.lines&&sv.lines[i])l.v=sv.lines[i].v||'';});
+    var entry=JSON.parse(JSON.stringify(defEntry));entry.fixed=true;
+    if(sv){entry.activo=sv.activo||false;(entry.lines||[]).forEach(function(l,i){if(sv.lines&&sv.lines[i]&&sv.lines[i].v!=null)l.v=sv.lines[i].v;});}
     return entry;
   });
-  // Free (user-created) entries that are not fixed
   const freeOas=stored.filter(function(o){return !o.fixed;});
-  const oas=[...fixedOas,...freeOas];
+  emp().otrosAsientos=fixedOas.concat(freeOas);
+  const oas=emp().otrosAsientos;
   const planOpts=S.planCuentas.map(a=>'<option value="'+a.c+'">'+a.c+' — '+a.n+'</option>').join('');
   const hasAny=oas.some(oa=>oa.fixed&&(oa.lines||[]).some(l=>pn(l.v)>0));
 
@@ -3357,32 +3374,33 @@ function renderReporte(c){
   return '<div class="card"><div class="h2">📋 Reporte Ejecutivo — '+(cfg.razonSocial||'Empresa')+'</div>'+
     '<div style="font-size:11px;color:#888;margin-bottom:14px">'+cfg.fechaInicio+' al '+cfg.fechaFin+' | NIT: '+(cfg.nit||'—')+' | Gestión '+cfg.gestion+' | '+(cfg.actividad||'')+'</div>'+
     '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px">'+
-    kard(fmt(tI)+' Bs','Total Ingresos','💰','#059669')+kard(fmt(tG)+' Bs','Total Gastos','📤','#DC2626')+
-    kard(fmt(util)+' Bs',util>=0?'Utilidad':'Pérdida',util>=0?'📈':'📉',util>=0?'#031740':'#DC2626')+
-    kard(margen+'%','Margen',margen>10?'🎯':'⚠️',margen>10?'#059669':margen>0?'#F59E0B':'#DC2626')+
-    kard(fmt(tA)+' Bs','Total Activo','🏛️','#031740')+kard(fmt(tP)+' Bs','Total Pasivo','📊','#7C3AED')+
-    kard(fmt(tPT)+' Bs','Patrimonio','🏦','#0891B2')+kard(end+'%','Endeudamiento',end<50?'✅':'⚠️',end<50?'#059669':'#F59E0B')+
-    '<div class="sep"></div>'+
-    '<div class="card" style="background:#F8FAFF;border:1px solid #BFDBFE">'+
-    '<div class="h2" style="color:#1E40AF">🤖 Análisis IA — Interpretación para el Cliente</div>'+
-    '<p class="nota">La IA analiza los resultados y genera una explicación clara para presentar al cliente. Requiere API key configurada en "CONTAX IA".</p>'+
-    '<div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap">'+
-    '<button onclick="genAIReporte()" class="btn-purple" style="font-size:12px">🤖 Generar Análisis IA</button>'+
-    '<button onclick="localStorage.removeItem(\'ai_reporte\');re()" class="btn-del" style="font-size:11px">🗑 Limpiar</button>'+
+      kard(fmt(tI)+' Bs','Total Ingresos','💰','#059669')+kard(fmt(tG)+' Bs','Total Gastos','📤','#DC2626')+
+      kard(fmt(util)+' Bs',util>=0?'Utilidad':'Pérdida',util>=0?'📈':'📉',util>=0?'#031740':'#DC2626')+
+      kard(margen+'%','Margen',margen>10?'🎯':'⚠️',margen>10?'#059669':margen>0?'#F59E0B':'#DC2626')+
+      kard(fmt(tA)+' Bs','Total Activo','🏛️','#031740')+kard(fmt(tP)+' Bs','Total Pasivo','📊','#7C3AED')+
+      kard(fmt(tPT)+' Bs','Patrimonio','🏦','#0891B2')+kard(end+'%','Endeudamiento',end<50?'✅':'⚠️',end<50?'#059669':'#F59E0B')+
     '</div>'+
-    (localStorage.getItem('ai_reporte')?
-      '<div style="background:#fff;border:1px solid #E2E8F0;border-radius:8px;padding:14px;font-size:12px;line-height:1.7;white-space:pre-wrap">'+
-      (localStorage.getItem('ai_reporte')||'')+'</div>':
-      '<div class="info iy">Haz clic en "Generar Análisis IA" para obtener una interpretación automática de los resultados para presentar a tu cliente.</div>')+
-    '</div></div>';
-    '<div style="margin-top:16px;padding:12px;background:#031740;border-radius:8px;color:#fff">'+
-    '<div style="font-weight:700;margin-bottom:6px;font-size:11px">CONTAX — Firma Profesional</div>'+
-    '<div style="font-size:10px;opacity:.85;display:flex;gap:16px;flex-wrap:wrap">'+
-    '<span>Contador: <strong>'+(cfg.contadorNombre||'—')+'</strong> | C.I.: '+(cfg.contadorCI||'—')+'</span>'+
-    '<span>Cliente: <strong>'+(cfg.razonSocial||'—')+'</strong> | NIT: '+(cfg.nit||'—')+'</span>'+
-    '<span>Fecha: '+new Date().toLocaleDateString('es-BO')+'</span>'+
+    '<div style="background:#F8FAFF;border:1px solid #BFDBFE;border-radius:10px;padding:16px;margin-bottom:12px">'+
+      '<div class="h2" style="color:#1E40AF;margin-top:0">🤖 Análisis IA — Interpretación para el Cliente</div>'+
+      '<p class="nota">La IA analiza los resultados y genera una explicación clara para presentar al cliente. Requiere API key configurada en "CONTAX IA".</p>'+
+      '<div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap">'+
+        '<button onclick="genAIReporte()" class="btn-purple" style="font-size:12px">🤖 Generar Análisis IA</button>'+
+        '<button onclick="localStorage.removeItem(\'ai_reporte\');re()" class="btn-del" style="font-size:11px">🗑 Limpiar</button>'+
+      '</div>'+
+      (localStorage.getItem('ai_reporte')?
+        '<div style="background:#fff;border:1px solid #E2E8F0;border-radius:8px;padding:16px;font-size:13px;line-height:1.7;white-space:pre-wrap">'+
+        (localStorage.getItem('ai_reporte')||'')+'</div>':
+        '<div class="info iy">Haz clic en "Generar Análisis IA" para obtener una interpretación automática de los resultados para presentar a tu cliente.</div>')+
     '</div>'+
-    '</div>';
+    '<div style="margin-top:12px;padding:12px;background:#031740;border-radius:8px;color:#fff">'+
+      '<div style="font-weight:700;margin-bottom:6px;font-size:11px">CONTAX — Firma Profesional</div>'+
+      '<div style="font-size:10px;opacity:.85;display:flex;gap:16px;flex-wrap:wrap">'+
+        '<span>Contador: <strong>'+(cfg.contadorNombre||'—')+'</strong> | C.I.: '+(cfg.contadorCI||'—')+'</span>'+
+        '<span>Cliente: <strong>'+(cfg.razonSocial||'—')+'</strong> | NIT: '+(cfg.nit||'—')+'</span>'+
+        '<span>Fecha: '+new Date().toLocaleDateString('es-BO')+'</span>'+
+      '</div>'+
+    '</div>'+
+  '</div>';
 }
 
 function renderUsuarios(){
@@ -5389,8 +5407,9 @@ function exportExcelGeneral(){
   XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(erRows),'Estado de Resultados');
   const tr2=emp().traspaso;const uR=pn(cfg.ufvFin)/pn(cfg.ufvInicio)||1;
   const capA=r2(pn(tr2.capitalSocial)+pn(tr2.ajusteCapital)),resA=r2(pn(tr2.resAcum));
-  const fRows=[['ESTADO DE FLUJO DE EFECTIVO'],[cfg.razonSocial+' | Gestión '+year],[],'ACTIVIDADES DE OPERACIÓN','','Utilidad',c.util,'+ Depreciaciones',c.dep,'Otras variaciones',r2(c.fOp-c.util-c.dep),'','TOTAL OPERACIÓN',c.fOp,'','VARIACIÓN NETA',c.difF,'Saldo inicial',c.sI,'SALDO FINAL',c.sF];
-  XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(fRows.map(function(x){return Array.isArray(x)?x:[x];})),'Flujo de Efectivo');
+  const fRows=[['ESTADO DE FLUJO DE EFECTIVO'],[cfg.razonSocial+' | Gestión '+year],[]];
+  flujoLines(c).forEach(function(l){fRows.push(l.t==='grp'?[l.label]:[l.label,r2(l.v)]);});
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(fRows),'Flujo de Efectivo');
   const pRows=[['EVOLUCIÓN DEL PATRIMONIO'],[cfg.razonSocial+' | Gestión '+year],[],['CONCEPTO','CAPITAL','RES.ACUM.','UTILIDAD','TOTAL'],['Saldo Inicio',capA,resA,0,r2(capA+resA)],['+ Utilidad','—','—',c.util,c.util],['SALDO FINAL',r2(capA+c.ajC),resA,c.util,r2(capA+c.ajC+resA+c.util)]];
   XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(pRows),'Patrimonio');
   const ssRows=[['SUMAS Y SALDOS'],[cfg.razonSocial+' | NIT: '+nit+' | Gestión '+year],[],['Código','Cuenta','Suma Debe','Suma Haber','Saldo Deudor','Saldo Acreedor']];
@@ -5398,8 +5417,8 @@ function exportExcelGeneral(){
   ssRows.push(['','TOTALES',c.ssTSD,c.ssTSH,c.ssTSD,c.ssTSH]);
   XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(ssRows),'Sumas y Saldos');
   const afItems=getAFFromApertura();
-  const afRows=[['CUADRO DE ACTIVOS FIJOS'],[cfg.razonSocial+' | Gestión '+year],[],['Descripción','Fuente','Fecha','Valor Hist.','Dep.Año','Valor Neto','Tasa']];
-  afItems.forEach(function(af){afRows.push([af.nombre,af.fuente,af.fecha||'Inicio',af.vH,af.dep,af.vNeto,af.tasa]);});
+  const afRows=[['CUADRO DE ACTIVOS FIJOS'],[cfg.razonSocial+' | Gestión '+year],[],['Descripción','Fuente','Fecha','Meses','Años','Valor Neto (87%)','Increm. Actualiz.','Valor Actualizado','Deprec. Año','Acum. Ant.','Increm. Acum.','Dep. Acum. Actualiz.','Inventario Final']];
+  afItems.forEach(function(af){afRows.push([af.nombre,af.fuente,(af.fuente==='Apertura'?'Apertura':(af.fecha||'')),(af.meses!=null?af.meses:12),af.anios||'',r2(af.vH),r2(af.ajA),r2(af.vAct),r2(af.dep),r2(af.dAP),r2(af.ajD),r2(af.dTotal),r2(af.vNeto)]);});
   if(!afItems.length)afRows.push(['(Sin activos fijos)']);
   XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(afRows),'Cuadro AF');
   XLSX.writeFile(wb,'SIAT-EEFF-'+nit+'-'+year+'-12.xlsx');
@@ -5460,17 +5479,83 @@ function pdfSS(c){
 }
 function pdfCuadroAF(){
   var cfg=emp().cfg;var items=getAFFromApertura();
-  if(!items.length)return pdfHeader('Cuadro A.F.')+'<p>No hay activos fijos.</p>';
-  var rows=items.map(function(af){return '<tr><td>'+af.nombre+'</td><td style="font-size:9px">'+af.fuente+'</td><td style="font-size:9px">'+(af.fecha||'Inicio')+'</td><td style="text-align:right;font-family:monospace">'+fmt(af.vH)+'</td><td style="text-align:right;font-family:monospace">'+fmt(af.dep)+'</td><td style="text-align:right;font-weight:700;font-family:monospace">'+fmt(af.vNeto)+'</td><td style="font-size:9px">'+Math.round(af.tasa*100)+'%</td></tr>';}).join('');
-  var totNeto=r2(items.reduce(function(s,a){return r2(s+a.vNeto);},0));
-  return pdfHeader('Cuadro de Activos Fijos')+'<div style="text-align:center;margin-bottom:10px"><div style="font-size:13px;font-weight:700;color:#031740">CUADRO DE ACTIVOS FIJOS</div></div><table style="width:100%;border-collapse:collapse"><thead style="background:#031740;color:#fff"><tr><th>Descripción</th><th>Fuente</th><th>Fecha</th><th style="text-align:right">V.Hist.</th><th style="text-align:right">Dep.Año</th><th style="text-align:right">V.Neto</th><th>Tasa</th></tr></thead><tbody>'+rows+'</tbody><tfoot style="background:#031740;color:#fff;font-weight:700"><tr><td colspan="5">TOTAL VALOR NETO</td><td style="text-align:right;font-family:monospace">'+fmt(totNeto)+'</td><td></td></tr></tfoot></table>'+pdfFirmas(calcAll());
+  if(!items.length)return '<!--LANDSCAPE-->'+pdfHeader('Cuadro A.F.')+'<p>No hay activos fijos.</p>';
+  function n(v){return v?fmt(r2(v)):'';}
+  var rows=items.map(function(af){return '<tr>'+
+    '<td>'+af.nombre+'</td>'+
+    '<td style="font-size:9px">'+af.fuente+'</td>'+
+    '<td style="font-size:9px">'+(af.fuente==='Apertura'?'Apertura':(af.fecha||'—'))+'</td>'+
+    '<td style="text-align:center">'+(af.meses!=null?af.meses:12)+'</td>'+
+    '<td style="text-align:center">'+(af.anios||'')+'</td>'+
+    '<td style="text-align:right;font-family:monospace">'+fmt(af.vH)+'</td>'+
+    '<td style="text-align:right;font-family:monospace">'+n(af.ajA)+'</td>'+
+    '<td style="text-align:right;font-family:monospace;font-weight:600">'+fmt(af.vAct)+'</td>'+
+    '<td style="text-align:right;font-family:monospace">'+fmt(af.dep)+'</td>'+
+    '<td style="text-align:right;font-family:monospace">'+n(af.dAP)+'</td>'+
+    '<td style="text-align:right;font-family:monospace">'+n(af.ajD)+'</td>'+
+    '<td style="text-align:right;font-family:monospace;font-weight:700">'+fmt(af.dTotal)+'</td>'+
+    '<td style="text-align:right;font-family:monospace;font-weight:700">'+fmt(af.vNeto)+'</td>'+
+  '</tr>';}).join('');
+  var T=function(f){return r2(items.reduce(function(s,a){return r2(s+(a[f]||0));},0));};
+  return '<!--LANDSCAPE-->'+pdfHeader('Cuadro de Activos Fijos')+
+    '<div style="text-align:center;margin-bottom:8px"><div style="font-size:13px;font-weight:700;color:#031740">CUADRO DE ACTIVOS FIJOS</div>'+
+    '<div style="font-size:10px;color:#555">'+cfg.razonSocial+' | Gestión '+(cfg.gestion||'')+'</div></div>'+
+    '<table style="width:100%;border-collapse:collapse;font-size:9.5px"><thead style="background:#031740;color:#fff;font-size:9px"><tr>'+
+      '<th style="text-align:left">Descripción</th><th>Fuente</th><th>Fecha</th><th>Meses</th><th>Años</th>'+
+      '<th style="text-align:right">Valor Neto (87%)</th><th style="text-align:right">Increm. Actualiz.</th><th style="text-align:right">Valor Actualizado</th>'+
+      '<th style="text-align:right">Deprec. Año</th><th style="text-align:right">Acum. Ant.</th><th style="text-align:right">Increm. Acum.</th>'+
+      '<th style="text-align:right">Dep. Acum. Actualiz.</th><th style="text-align:right">Inventario Final</th>'+
+    '</tr></thead><tbody>'+rows+'</tbody>'+
+    '<tfoot style="background:#031740;color:#fff;font-weight:700"><tr>'+
+      '<td colspan="5" style="text-align:right">TOTALES</td>'+
+      '<td style="text-align:right;font-family:monospace">'+fmt(T('vH'))+'</td>'+
+      '<td style="text-align:right;font-family:monospace">'+fmt(T('ajA'))+'</td>'+
+      '<td style="text-align:right;font-family:monospace">'+fmt(T('vAct'))+'</td>'+
+      '<td style="text-align:right;font-family:monospace">'+fmt(T('dep'))+'</td>'+
+      '<td style="text-align:right;font-family:monospace">'+fmt(T('dAP'))+'</td>'+
+      '<td style="text-align:right;font-family:monospace">'+fmt(T('ajD'))+'</td>'+
+      '<td style="text-align:right;font-family:monospace">'+fmt(T('dTotal'))+'</td>'+
+      '<td style="text-align:right;font-family:monospace">'+fmt(T('vNeto'))+'</td>'+
+    '</tr></tfoot></table>'+pdfFirmas(calcAll());
+}
+// Genera TODAS las líneas del flujo de efectivo (usado por pantalla no, pero sí por Excel y PDF)
+function flujoLines(c){
+  var L=[];
+  L.push({t:'grp',label:'ACTIVIDADES DE OPERACIÓN'});
+  L.push({label:'Utilidad de la Gestión',v:c.util});
+  L.push({label:'+ Depreciaciones (no monetario)',v:c.dep});
+  L.push({label:'+ Gasto UFV (no monetario)',v:c.gUFV});
+  L.push({label:'− Ingreso UFV (no monetario)',v:-c.iUFV});
+  if(c.vCF!==0)L.push({label:'Variación Crédito Fiscal IVA',v:-c.vCF});
+  if(c.vIC!==0)L.push({label:'Variación IUE a compensar',v:-c.vIC});
+  if(c.vDF!==0)L.push({label:'Variación Débito Fiscal IVA',v:c.vDF});
+  if(c.vIT!==0)L.push({label:'Variación IT Por Pagar',v:c.vIT});
+  if(c.vIUE!==0)L.push({label:'Variación IUE Por Pagar',v:c.vIUE});
+  if(c.vCxC!==0)L.push({label:'Variación Cuentas por Cobrar',v:-c.vCxC});
+  if(c.vCxP!==0)L.push({label:'Variación Cuentas por Pagar',v:c.vCxP});
+  if(c.vMultas!==0)L.push({label:'Variación Multas por Pagar',v:c.vMultas});
+  L.push({t:'tot',label:'TOTAL OPERACIÓN',v:c.fOp});
+  L.push({t:'grp',label:'ACTIVIDADES DE INVERSIÓN'});
+  L.push({label:'Compras de activos fijos (efectivo)',v:c.inv});
+  L.push({t:'tot',label:'TOTAL INVERSIÓN',v:c.inv});
+  L.push({t:'grp',label:'ACTIVIDADES DE FINANCIAMIENTO'});
+  if(c.vPr!==0)L.push({label:'Variación Préstamos',v:c.vPr});
+  L.push({t:'tot',label:'TOTAL FINANCIAMIENTO',v:c.fFin});
+  L.push({t:'tot',label:'DIFERENCIA DE EFECTIVO',v:c.difF});
+  L.push({label:'Saldo INICIO (Caja + Banco)',v:c.sI});
+  L.push({t:'fin',label:'SALDO FINAL DE EFECTIVO',v:c.sF});
+  L.push({label:'Efectivo real (Caja + Banco) según Balance',v:c.cajaMN});
+  L.push({t:'chk',label:'DIFERENCIA (debe ser 0)',v:r2(c.sF-c.cajaMN)});
+  return L;
 }
 function pdfFlujo(c){
-  var cfg=emp().cfg;
-  var rows='<tr style="background:#031740;color:#fff"><td colspan="2" style="padding:6px 8px;font-weight:700">ACTIVIDADES DE OPERACIÓN</td></tr><tr><td style="padding:3px 6px 3px 18px">Utilidad de la Gestión</td><td style="text-align:right;font-family:monospace">'+fmt(c.util)+'</td></tr><tr><td style="padding:3px 6px 3px 18px">+ Depreciaciones</td><td style="text-align:right;font-family:monospace">'+fmt(c.dep)+'</td></tr>'+
-    (c.gUFV?'<tr><td style="padding:3px 6px 3px 18px">+ Gasto UFV</td><td style="text-align:right;font-family:monospace">'+fmt(c.gUFV)+'</td></tr>':'')+
-    '<tr style="background:#E2E8F0"><td style="padding:5px 6px;font-weight:700">TOTAL OPERACIÓN</td><td style="text-align:right;font-weight:700;font-family:monospace">'+fmt(c.fOp)+'</td></tr><tr style="background:#E2E8F0"><td style="padding:5px 6px;font-weight:700">VARIACIÓN NETA</td><td style="text-align:right;font-weight:700;font-family:monospace">'+fmt(c.difF)+'</td></tr><tr><td style="padding:3px 6px">Saldo inicial</td><td style="text-align:right;font-family:monospace">'+fmt(c.sI)+'</td></tr><tr style="background:#031740;color:#fff"><td style="padding:6px 8px;font-weight:700">SALDO FINAL DE EFECTIVO</td><td style="text-align:right;font-weight:700;font-family:monospace">'+fmt(c.sF)+'</td></tr>';
-  return pdfHeader('Flujo de Efectivo')+'<div style="text-align:center;margin-bottom:10px"><div style="font-size:14px;font-weight:700;color:#031740">FLUJO DE EFECTIVO</div></div><table style="width:100%;border-collapse:collapse"><tbody>'+rows+'</tbody></table>'+pdfFirmas(c);
+  var rows=flujoLines(c).map(function(l){
+    if(l.t==='grp')return '<tr style="background:#031740;color:#fff"><td colspan="2" style="padding:6px 8px;font-weight:700">'+l.label+'</td></tr>';
+    var bg=(l.t==='tot')?'background:#E2E8F0;font-weight:700':(l.t==='fin')?'background:#031740;color:#fff;font-weight:700':(l.t==='chk')?'background:'+(Math.abs(l.v)<0.005?'#F0FDF4':'#FEF2F2')+';font-weight:700':'';
+    var pad=(l.t)?'padding:5px 8px':'padding:3px 6px 3px 18px';
+    return '<tr style="'+bg+'"><td style="'+pad+'">'+l.label+'</td><td style="text-align:right;font-family:monospace;'+pad+'">'+fmt(l.v)+'</td></tr>';
+  }).join('');
+  return pdfHeader('Flujo de Efectivo')+'<div style="text-align:center;margin-bottom:10px"><div style="font-size:14px;font-weight:700;color:#031740">ESTADO DE FLUJO DE EFECTIVO</div></div><table style="width:100%;border-collapse:collapse;font-size:11px"><tbody>'+rows+'</tbody></table>'+pdfFirmas(c);
 }
 function pdfPatrimonio(c){
   var cfg=emp().cfg;var tr2=emp().traspaso;
@@ -5483,14 +5568,10 @@ function pdfPatrimonio(c){
     '</table>'+pdfFirmas(c);
 }
 function pdfTributario(){
-  var cfg=emp().cfg;var data=buildTribResumen();
-  var MESES=['ENERO','FEBRERO','MARZO','ABRIL','MAYO','JUNIO','JULIO','AGOSTO','SEPTIEMBRE','OCTUBRE','NOVIEMBRE','DICIEMBRE'];
-  var totC=r2(data.reduce(function(s,m){return r2(s+m.compras);},0)),totV=r2(data.reduce(function(s,m){return r2(s+m.ventas);},0));
-  var totIVA=r2(data.reduce(function(s,m){return r2(s+m.ivaAPagar);},0)),totIT=r2(data.reduce(function(s,m){return r2(s+m.itAPagar);},0));
-  var rows=data.map(function(m,i){return '<tr style="background:'+(i%2?'#F8FAFC':'#fff')+'"><td style="font-weight:600">'+(i+1)+'</td><td>'+MESES[i]+'</td><td style="text-align:right;font-family:monospace">'+(m.compras>0?fmt(m.compras):'—')+'</td><td style="text-align:right;font-family:monospace">'+(m.ventas>0?fmt(m.ventas):'—')+'</td><td style="text-align:right;font-family:monospace;font-weight:600;color:#DC2626">'+(m.ivaAPagar>0?fmt(m.ivaAPagar):(m.cfDisponible>0?'CF:'+fmt(m.cfDisponible):'—'))+'</td><td style="text-align:right;font-family:monospace">'+(m.itAPagar>0?fmt(m.itAPagar):'—')+'</td></tr>';}).join('');
-  return pdfHeader('Resumen Tributario')+'<div style="text-align:center;margin-bottom:10px"><div style="font-size:13px;font-weight:700;color:#031740">RESUMEN TRIBUTARIO — '+cfg.gestion+'</div></div>'+
-    '<table style="width:100%;border-collapse:collapse"><thead style="background:#031740;color:#fff"><tr><th>N°</th><th>Mes</th><th style="text-align:right">Compras</th><th style="text-align:right">Ventas</th><th style="text-align:right">IVA Pagar</th><th style="text-align:right">IT Pagar</th></tr></thead><tbody>'+rows+'</tbody>'+
-    '<tfoot style="background:#031740;color:#fff;font-weight:700"><tr><td colspan="2">TOTALES</td><td style="text-align:right;font-family:monospace">'+fmt(totC)+'</td><td style="text-align:right;font-family:monospace">'+fmt(totV)+'</td><td style="text-align:right;font-family:monospace">'+fmt(totIVA)+'</td><td style="text-align:right;font-family:monospace">'+fmt(totIT)+'</td></tr></tfoot></table>';
+  return '<!--LANDSCAPE-->'+renderTributario();
+}
+function pdfGraficos(c){
+  return renderGraficos(c||calcAll());
 }
 function renderCover(){
   var cfg=emp().cfg;var year=cfg.fechaFin?cfg.fechaFin.split('-')[0]:new Date().getFullYear();
@@ -5510,8 +5591,9 @@ function renderCover(){
     '</div></div>';
 }
 function buildPrintDocument(sections){
-  var pageStyle='@page{size:letter;margin:13mm 15mm} body{font-family:Segoe UI,Arial,sans-serif;font-size:10.5px;color:#0D0D0D;background:#fff} table{width:100%;border-collapse:collapse;font-size:10.5px} td,th{padding:3px 6px} .pb{page-break-after:always}';
-  return '<!DOCTYPE html><html><head><meta charset="utf-8"><style>'+pageStyle+'</style></head><body>'+sections.map(function(s,i){return '<div class="'+(i<sections.length-1?'pb':'')+'" style="padding:4mm 0">'+s+'</div>';}).join('')+'</body></html>';
+  var appCss='';try{var st=document.querySelector('style');if(st)appCss=st.textContent;}catch(e){}
+  var pageStyle=appCss+' @page{size:letter;margin:13mm 15mm} @page ph{size:letter landscape;margin:10mm} .ph{page:ph} body{font-family:Segoe UI,Arial,sans-serif;font-size:10.5px;color:#0D0D0D;background:#fff;height:auto} .pb{page-break-after:always} .card{box-shadow:none;break-inside:avoid} button,.btn,.btn-blue,.btn-green,.btn-orange,.btn-del,.btn-purple,.chat-fab,.chat-float,.nav,.hdr,.nav-toggle{display:none!important}';
+  return '<!DOCTYPE html><html><head><meta charset="utf-8"><style>'+pageStyle+'</style></head><body>'+sections.map(function(s,i){var land=String(s).indexOf('<!--LANDSCAPE-->')===0;var cls=(i<sections.length-1?'pb':'')+(land?' ph':'');return '<div class="'+cls+'" style="padding:4mm 0">'+s+'</div>';}).join('')+'</body></html>';
 }
 function exportPDFCompleto(){
   var c=calcAll();var cfg=emp().cfg;
@@ -5536,7 +5618,7 @@ function exportPDFSingle(tipo,titulo){
 }
 function exportPDFAnalisis(){
   var c=calcAll();
-  var doc=buildPrintDocument([pdfTributario(),'<div style="page-break-after:always">'+renderReporte(c)+'</div>']);
+  var doc=buildPrintDocument([pdfTributario(),'<div class="pb">'+pdfGraficos(c)+'</div>','<div class="pb">'+renderReporte(c)+'</div>']);
   var win=window.open('','_blank');if(!win){alert('Permite ventanas emergentes.');return;}
   win.document.write(doc);win.document.close();win.onload=function(){win.print();};
 }
@@ -5607,7 +5689,7 @@ function renderExportModal(){
     {icon:'📊',title:'Excel General (EEFF)',desc:'BG + ER + Flujo + Patrimonio + S&S + AF',file:'SIAT-EEFF-'+nit+'-'+year+'-12.xlsx',color:'#059669',action:'exportExcelGeneral()'},
     {icon:'📋',title:'Excel Sumas y Saldos',desc:'Formato S&S para el SIAT',file:'SIAT-BSS-'+nit+'-'+year+'-12.xlsx',color:'#0891B2',action:'exportExcelSS()'},
     {icon:'📄',title:'PDF Completo (con carátula)',desc:'Carátula + BG + ER + S&S + Flujo + Patrimonio + AF + Notas. Hoja carta.',file:'EEFF-'+nombre+'-'+year+'.pdf',color:'#DC2626',action:'exportPDFCompleto()'},
-    {icon:'📉',title:'PDF Análisis',desc:'Resumen Tributario + Reporte Ejecutivo',file:'Analisis-'+nombre+'-'+year+'.pdf',color:'#7C3AED',action:'exportPDFAnalisis()'},
+    {icon:'📉',title:'PDF Análisis',desc:'Resumen Tributario + Gráficos + Reporte Ejecutivo',file:'Analisis-'+nombre+'-'+year+'.pdf',color:'#7C3AED',action:'exportPDFAnalisis()'},
     {icon:'📝',title:'Word — Notas EEFF',desc:'Notas en formato Word editable',file:'Notas_EEFF_'+nombre+'_'+year+'.doc',color:'#142740',action:'exportNotasWord()'},
     {icon:'💾',title:'Respaldo completo (JSON)',desc:'TODOS los datos del sistema. Guárdalo como copia de seguridad o para pasar a otro equipo.',file:'CONTAX_respaldo_'+VERSION+'.json',color:'#334155',action:'exportBackup()'},
   ];
