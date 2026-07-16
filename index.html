@@ -173,8 +173,15 @@ body.dark-mode .emp-box{background:#0d2145!important;color:#E2E8F0!important}
 // VERSIÓN DEL SISTEMA — Única fuente de verdad
 // Al aprobar una versión: subir VERSION y agregar una entrada al inicio de CHANGELOG.
 // ══════════════════════════════════════════════════════════
-const VERSION='V72';
+const VERSION='V73';
 const CHANGELOG=[
+  {v:'V73', fecha:'2026-07-14', cambios:[
+    'CORRECCIÓN del Flujo de Efectivo (por fin cuadra): se corrigieron 3 errores que impedían la reconciliación.',
+    '1) El flujo consideraba solo Caja e ignoraba el Banco; ahora el efectivo = Caja + Banco (incluye el saldo inicial y el final).',
+    '2) Faltaba incluir la variación de Multas por Pagar.',
+    '3) El financiamiento (préstamos) tenía el signo invertido; un aumento de préstamos es ingreso de efectivo.',
+    'Verificado con la identidad contable: Activo = Pasivo + Patrimonio, por lo que el flujo ahora reconcilia con el efectivo real del Balance.'
+  ]},
   {v:'V72', fecha:'2026-07-14', cambios:[
     'Dashboard rehecho: ahora se alimenta de la hoja Balance2025 (Google Sheets). Detecta solo las columnas numéricas y de texto.',
     'Muestra indicadores (total de registros y suma de cada columna numérica) y un análisis configurable: agrupar por cualquier columna y medir cantidad o suma, con gráfico de barras.',
@@ -1288,15 +1295,17 @@ function calcAll(){
   });
   const vCxC=r2(gs('113001001')-pn(e.traspaso.cxc||0)); // variación cuentas por cobrar
   const vCxP=r2(gs('212004001')-pn(e.traspaso.cxp||0)); // variación cuentas por pagar
-  const fOp=r2(util+dep+gUFV-iUFV-vCF-vIC+vDF+vIT+vIUE-vCxC+vCxP);
-  const fFin=r2(-vPr),difF=r2(fOp+inv+fFin);
-  const sI=r2(pn(e.traspaso.caja)),sF=r2(sI+difF),cajaMN=gs('111001001');
+  const vMultas=r2(gs('214026001')-pn(e.traspaso.multas)); // variación multas por pagar
+  const fOp=r2(util+dep+gUFV-iUFV-vCF-vIC+vDF+vIT+vIUE-vCxC+vCxP+vMultas);
+  const fFin=r2(vPr),difF=r2(fOp+inv+fFin); // financiamiento: aumento de préstamos = ingreso de efectivo (+vPr)
+  // Efectivo = Caja + Banco (efectivo y equivalentes), no solo caja
+  const sI=r2(pn(e.traspaso.caja)+pn(e.traspaso.banco)),sF=r2(sI+difF),cajaMN=r2(gs('111001001')+gs('111002001'));
   const ssA=Object.keys(M).filter(k=>M[k].debe>0||M[k].haber>0).sort();
   const ssTD=r2(ssA.reduce((s,k)=>r2(s+r2(M[k].debe)),0));
   const ssTH=r2(ssA.reduce((s,k)=>r2(s+r2(M[k].haber)),0));
   const ssTSD=r2(ssA.reduce((s,k)=>r2(s+r2(M[k].sD||0)),0));
   const ssTSH=r2(ssA.reduce((s,k)=>r2(s+r2(M[k].sH||0)),0));
-  return{E,M,gs,util,tI,tG,aC,aNC,tA,tP,tPT,difBG,dep,gUFV,iUFV,vCF,vIC,vDF,vIT,vIUE,vPr,inv,fOp,fFin,difF,sI,sF,cajaMN,ajC,vCxC,vCxP,ssA,ssTD,ssTH,ssTSD,ssTSH,bgOK:difBG===0,ssOK:r2(ssTSD-ssTSH)===0,fOK:r2(sF-cajaMN)===0};
+  return{E,M,gs,util,tI,tG,aC,aNC,tA,tP,tPT,difBG,dep,gUFV,iUFV,vCF,vIC,vDF,vIT,vIUE,vPr,inv,fOp,fFin,difF,sI,sF,cajaMN,ajC,vCxC,vCxP,vMultas,ssA,ssTD,ssTH,ssTSD,ssTSH,bgOK:difBG===0,ssOK:r2(ssTSD-ssTSH)===0,fOK:r2(sF-cajaMN)===0};
 }
 
 // HELPERS
@@ -1344,7 +1353,7 @@ function exportXL(){
     ['OPERACIÓN',''],['Utilidad',util],['+Depreciaciones',dep],['+Gasto UFV',gUFV],['-Ingreso UFV',-iUFV],
     ['Var. CF IVA',-vCF],['Var. IUE Comp.',-vIC],['Var. DF IVA',vDF],['Var. IT Pagar',vIT],['Var. IUE Pagar',vIUE],
     ['TOTAL OPERACIÓN',fOp],[],['INVERSIÓN',''],['Compras activos',inv],['TOTAL INVERSIÓN',inv],[],
-    ['FINANCIAMIENTO',''],['Var. Préstamos',-vPr],['TOTAL FINANCIAMIENTO',fFin],[],
+    ['FINANCIAMIENTO',''],['Var. Préstamos',vPr],['TOTAL FINANCIAMIENTO',fFin],[],
     ['DIFERENCIA',difF],['Saldo Inicio',sI],['Saldo Final',sF],['Caja M/N BG',cajaMN],['Diferencia',r2(sF-cajaMN)]]);
   XLSX.writeFile(wb,'CONTAX_'+cfg.razonSocial+'_'+cfg.gestion+'.xlsx');
 }
@@ -3033,18 +3042,19 @@ function renderEE(c){
       (vIUE!==0?'<tr><td style="padding-left:18px">Variación IUE Por Pagar</td><td class="r">'+fmt(vIUE)+'</td></tr>':'')+
       (c.vCxC!==0?'<tr><td style="padding-left:18px">Variación Cuentas por Cobrar</td><td class="r">'+fmt(-c.vCxC)+'</td></tr>':'')+
       (c.vCxP!==0?'<tr><td style="padding-left:18px">Variación Cuentas por Pagar</td><td class="r">'+fmt(c.vCxP)+'</td></tr>':'')+
+      (c.vMultas!==0?'<tr><td style="padding-left:18px">Variación Multas por Pagar</td><td class="r">'+fmt(c.vMultas)+'</td></tr>':'')+
       '<tr class="tr-t"><td>TOTAL OPERACIÓN</td><td class="r">'+fmt(fOp)+'</td></tr>'+
       '<tr class="tr-g"><td colspan="2">ACTIVIDADES DE INVERSIÓN</td></tr>'+
       '<tr><td style="padding-left:18px">Compras activos fijos (efectivo real)</td><td class="r">'+fmt(inv)+'</td></tr>'+
       '<tr class="tr-t"><td>TOTAL INVERSIÓN</td><td class="r">'+fmt(inv)+'</td></tr>'+
       '<tr class="tr-g"><td colspan="2">ACTIVIDADES DE FINANCIAMIENTO</td></tr>'+
-      (vPr!==0?'<tr><td style="padding-left:18px">Variación Préstamos</td><td class="r">'+fmt(-vPr)+'</td></tr>':'')+
+      (vPr!==0?'<tr><td style="padding-left:18px">Variación Préstamos</td><td class="r">'+fmt(vPr)+'</td></tr>':'')+
       '<tr class="tr-t"><td>TOTAL FINANCIAMIENTO</td><td class="r">'+fmt(fFin)+'</td></tr>'+
       '</tbody><tfoot>'+
       '<tr class="tr-f"><td>DIFERENCIA DE EFECTIVO</td><td class="r">'+fmt(difF)+'</td></tr>'+
       '<tr><td>Saldo INICIO</td><td class="r">'+fmt(sI)+'</td></tr>'+
       '<tr class="tr-t"><td>Saldo FINAL (flujo)</td><td class="r" style="font-size:13px">'+fmt(sF)+'</td></tr>'+
-      '<tr><td>Caja M/N según BG</td><td class="r">'+fmt(cajaMN)+'</td></tr>'+
+      '<tr><td>Efectivo real (Caja + Banco) según BG</td><td class="r">'+fmt(cajaMN)+'</td></tr>'+
       '<tr class="'+(fOK?'bok':'ber')+'"><td>DIFERENCIA</td><td class="r '+(fOK?'cok':'cer')+'">'+fmt(r2(sF-cajaMN))+' '+(fOK?'✓ CUADRADO':'')+'</td></tr>'+
       '</tfoot></table>';
   } else if(st==='pat'){
@@ -4704,14 +4714,15 @@ function eeFlujoAux(c){
     auxLine('(+) Variación IUE por pagar','',c.vIUE)+
     auxLine('(−) Variación Cuentas por Cobrar','',-c.vCxC)+
     auxLine('(+) Variación Cuentas por Pagar','',c.vCxP)+
+    auxLine('(+) Variación Multas por Pagar','',c.vMultas)+
     auxLine('= Flujo de Operación','suma de lo anterior',c.fOp)+
     auxLine('Flujo de Inversión (compras de A.F.)','',c.inv)+
     auxLine('Flujo de Financiamiento (préstamos)','',c.fFin)+
     auxLine('Variación neta de efectivo','Operación + Inversión + Financiamiento',c.difF)+
-    auxLine('Saldo inicial de caja','',c.sI)+
+    auxLine('Saldo inicial (Caja + Banco)','',c.sI)+
     auxLine('Saldo final calculado','Inicial + Variación neta',c.sF)+
-    auxLine('Caja M/N real (según Balance)','',c.cajaMN)+
-    auxLine('Diferencia (debe ser 0)','Saldo final − Caja real',r2(c.sF-c.cajaMN));
+    auxLine('Efectivo real (Caja + Banco, según Balance)','',c.cajaMN)+
+    auxLine('Diferencia (debe ser 0)','Saldo final − Efectivo real',r2(c.sF-c.cajaMN));
 }
 function eePatAux(c){
   var gs=c.gs;var cap=gs('311001001'),aj=gs('311002001'),res=gs('313001001'),ut=c.util;
