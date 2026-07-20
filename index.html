@@ -174,8 +174,13 @@ body.dark-mode .emp-box{background:#0d2145!important;color:#E2E8F0!important}
 // VERSIÓN DEL SISTEMA — Única fuente de verdad
 // Al aprobar una versión: subir VERSION y agregar una entrada al inicio de CHANGELOG.
 // ══════════════════════════════════════════════════════════
-const VERSION='V90';
+const VERSION='V91';
 const CHANGELOG=[
+  {v:'V91', fecha:'2026-07-20', cambios:[
+    'Plan de Cuentas: botón 🗑 para eliminar una cuenta analítica (deja de aparecer en el plan y en los selectores). Se puede recuperar con "↺ Restaurar todo".',
+    'Plan de Cuentas: cada nivel se distingue por color (Cuenta, Grupo, Sub Grupo, Cuenta Principal en tonos azul/índigo/violeta/gris; Cuenta Analítica en verde claro = editable; naranja si fue modificada).',
+    'Reporte: se quitó toda mención a "IA". El apartado ahora se titula "Análisis" y el texto ya no dice que lo genera una IA.'
+  ]},
   {v:'V90', fecha:'2026-07-20', cambios:[
     'Otros Asientos (asientos libres): nuevo campo de Comentario. Si el asiento es una compra de Activo Fijo, ese comentario se muestra en el Cuadro de Activos Fijos.',
     'Selección de cuentas buscable: los desplegables de cuenta en NIT\'s y en las líneas de asientos libres ahora permiten escribir para buscar (ej. escribir "caja" y elegir), igual que en RCV e Ingresos.',
@@ -723,6 +728,7 @@ function globalSnapshot(){
     ufvData:S.ufvData||[],
     nits:S.nits||[],
     planCuentas:S.planCuentas||[],
+    plan_hidden:localStorage.getItem('cx_planhidden')||null,
     vidautil:localStorage.getItem('cx_vidautil')||null,
     plans:localStorage.getItem('cx_plans')||null,
     lista_eeff:localStorage.getItem('lista_eeff')||null,
@@ -737,6 +743,7 @@ function applyGlobal(g){
   if(g.ufvData)S.ufvData=g.ufvData;
   if(g.nits)S.nits=g.nits;
   if(g.planCuentas)S.planCuentas=g.planCuentas;
+  if(g.plan_hidden!=null)try{localStorage.setItem('cx_planhidden',g.plan_hidden);}catch(e){}
   if(g.vidautil)try{localStorage.setItem('cx_vidautil',g.vidautil);}catch(e){}
   if(g.plans)try{localStorage.setItem('cx_plans',g.plans);}catch(e){}
   if(g.lista_eeff)try{localStorage.setItem('lista_eeff',g.lista_eeff);}catch(e){}
@@ -2060,6 +2067,8 @@ function renderPlan(){
     var idx=plan.findIndex(function(r){return r.a>code;});
     if(idx<0)plan.push(cr);else plan.splice(idx,0,cr);
   });
+  var _hidden=getPlanHidden();
+  if(_hidden.length)plan=plan.filter(function(r){return _hidden.indexOf(r.a)<0;});
   var customPlan=S.planCuentas&&S.planCuentas.length?S.planCuentas:[];
   var q=(S.planQ||'').toLowerCase();
   function getRow(r){
@@ -2132,10 +2141,13 @@ function renderPlan(){
   }
 
   // ── Leyenda ──
-  var legend='<div style="display:flex;gap:10px;margin-bottom:8px;font-size:10px;flex-wrap:wrap">'+
-    '<span style="background:#DCFCE7;border-radius:3px;padding:2px 7px;color:#166534">● CUENTA ANALÍTICA — clic para editar</span>'+
-    '<span style="background:#FEF9C3;border-radius:3px;padding:2px 7px;color:#854D0E">● Modificada</span>'+
-    '<span style="background:#F3F4F6;border-radius:3px;padding:2px 7px;color:#6B7280">Otros niveles — solo lectura</span>'+
+  var legend='<div style="display:flex;gap:6px;margin-bottom:8px;font-size:10px;flex-wrap:wrap">'+
+    '<span style="background:#DBEAFE;border-radius:3px;padding:2px 7px;color:#1E3A8A">● Cuenta</span>'+
+    '<span style="background:#E0E7FF;border-radius:3px;padding:2px 7px;color:#3730A3">● Grupo</span>'+
+    '<span style="background:#EDE9FE;border-radius:3px;padding:2px 7px;color:#5B21B6">● Sub Grupo</span>'+
+    '<span style="background:#F1F5F9;border-radius:3px;padding:2px 7px;color:#475569">● Cuenta Principal</span>'+
+    '<span style="background:#F0FDF4;border:1px solid #86EFAC;border-radius:3px;padding:2px 7px;color:#166534">● Cuenta Analítica — editable (clic)</span>'+
+    '<span style="background:#FFEDD5;border-radius:3px;padding:2px 7px;color:#9A3412">● Modificada</span>'+
   '</div>';
 
   // ── Filas de la tabla ──
@@ -2143,12 +2155,14 @@ function renderPlan(){
     var row=getRow(r);
     var isAnal=r.l==='CUENTA ANALITICA';
     var isMod=isAnal&&row._modified;
-    var bg=isMod?'#FEF9C3':isAnal?'#F0FDF4':'';
-    var col=isMod?'#92400E':isAnal?'#166534':'#374151';
+    var lvlBg={'CUENTA':'#DBEAFE','GRUPO':'#E0E7FF','SUB GRUPO':'#EDE9FE','CUENTA PRINCIPAL':'#F1F5F9','CUENTA ANALITICA':'#F0FDF4'};
+    var bg=isMod?'#FFEDD5':(lvlBg[r.l]||'#fff');
+    var col=isMod?'#9A3412':isAnal?'#166534':'#334155';
     var fw=r.l==='CUENTA'?'800':r.l==='GRUPO'?'700':r.l==='SUB GRUPO'?'600':r.l==='CUENTA PRINCIPAL'?'500':'400';
     var click=isAnal?'onclick="S.planEdit=\''+r.a+'\';re()"':'';
-    var hover=isAnal?'onmouseover="this.style.background=\'#BBFBD0\'" onmouseout="this.style.background=\''+bg+'\'"':'';
-    var editBtn=isAnal?'<button onclick="event.stopPropagation();S.planEdit=\''+r.a+'\';re()" style="background:none;border:none;cursor:pointer;color:#F59E0B;font-size:11px;padding:0 3px">✏️</button>':'';
+    var hover=isAnal?'onmouseover="this.style.background=\'#DCFCE7\'" onmouseout="this.style.background=\''+bg+'\'"':'';
+    var editBtn=isAnal?'<button onclick="event.stopPropagation();S.planEdit=\''+r.a+'\';re()" title="Editar nombre" style="background:none;border:none;cursor:pointer;color:#F59E0B;font-size:11px;padding:0 3px">✏️</button>'+
+      '<button onclick="event.stopPropagation();deletePlanAcct(\''+r.a+'\')" title="Eliminar cuenta" style="background:none;border:none;cursor:pointer;color:#DC2626;font-size:11px;padding:0 3px">🗑</button>':'';
     return '<tr '+click+' '+hover+' style="background:'+bg+';cursor:'+(isAnal?'pointer':'default')+'">'+
       '<td style="font-family:monospace;font-size:10px;color:#6B7280;padding:3px 6px;white-space:nowrap">'+r.a+'</td>'+
       '<td style="text-align:center;font-family:monospace;font-size:10px;color:#9CA3AF;padding:3px 4px">'+r.b+'</td>'+
@@ -2162,7 +2176,7 @@ function renderPlan(){
     '</tr>';
   }).join('');
 
-  var hasCustom=customPlan.length>0;
+  var hasCustom=customPlan.length>0||getPlanHidden().length>0;
   var tipos=[['','Todas'],['1','Activo'],['2','Pasivo'],['3','Patrimonio'],['4','Ingresos'],['5','Egresos']];
   var chips='<div style="display:flex;gap:6px;margin-bottom:6px;flex-wrap:wrap;align-items:center">'+
     '<span style="font-size:10px;color:#94A3B8;font-weight:700;margin-right:2px">TIPO:</span>'+tipos.map(function(t){
@@ -2234,8 +2248,20 @@ function resetPlanAcct(code){
   S.planCuentas=cp;savePlanCuentas(cp);re();
 }
 function resetAllPlan(){
-  if(!confirm('Restaurar TODOS los nombres originales?'))return;
-  S.planCuentas=[];savePlanCuentas([]);re();
+  if(!confirm('Restaurar TODOS los nombres originales y recuperar las cuentas eliminadas?'))return;
+  S.planCuentas=[];savePlanCuentas([]);savePlanHidden([]);re();
+}
+function getPlanHidden(){try{var s=localStorage.getItem('cx_planhidden');if(s){var a=JSON.parse(s);if(Array.isArray(a))return a;}}catch(e){}return [];}
+function savePlanHidden(a){try{localStorage.setItem('cx_planhidden',JSON.stringify(a));}catch(e){}if(typeof scheduleSyncGlobal==='function')scheduleSyncGlobal();}
+function deletePlanAcct(code){
+  if(!confirm('¿Eliminar la cuenta '+code+' — '+acctName(code)+'?\nDejará de aparecer en el plan y en los selectores de cuenta. Puedes recuperarla con "↺ Restaurar todo".'))return;
+  if(PLAN_DEFAULT.find(function(r){return r.a===code;})){
+    var h=getPlanHidden();if(h.indexOf(code)<0){h.push(code);savePlanHidden(h);}
+  } else {
+    var cp=(S.planCuentas||[]).filter(function(x){return (x.a||x.c)!==code;});
+    S.planCuentas=cp;savePlanCuentas(cp);
+  }
+  saveLS();re();
 }
 function savePlanCuentas(plan){localStorage.setItem('cx_plan_'+S.activeId,JSON.stringify(plan));}
 function loadPlanCuentas(){var s=localStorage.getItem('cx_plan_'+S.activeId);return s?JSON.parse(s):[];}
@@ -2311,7 +2337,7 @@ let _sdTimer=null;
 function sdOpen(id){const el=document.getElementById('sd-list-'+id);if(el)el.style.display='block';}
 function sdClose(id){_sdTimer=setTimeout(()=>{const el=document.getElementById('sd-list-'+id);if(el)el.style.display='none';},180);}
 function sdCancel(){clearTimeout(_sdTimer);}
-function sdFilterAccts(ft){const plan=S.planCuentas.filter(a=>a.c&&a.c.length===9);if(ft==='I')return plan.filter(a=>a.c[0]==='4');if(ft==='G')return plan.filter(a=>a.c[0]==='5'||a.c.startsWith('12'));return plan;}
+function sdFilterAccts(ft){var hidden=getPlanHidden();const plan=S.planCuentas.filter(a=>a.c&&a.c.length===9&&hidden.indexOf(a.c)<0);if(ft==='I')return plan.filter(a=>a.c[0]==='4');if(ft==='G')return plan.filter(a=>a.c[0]==='5'||a.c.startsWith('12'));return plan;}
 function sdFilter(id,query,onSelect,ft){
   const list=document.getElementById('sd-list-'+id);if(!list)return;
   const q=((query||'').split('—')[0]||'').toLowerCase().trim();
@@ -3574,16 +3600,16 @@ function renderReporte(c){
       kard(fmt(tPT)+' Bs','Patrimonio','🏦','#0891B2')+kard(end+'%','Endeudamiento',end<50?'✅':'⚠️',end<50?'#059669':'#F59E0B')+
     '</div>'+
     '<div style="background:#F8FAFF;border:1px solid #BFDBFE;border-radius:10px;padding:16px;margin-bottom:12px">'+
-      '<div class="h2" style="color:#1E40AF;margin-top:0">🤖 Análisis IA — Interpretación para el Cliente</div>'+
-      '<p class="nota">La IA analiza los resultados y genera una explicación clara para presentar al cliente. Requiere API key configurada en "CONTAX IA".</p>'+
+      '<div class="h2" style="color:#1E40AF;margin-top:0">Análisis</div>'+
+      '<p class="nota">Interpretación de los resultados del período para presentar al cliente.</p>'+
       '<div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap">'+
-        '<button onclick="genAIReporte()" class="btn-purple" style="font-size:12px">🤖 Generar Análisis IA</button>'+
+        '<button onclick="genAIReporte()" class="btn-purple" style="font-size:12px">Generar Análisis</button>'+
         '<button onclick="localStorage.removeItem(\'ai_reporte\');re()" class="btn-del" style="font-size:11px">🗑 Limpiar</button>'+
       '</div>'+
       (localStorage.getItem('ai_reporte')?
         '<div style="background:#fff;border:1px solid #E2E8F0;border-radius:8px;padding:16px;font-size:13px;line-height:1.7;white-space:pre-wrap">'+
         (localStorage.getItem('ai_reporte')||'')+'</div>':
-        '<div class="info iy">Haz clic en "Generar Análisis IA" para obtener una interpretación automática de los resultados para presentar a tu cliente.</div>')+
+        '<div class="info iy">Haz clic en "Generar Análisis" para obtener una interpretación de los resultados para presentar a tu cliente.</div>')+
     '</div>'+
     '<div style="margin-top:12px;padding:12px;background:#031740;border-radius:8px;color:#fff">'+
       '<div style="font-weight:700;margin-bottom:6px;font-size:11px">CONTAX — Firma Profesional</div>'+
