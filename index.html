@@ -174,8 +174,13 @@ body.dark-mode .emp-box{background:#0d2145!important;color:#E2E8F0!important}
 // VERSIÓN DEL SISTEMA — Única fuente de verdad
 // Al aprobar una versión: subir VERSION y agregar una entrada al inicio de CHANGELOG.
 // ══════════════════════════════════════════════════════════
-const VERSION='V88';
+const VERSION='V89';
 const CHANGELOG=[
+  {v:'V89', fecha:'2026-07-20', cambios:[
+    'Plan de Cuentas: el buscador ya no pierde el cursor al escribir.',
+    'Plan de Cuentas: las cuentas que creas (ej. 411002005 de ingresos) ahora SÍ aparecen en la tabla, ordenadas en su lugar según el código.',
+    'Estado de Resultados: ahora muestra el NOMBRE REAL de cada cuenta (respeta los nombres que editaste en el Plan de Cuentas). Antes mostraba siempre el nombre original del plan base (por eso "seguía como Enfermería" aunque cambiaras la cuenta).'
+  ]},
   {v:'V88', fecha:'2026-07-20', cambios:[
     'RCV Compras: encabezados fijos al desplazar y un filtro para ver solo los registros de una cuenta asignada.',
     'Plan de Cuentas: segunda fila de chips para filtrar por nivel (Cuenta, Grupo, Sub Grupo, Cuenta Principal, Cuenta Analítica).',
@@ -2037,7 +2042,17 @@ function pasteNITs(txt){
 }
 
 function renderPlan(){
-  var plan=PLAN_DEFAULT;
+  // V89 — incluir en la tabla las cuentas creadas por el usuario (S.planCuentas) que no están en el plan base
+  var plan=PLAN_DEFAULT.slice();
+  (S.planCuentas||[]).forEach(function(x){
+    var code=''+(x.a||x.c||'');
+    if(code.length!==9)return;
+    if(PLAN_DEFAULT.find(function(r){return r.a===code;}))return;
+    var cr={a:code,b:code[0],c:code[1],d:code[2],e:code.slice(3,6),f:code.slice(6,9),
+      g:x.n||x.g||code,l:x.l||x.nivel||'CUENTA ANALITICA',t:x.t||acctTipo(code),_nuevo:true};
+    var idx=plan.findIndex(function(r){return r.a>code;});
+    if(idx<0)plan.push(cr);else plan.splice(idx,0,cr);
+  });
   var customPlan=S.planCuentas&&S.planCuentas.length?S.planCuentas:[];
   var q=(S.planQ||'').toLowerCase();
   function getRow(r){
@@ -2165,7 +2180,7 @@ function renderPlan(){
     '</div>'+
     legend+
     chips+
-    '<div style="margin-bottom:8px"><input type="text" placeholder="🔍 Buscar por código o nombre..." value="'+(S.planQ||'')+'" oninput="S.planQ=this.value;re()" style="width:100%;padding:6px 10px;border:1px solid #E2E8F0;border-radius:6px;font-size:12px;outline:none"/></div>'+
+    '<div style="margin-bottom:8px"><input id="cx-plan-q" type="text" placeholder="🔍 Buscar por código o nombre..." value="'+(S.planQ||'')+'" oninput="S.planQ=this.value;re()" style="width:100%;padding:6px 10px;border:1px solid #E2E8F0;border-radius:6px;font-size:12px;outline:none"/></div>'+
     (filtered.length<plan.length?'<div style="font-size:11px;color:#77888C;margin-bottom:6px">Mostrando '+filtered.length+' de '+plan.length+'</div>':'')+
     '<div class="tbl-wrap" style="max-height:580px"><table style="width:100%;border-collapse:collapse">'+
     '<thead><tr style="font-size:10px">'+
@@ -3172,29 +3187,29 @@ function renderEE(c){
 
         if(r.l==='CUENTA'){
           rows+='<tr style="background:'+headerColor+';color:#fff">'+
-            '<td style="padding:7px 10px;font-weight:900;font-size:13px">'+r.g+'</td>'+
+            '<td style="padding:7px 10px;font-weight:900;font-size:13px">'+acctName(r.a)+'</td>'+
             '<td style="text-align:right;padding:7px 10px;font-family:monospace;font-weight:900;font-size:13px">'+fmt(display)+'</td>'+
           '</tr>';
           sectionTotal=r2(sectionTotal+display);
         } else if(r.l==='GRUPO'){
           rows+='<tr style="background:'+rowColor+'20">'+
-            '<td style="padding:5px 10px 5px '+(10+indent*14)+'px;font-weight:700;font-size:12px;color:'+headerColor+'">'+r.g+'</td>'+
+            '<td style="padding:5px 10px 5px '+(10+indent*14)+'px;font-weight:700;font-size:12px;color:'+headerColor+'">'+acctName(r.a)+'</td>'+
             '<td style="text-align:right;padding:5px 10px;font-family:monospace;font-weight:700;font-size:12px;color:'+headerColor+'">'+fmt(display)+'</td>'+
           '</tr>';
         } else if(r.l==='SUB GRUPO'){
           rows+='<tr style="background:'+rowColor+'10;border-top:1px solid '+rowColor+'30">'+
-            '<td style="padding:4px 10px 4px '+(10+indent*14)+'px;font-weight:600;font-size:11px">'+r.g+'</td>'+
+            '<td style="padding:4px 10px 4px '+(10+indent*14)+'px;font-weight:600;font-size:11px">'+acctName(r.a)+'</td>'+
             '<td style="text-align:right;padding:4px 10px;font-family:monospace;font-size:11px;font-weight:600;color:'+headerColor+'">'+fmt(display)+'</td>'+
           '</tr>';
         } else if(r.l==='CUENTA PRINCIPAL'){
           rows+='<tr style="background:#fafafa">'+
-            '<td style="padding:4px 10px 4px '+(10+indent*14)+'px;font-size:11px;color:#444">'+r.g+'</td>'+
+            '<td style="padding:4px 10px 4px '+(10+indent*14)+'px;font-size:11px;color:#444">'+acctName(r.a)+'</td>'+
             '<td style="text-align:right;padding:4px 10px;font-family:monospace;font-size:11px;color:#444">'+fmt(display)+'</td>'+
           '</tr>';
         } else {
           rows+='<tr style="border-bottom:1px solid #f0f0f0">'+
             '<td style="padding:3px 10px 3px '+(10+indent*14)+'px;font-size:10px;color:#666">'+
-              '<span style="font-family:monospace;font-size:9px;color:#aaa;margin-right:4px">'+r.a+'</span>'+r.g+
+              '<span style="font-family:monospace;font-size:9px;color:#aaa;margin-right:4px">'+r.a+'</span>'+acctName(r.a)+
             '</td>'+
             '<td style="text-align:right;padding:3px 10px;font-family:monospace;font-size:10px;color:'+headerColor+'">'+fmt(display)+'</td>'+
           '</tr>';
