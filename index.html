@@ -51,6 +51,7 @@ textarea{height:150px;resize:vertical;font-family:monospace;font-size:11px}
 .tab-btn.a{background:#fff;color:#1C2B4B;font-weight:700;box-shadow:0 1px 3px rgba(0,0,0,.1)}
 table{width:100%;border-collapse:collapse;font-size:11px}
 th{background:#031740;color:#fff;padding:6px 8px;font-size:10px;font-weight:600;text-align:left;white-space:nowrap}
+table.rcv-table thead th{position:sticky;top:0;z-index:3}
 th.r{text-align:right}
 td{padding:5px 8px;border-bottom:1px solid #F0F2F5}
 td.r{font-family:'Courier New',monospace;text-align:right;white-space:nowrap}
@@ -173,8 +174,15 @@ body.dark-mode .emp-box{background:#0d2145!important;color:#E2E8F0!important}
 // VERSIÓN DEL SISTEMA — Única fuente de verdad
 // Al aprobar una versión: subir VERSION y agregar una entrada al inicio de CHANGELOG.
 // ══════════════════════════════════════════════════════════
-const VERSION='V87';
+const VERSION='V88';
 const CHANGELOG=[
+  {v:'V88', fecha:'2026-07-20', cambios:[
+    'RCV Compras: encabezados fijos al desplazar y un filtro para ver solo los registros de una cuenta asignada.',
+    'Plan de Cuentas: segunda fila de chips para filtrar por nivel (Cuenta, Grupo, Sub Grupo, Cuenta Principal, Cuenta Analítica).',
+    'Barra lateral: al cambiar de pestaña ya no salta la pantalla; el cambio es limpio desde arriba y al editar se conserva la posición.',
+    'NIT\'s: el botón para agregar NITs ahora funciona para todos (la pestaña dejó de estar bloqueada por permisos).',
+    'Otros Asientos (asientos libres): ahora se puede poner la FECHA del asiento y marcarlo como compra de Activo Fijo eligiendo su tipo. Con eso, el activo entra al motor de activos fijos igual que los del RCV: se actualiza por UFV según el día de compra, se deprecia proporcionalmente por meses y aparece en el Cuadro de Activos Fijos, Balance General, Estado de Resultados y Comprobantes.'
+  ]},
   {v:'V87', fecha:'2026-07-20', cambios:[
     'Plan de Cuentas: chips para filtrar por tipo (Activo, Pasivo, Patrimonio, Ingresos, Egresos) y encabezados de tabla fijos al desplazar.',
     'RCV Compras: botón para eliminar un registro individual (no todo el archivo) y botón "➕ Cuenta analítica" para crear una cuenta sin salir de la pestaña.',
@@ -441,6 +449,7 @@ function getPerms(){
 }
 function savePerms(p){try{localStorage.setItem('cx_perms',JSON.stringify(p));}catch(e){}}
 function canEdit(tabId){
+  if(tabId==='nits')return true; // V88 — base de proveedores compartida: cualquiera puede agregar/editar NITs
   if(isCurrentAdmin())return true;
   var rol=currentRol();
   if(!rol)return false;
@@ -1629,8 +1638,17 @@ function renderApertura(){
 var _rcvFilter='';
 var _venFilter='';
 
-var _rcvFilter='';var _venFilter='';
-function filterRCVInPlace(v){_rcvFilter=v;var q=v.toLowerCase();Array.from(document.querySelectorAll('#rcv-tbody tr')).forEach(function(tr){tr.style.display=q&&!tr.textContent.toLowerCase().includes(q)?'none':'';});}
+var _rcvFilter='';var _venFilter='';var _rcvAcct='';
+function applyRcvFilters(){
+  var q=(_rcvFilter||'').toLowerCase();var ac=_rcvAcct||'';
+  Array.from(document.querySelectorAll('#rcv-tbody tr')).forEach(function(tr){
+    var okText=!q||tr.textContent.toLowerCase().includes(q);
+    var okAcct=!ac||tr.getAttribute('data-acct')===ac;
+    tr.style.display=(okText&&okAcct)?'':'none';
+  });
+}
+function filterRCVInPlace(v){_rcvFilter=v;applyRcvFilters();}
+function setRcvAcctFilter(v){_rcvAcct=v;applyRcvFilters();}
 function filterVenInPlace(v){_venFilter=v;var q=v.toLowerCase();Array.from(document.querySelectorAll('#ven-tbody tr, #ing-tbody tr')).forEach(function(tr){tr.style.display=q&&!tr.textContent.toLowerCase().includes(q)?'none':'';});}
 function filterVentasInPlace(v){_venFilter=v;var q=v.toLowerCase();Array.from(document.querySelectorAll('#ven-tbody tr')).forEach(function(tr){tr.style.display=q&&!tr.textContent.toLowerCase().includes(q)?'none':'';});}
 function renderRCV(){
@@ -1641,17 +1659,19 @@ function renderRCV(){
   const overrides=emp().rcvOverrides||{};
   const totCF=r2(allRCV.reduce((s,r)=>r2(s+r.cf),0));
   const totCompras=r2(allRCV.reduce((s,r)=>r2(s+r.total),0));
+  const rcvAccts={};
 
   const rows=allRCV.slice(0,300).map((r,idx)=>{
     const lk=nitLookup(r.nit);
     const autoCode=lk?lk.cuenta:(CAT_MAP[r.cat?.trim()]||'526002001');
     const isOver=!!overrides[idx];
     const finalCode=overrides[idx]||autoCode;
+    rcvAccts[finalCode]=acctName(finalCode);
     const sdId='rc'+idx;
     const cellSt=isOver
       ?'min-width:180px;padding:2px 4px;background:#FFF7ED;border-radius:3px;border:1px solid #F97316'
       :'min-width:180px;padding:2px 4px;background:#F0FDF4;border-radius:3px;border:1px solid #22C55E';
-    return '<tr style="background:'+(idx%2?'#F8FAFC':'#fff')+'">'+
+    return '<tr data-acct="'+finalCode+'" style="background:'+(idx%2?'#F8FAFC':'#fff')+'">'+
       '<td style="font-size:11px">'+(r.nro||'')+'</td>'+
       '<td style="max-width:130px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;font-size:11px">'+(r.razon||'')+'</td>'+
       '<td style="font-size:10px">'+(r.nit||'')+'</td>'+
@@ -1712,9 +1732,15 @@ function renderRCV(){
       '<div class="info iy">Carga un archivo XLSX o pega los datos del RCV.</div>'+
     '')+
     (allRCV.length?
-      '<div style="margin-bottom:6px"><input type="text" placeholder="🔍 Filtrar por razón social, NIT o factura..." value="'+(_rcvFilter||'')+'" oninput="filterRCVInPlace(this.value)" style="width:100%;padding:6px 10px;border:1px solid #E2E8F0;border-radius:6px;font-size:12px;outline:none"/></div>'+
+      '<div style="display:flex;gap:8px;margin-bottom:6px;flex-wrap:wrap">'+
+        '<input type="text" placeholder="🔍 Filtrar por razón social, NIT o factura..." value="'+(_rcvFilter||'')+'" oninput="filterRCVInPlace(this.value)" style="flex:1;min-width:200px;padding:6px 10px;border:1px solid #E2E8F0;border-radius:6px;font-size:12px;outline:none"/>'+
+        '<select onchange="setRcvAcctFilter(this.value)" style="padding:6px 10px;border:1px solid #E2E8F0;border-radius:6px;font-size:12px;outline:none;max-width:280px">'+
+          '<option value="">📂 Todas las cuentas</option>'+
+          Object.keys(rcvAccts).sort().map(function(c){return '<option value="'+c+'"'+(_rcvAcct===c?' selected':'')+'>'+c+' — '+rcvAccts[c]+'</option>';}).join('')+
+        '</select>'+
+      '</div>'+
       '<div class="tbl-wrap" style="max-height:400px">'+
-      '<table><thead><tr><th>Nº</th><th>Razón Social</th><th>NIT</th><th>Fecha</th><th class="r">Total</th><th class="r">CF</th>'+
+      '<table class="rcv-table"><thead><tr><th>Nº</th><th>Razón Social</th><th>NIT</th><th>Fecha</th><th class="r">Total</th><th class="r">CF</th>'+
       '<th>Cuenta <span style="font-weight:400;font-size:9px">verde=auto|naranja=manual</span></th>'+
       '<th style="font-size:10px">☐ Forma de Pago</th><th style="font-size:10px">Comentario</th>'+
       (!usingFile?'<th>Estado</th>':'')+
@@ -2019,9 +2045,11 @@ function renderPlan(){
     return c?Object.assign({},r,{g:c.n||c.g||r.g,_modified:true}):r;
   }
   var tf=S.planTipo||'';
+  var nf=S.planNivel||'';
   var filtered=plan.filter(function(r){
     if(q&&!(r.a.includes(q)||(r.g||'').toLowerCase().includes(q)))return false;
     if(tf&&r.b!==tf)return false;
+    if(nf&&r.l!==nf)return false;
     return true;
   });
   var editing=S.planEdit;
@@ -2114,9 +2142,16 @@ function renderPlan(){
 
   var hasCustom=customPlan.length>0;
   var tipos=[['','Todas'],['1','Activo'],['2','Pasivo'],['3','Patrimonio'],['4','Ingresos'],['5','Egresos']];
-  var chips='<div style="display:flex;gap:6px;margin-bottom:8px;flex-wrap:wrap">'+tipos.map(function(t){
+  var chips='<div style="display:flex;gap:6px;margin-bottom:6px;flex-wrap:wrap;align-items:center">'+
+    '<span style="font-size:10px;color:#94A3B8;font-weight:700;margin-right:2px">TIPO:</span>'+tipos.map(function(t){
     var on=tf===t[0];
     return '<button onclick="S.planTipo=\''+t[0]+'\';re()" style="border:1px solid '+(on?'#031740':'#CBD5E1')+';background:'+(on?'#031740':'#fff')+';color:'+(on?'#fff':'#475569')+';border-radius:14px;padding:4px 13px;font-size:11px;cursor:pointer;font-weight:'+(on?'700':'500')+'">'+t[1]+'</button>';
+  }).join('')+'</div>';
+  var niveles=[['','Todos'],['CUENTA','Cuenta'],['GRUPO','Grupo'],['SUB GRUPO','Sub Grupo'],['CUENTA PRINCIPAL','Cuenta Principal'],['CUENTA ANALITICA','Cuenta Analítica']];
+  chips+='<div style="display:flex;gap:6px;margin-bottom:8px;flex-wrap:wrap;align-items:center">'+
+    '<span style="font-size:10px;color:#94A3B8;font-weight:700;margin-right:2px">NIVEL:</span>'+niveles.map(function(t){
+    var on=nf===t[0];
+    return '<button onclick="S.planNivel=\''+t[0]+'\';re()" style="border:1px solid '+(on?'#0E7490':'#CBD5E1')+';background:'+(on?'#0E7490':'#fff')+';color:'+(on?'#fff':'#475569')+';border-radius:14px;padding:4px 13px;font-size:11px;cursor:pointer;font-weight:'+(on?'700':'500')+'">'+t[1]+'</button>';
   }).join('')+'</div>';
   return '<div class="card">'+editForm+createForm+
     '<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;flex-wrap:wrap">'+
@@ -2699,6 +2734,21 @@ function renderOtrosAsientos(){
         }).join('')+
       '</div>':
       '';
+    // V88 — barra de fecha + activo fijo (solo asientos libres)
+    var afBar='';
+    if(!oa.fixed){
+      var afOpts=getAFTipos().map(function(d){return '<option value="'+d.tipo+'"'+(oa.afTipo===d.tipo?' selected':'')+'>'+d.tipo+'</option>';}).join('');
+      afBar='<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;background:#F8FAFC;border:1px solid #E2E8F0;border-radius:6px;padding:6px 8px;margin-bottom:6px">'+
+        '<label style="font-size:10px;color:#555;font-weight:700">📅 Fecha del asiento:</label>'+
+        '<input type="date" value="'+(oa.fecha||'')+'" onchange="emp().otrosAsientos['+i+'].fecha=this.value;saveLS();re()" style="font-size:11px;border:1px solid #CBD5E1;border-radius:5px;padding:3px 6px"/>'+
+        '<span style="width:1px;height:16px;background:#CBD5E1"></span>'+
+        '<label style="font-size:10px;color:#555;font-weight:700">🏭 Compra de Activo Fijo:</label>'+
+        '<select onchange="emp().otrosAsientos['+i+'].afTipo=this.value;saveLS();re()" style="font-size:11px;border:1px solid #CBD5E1;border-radius:5px;padding:3px 6px">'+
+          '<option value="">— No es activo fijo —</option>'+afOpts+
+        '</select>'+
+        (oa.afTipo?(oa.fecha?'<span style="font-size:9px;color:#065F46;background:#D1FAE5;border-radius:8px;padding:2px 8px">✓ Se actualiza por UFV y se deprecia por meses; aparece en Cuadro A.F., Balance y Resultados</span>':'<span style="font-size:9px;color:#92400E;background:#FEF3C7;border-radius:8px;padding:2px 8px">⚠ Falta la fecha para calcular la depreciación</span>'):'')+
+      '</div>';
+    }
     // Apply cashBank substitution: replace 111001001 with bank account if banco selected
     const effectiveLines=(oa.lines||[]).map(function(l){
       if(oa.cashBank&&cbSel==='banco'&&l.c==='111001001')return Object.assign({},l,{c:'111002001'});
@@ -2729,7 +2779,7 @@ function renderOtrosAsientos(){
       (!oa.fixed?'<button class="btn-blue" style="font-size:10px;padding:3px 8px" onclick="emp().otrosAsientos['+i+'].lines.push({c:\'\',t:\'D\',v:0});saveLS();re()">+ Línea</button>':'')+
       (hasD?'<button onclick="clrOA('+i+')" style="background:#F59E0B;color:#fff;border:none;border-radius:4px;padding:3px 8px;font-size:10px;cursor:pointer">🗑 Limpiar</button>':'')+
       (!oa.fixed?'<button class="btn-del" style="font-size:10px;padding:3px 8px" onclick="if(confirm(\'¿Eliminar asiento libre?\')){emp().otrosAsientos.splice('+i+',1);saveLS();re()}">✕ Eliminar</button>':'')+
-      '</div></div>'+
+      '</div></div>'+afBar+
       '<div style="display:grid;grid-template-columns:'+(oa.fixed?'100px 1fr 130px 130px':'1fr 130px 130px auto')+';gap:6px;margin-bottom:6px;font-size:10px;font-weight:600;color:#888">'+
       '<span>CUENTA</span><span>NOMBRE</span><span style="text-align:right">DEBE (verde)</span><span style="text-align:right">HABER (verde)</span></div>'+
       linesHTML+
@@ -5049,6 +5099,35 @@ function getAFFromApertura(){
       tasa:(pn(def.pct)||0)/100,cA:def.cA,cD:def.cD,cG:def.cG
     });
   });
+  // ── Activos comprados vía Asiento Libre (Otros Asientos con FECHA + tipo AF) ──
+  // Mismo procedimiento que el RCV: UFV del día de compra, depreciación proporcional a meses.
+  (emp().otrosAsientos||[]).forEach(function(oa){
+    if(oa.fixed||!oa.activo)return;
+    if(!oa.afTipo||!oa.fecha)return;
+    var def=defs.find(function(d){return d.tipo===oa.afTipo;});
+    if(!def)return;
+    var anios=pn(def.anios)||1;
+    // Valor histórico = Debe en la cuenta del activo (def.cA); si no coincide, total Debe del asiento
+    var vHca=0,vHtot=0;
+    (oa.lines||[]).forEach(function(l){var v=pn(l.v);if(l.t==='D'){vHtot=r2(vHtot+v);if(l.c===def.cA)vHca=r2(vHca+v);}});
+    var vH=vHca>0?vHca:vHtot;
+    if(!vH)return;
+    var ufvCompra=getUFVForDate(oa.fecha)||uf;
+    var uRcv=uf>0&&ufvCompra>0?(uf/ufvCompra):1;
+    var ajA=ufvCompra>0&&uRcv!==1?r2(vH*(uRcv-1)):0;
+    var vAct=r2(vH+ajA);
+    var meses=getMesesDesde(oa.fecha,cfg.fechaFin);
+    var dep=r2(vAct/anios*(meses/12));
+    var label=def.tipo+' — '+(oa.fecha||'')+' (asiento libre'+(oa.nombre?': '+oa.nombre:'')+')';
+    items.push({
+      tipo:def.tipo,nombre:label,fuente:'Asiento Libre',
+      fecha:oa.fecha,ufvCompra:ufvCompra,meses:meses,anios:anios,
+      ufvIni:ufvCompra,ufvFin:uf,coef:uRcv,baseNeto:vH,
+      vH:vH,dAP:0,ajA:ajA,vAct:vAct,dep:dep,ajD:0,jVal:0,
+      dTotal:dep,vNeto:r2(vAct-dep),
+      tasa:(pn(def.pct)||0)/100,cA:def.cA,cD:def.cD,cG:def.cG
+    });
+  });
   return items;
 }
 
@@ -6078,10 +6157,12 @@ function re(){
   const navHTML=navSecs.map(function(sec){
     return '<div class="nav-sec">'+sec.sec+'</div>'+sec.items.map(navItem).join('');
   }).join('');
-  // V87 — preservar scroll y foco (evita que la pantalla salte arriba y se pierda el cursor al escribir)
+  // V87/V88 — preservar scroll y foco solo si seguimos en la MISMA pestaña.
+  // Al cambiar de pestaña (barra lateral) reiniciamos arriba de forma limpia (sin saltos raros).
+  var _tabChanged=(window._reLastTab!==S.tab);window._reLastTab=S.tab;
   var _pmc=document.getElementById('main-cnt');var _pscroll=_pmc?_pmc.scrollTop:0;var _pwin=window.scrollY||window.pageYOffset||0;
-  var _pae=document.activeElement;var _paeId=(_pae&&_pae.id)?_pae.id:null;var _paeSel=null;
-  try{if(_pae&&_pae.selectionStart!=null)_paeSel=_pae.selectionStart;}catch(e){}
+  var _pae=document.activeElement;var _paeId=(!_tabChanged&&_pae&&_pae.id)?_pae.id:null;var _paeSel=null;
+  try{if(_paeId&&_pae&&_pae.selectionStart!=null)_paeSel=_pae.selectionStart;}catch(e){}
   document.getElementById('root').innerHTML=
     (S.showChangelog?renderChangelogModal():'')+
     (S.showExport?renderExportModal():'')+
@@ -6118,12 +6199,16 @@ function re(){
       applyReadOnly();
     }
   }
-  // V87 — restaurar scroll y foco tras reconstruir el DOM
-  var _nmc=document.getElementById('main-cnt');if(_nmc&&_pscroll)_nmc.scrollTop=_pscroll;
-  if(_pwin)try{window.scrollTo(0,_pwin);}catch(e){}
-  if(_paeId){var _nel=document.getElementById(_paeId);if(_nel){try{_nel.focus({preventScroll:true});if(_paeSel!=null&&_nel.setSelectionRange)_nel.setSelectionRange(_paeSel,_paeSel);}catch(e){}}}
+  // V88 — restaurar scroll/foco solo si NO cambió la pestaña; si cambió, arrancar arriba
+  var _nmc=document.getElementById('main-cnt');
+  if(_tabChanged){if(_nmc)_nmc.scrollTop=0;}
+  else{
+    if(_nmc&&_pscroll)_nmc.scrollTop=_pscroll;
+    if(_pwin)try{window.scrollTo(0,_pwin);}catch(e){}
+    if(_paeId){var _nel=document.getElementById(_paeId);if(_nel){try{_nel.focus({preventScroll:true});if(_paeSel!=null&&_nel.setSelectionRange)_nel.setSelectionRange(_paeSel,_paeSel);}catch(e){}}}
+  }
   if(S.tab==='listaeeff'&&typeof gsFilter==='function')setTimeout(gsFilter,0);
-  if(S.tab==='rcv'&&typeof filterRCVInPlace==='function')setTimeout(function(){filterRCVInPlace(_rcvFilter||'');filterVenInPlace(_venFilter||'');},0);
+  if(S.tab==='rcv'&&typeof filterRCVInPlace==='function')setTimeout(function(){applyRcvFilters();filterVenInPlace(_venFilter||'');},0);
   if(S.tab==='ingresos'&&typeof filterVenInPlace==='function')setTimeout(function(){filterVenInPlace(_venFilter||'');},0);
   if(S.iaScroll&&(Date.now()-S.iaScroll<15000)&&typeof iaScrollBottom==='function')setTimeout(iaScrollBottom,60);
 }
