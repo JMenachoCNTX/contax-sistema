@@ -174,8 +174,12 @@ body.dark-mode .emp-box{background:#0d2145!important;color:#E2E8F0!important}
 // VERSIÓN DEL SISTEMA — Única fuente de verdad
 // Al aprobar una versión: subir VERSION y agregar una entrada al inicio de CHANGELOG.
 // ══════════════════════════════════════════════════════════
-const VERSION='V91';
+const VERSION='V92';
 const CHANGELOG=[
+  {v:'V92', fecha:'2026-07-20', cambios:[
+    'RCV Compras (y todos los selectores de cuenta): ahora aparecen TODAS las cuentas de egreso del plan (antes el buscador solo mostraba algunas). Los selectores toman las cuentas del plan base + las que creaste − las eliminadas, así lo que asignas figura correctamente en el Estado de Resultados.',
+    'Plan de Cuentas: ARREGLADO el botón 🗑 para eliminar cuenta (una función vacía duplicada lo anulaba y por eso no hacía nada). Ahora pide confirmación y elimina de verdad; se recupera con "↺ Restaurar todo".'
+  ]},
   {v:'V91', fecha:'2026-07-20', cambios:[
     'Plan de Cuentas: botón 🗑 para eliminar una cuenta analítica (deja de aparecer en el plan y en los selectores). Se puede recuperar con "↺ Restaurar todo".',
     'Plan de Cuentas: cada nivel se distingue por color (Cuenta, Grupo, Sub Grupo, Cuenta Principal en tonos azul/índigo/violeta/gris; Cuenta Analítica en verde claro = editable; naranja si fue modificada).',
@@ -2254,18 +2258,18 @@ function resetAllPlan(){
 function getPlanHidden(){try{var s=localStorage.getItem('cx_planhidden');if(s){var a=JSON.parse(s);if(Array.isArray(a))return a;}}catch(e){}return [];}
 function savePlanHidden(a){try{localStorage.setItem('cx_planhidden',JSON.stringify(a));}catch(e){}if(typeof scheduleSyncGlobal==='function')scheduleSyncGlobal();}
 function deletePlanAcct(code){
-  if(!confirm('¿Eliminar la cuenta '+code+' — '+acctName(code)+'?\nDejará de aparecer en el plan y en los selectores de cuenta. Puedes recuperarla con "↺ Restaurar todo".'))return;
+  if(!confirm('¿Estás seguro de eliminar la cuenta '+code+' — '+acctName(code)+' ?\n\nDejará de aparecer en el Plan de Cuentas y en los selectores de cuenta.\nPodrás recuperarla con el botón "↺ Restaurar todo".'))return;
+  // Quitar de la lista de cuentas (creadas o base guardadas) si existe
+  var cp=(S.planCuentas||[]).filter(function(x){return (x.a||x.c)!==code;});
+  if(cp.length!==(S.planCuentas||[]).length){S.planCuentas=cp;savePlanCuentas(cp);}
+  // Si es una cuenta del plan base, ocultarla para que no vuelva a aparecer
   if(PLAN_DEFAULT.find(function(r){return r.a===code;})){
     var h=getPlanHidden();if(h.indexOf(code)<0){h.push(code);savePlanHidden(h);}
-  } else {
-    var cp=(S.planCuentas||[]).filter(function(x){return (x.a||x.c)!==code;});
-    S.planCuentas=cp;savePlanCuentas(cp);
   }
   saveLS();re();
 }
 function savePlanCuentas(plan){localStorage.setItem('cx_plan_'+S.activeId,JSON.stringify(plan));}
 function loadPlanCuentas(){var s=localStorage.getItem('cx_plan_'+S.activeId);return s?JSON.parse(s):[];}
-function deletePlanAcct(){}
 function resetPlan(){resetAllPlan();}
 
 function exportPlanExcel(){
@@ -2337,7 +2341,28 @@ let _sdTimer=null;
 function sdOpen(id){const el=document.getElementById('sd-list-'+id);if(el)el.style.display='block';}
 function sdClose(id){_sdTimer=setTimeout(()=>{const el=document.getElementById('sd-list-'+id);if(el)el.style.display='none';},180);}
 function sdCancel(){clearTimeout(_sdTimer);}
-function sdFilterAccts(ft){var hidden=getPlanHidden();const plan=S.planCuentas.filter(a=>a.c&&a.c.length===9&&hidden.indexOf(a.c)<0);if(ft==='I')return plan.filter(a=>a.c[0]==='4');if(ft==='G')return plan.filter(a=>a.c[0]==='5'||a.c.startsWith('12'));return plan;}
+// V92 — fuente única de cuentas seleccionables: plan base (analíticas) + creadas por el usuario − eliminadas.
+// Antes leía solo de S.planCuentas, que podía no contener todas las cuentas (por eso no salían todos los egresos).
+function allSelectableAccts(){
+  var hidden=getPlanHidden();var out=[];var seen={};
+  PLAN_DEFAULT.forEach(function(r){
+    if(r.l!=='CUENTA ANALITICA')return;
+    if(hidden.indexOf(r.a)>=0)return;
+    seen[r.a]=1;out.push({c:r.a,n:acctName(r.a)});
+  });
+  (S.planCuentas||[]).forEach(function(x){
+    var code=''+(x.a||x.c||'');if(code.length!==9)return;
+    if(hidden.indexOf(code)>=0||seen[code])return;
+    seen[code]=1;out.push({c:code,n:x.n||x.g||acctName(code)});
+  });
+  return out;
+}
+function sdFilterAccts(ft){
+  var plan=allSelectableAccts();
+  if(ft==='I')return plan.filter(function(a){return a.c[0]==='4';});
+  if(ft==='G')return plan.filter(function(a){return a.c[0]==='5'||a.c.indexOf('12')===0;});
+  return plan;
+}
 function sdFilter(id,query,onSelect,ft){
   const list=document.getElementById('sd-list-'+id);if(!list)return;
   const q=((query||'').split('—')[0]||'').toLowerCase().trim();
