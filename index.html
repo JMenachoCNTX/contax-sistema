@@ -174,8 +174,13 @@ body.dark-mode .emp-box{background:#0d2145!important;color:#E2E8F0!important}
 // VERSIÓN DEL SISTEMA — Única fuente de verdad
 // Al aprobar una versión: subir VERSION y agregar una entrada al inicio de CHANGELOG.
 // ══════════════════════════════════════════════════════════
-const VERSION='V89';
+const VERSION='V90';
 const CHANGELOG=[
+  {v:'V90', fecha:'2026-07-20', cambios:[
+    'Otros Asientos (asientos libres): nuevo campo de Comentario. Si el asiento es una compra de Activo Fijo, ese comentario se muestra en el Cuadro de Activos Fijos.',
+    'Selección de cuentas buscable: los desplegables de cuenta en NIT\'s y en las líneas de asientos libres ahora permiten escribir para buscar (ej. escribir "caja" y elegir), igual que en RCV e Ingresos.',
+    'RCV Compras: botón "➕NIT" en cada factura para guardar su NIT + Razón Social (con la cuenta asignada) en la base de NIT\'s, sin salir de RCV. Las facturas cuyo NIT ya está registrado muestran un ✓.'
+  ]},
   {v:'V89', fecha:'2026-07-20', cambios:[
     'Plan de Cuentas: el buscador ya no pierde el cursor al escribir.',
     'Plan de Cuentas: las cuentas que creas (ej. 411002005 de ingresos) ahora SÍ aparecen en la tabla, ordenadas en su lugar según el código.',
@@ -1679,7 +1684,9 @@ function renderRCV(){
     return '<tr data-acct="'+finalCode+'" style="background:'+(idx%2?'#F8FAFC':'#fff')+'">'+
       '<td style="font-size:11px">'+(r.nro||'')+'</td>'+
       '<td style="max-width:130px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;font-size:11px">'+(r.razon||'')+'</td>'+
-      '<td style="font-size:10px">'+(r.nit||'')+'</td>'+
+      '<td style="font-size:10px;white-space:nowrap">'+(r.nit||'')+
+        (r.nit?(lk?'<span title="Ya está en la base de NIT\'s" style="color:#16A34A;margin-left:4px">✓</span>':'<button title="Guardar NIT + Razón Social en la base de NIT\'s" onclick="addRcvNit('+idx+')" style="margin-left:4px;background:#3B82F6;color:#fff;border:none;border-radius:4px;padding:1px 5px;font-size:9px;cursor:pointer">➕NIT</button>'):'')+
+      '</td>'+
       '<td style="font-size:10px">'+(r.fecha||'')+'</td>'+
       '<td class="r">'+fmt(r.total)+'</td>'+
       '<td class="r">'+fmt(r.cf)+'</td>'+
@@ -1988,7 +1995,7 @@ function renderNITs(){
     '<input type="text" value="'+(n.nit||'')+'" placeholder="NIT" onblur="S.nits['+i+'].nit=this.value;saveLS()"/>'+
     '<input type="text" value="'+(n.razon||'')+'" placeholder="Razón Social" onblur="S.nits['+i+'].razon=this.value;saveLS()"/>'+
     '<input type="text" value="'+(n.cat||'')+'" placeholder="Categoría" onblur="S.nits['+i+'].cat=this.value;saveLS()"/>'+
-    '<select onchange="S.nits['+i+'].cuenta=this.value;saveLS()" style="font-size:11px"><option value="">— Cuenta —</option>'+planOpts.replace('value="'+n.cuenta+'"','value="'+n.cuenta+'" selected')+'</select>'+
+    sdMake('nitc'+i,n.cuenta||'','nitCuentaSet',false,'')+
     '<button class="btn-del" onclick="S.nits.splice('+i+',1);saveLS();re()">✕</button></div>'
   ).join('');
   return '<div class="card"><div class="h2">🔍 NIT\'s — Base de Datos de Proveedores</div>'+
@@ -2762,6 +2769,10 @@ function renderOtrosAsientos(){
           '<option value="">— No es activo fijo —</option>'+afOpts+
         '</select>'+
         (oa.afTipo?(oa.fecha?'<span style="font-size:9px;color:#065F46;background:#D1FAE5;border-radius:8px;padding:2px 8px">✓ Se actualiza por UFV y se deprecia por meses; aparece en Cuadro A.F., Balance y Resultados</span>':'<span style="font-size:9px;color:#92400E;background:#FEF3C7;border-radius:8px;padding:2px 8px">⚠ Falta la fecha para calcular la depreciación</span>'):'')+
+      '</div>'+
+      '<div style="display:flex;gap:8px;align-items:center;margin-bottom:6px">'+
+        '<label style="font-size:10px;color:#555;font-weight:700;white-space:nowrap">📝 Comentario:</label>'+
+        '<input id="oacom'+i+'" type="text" value="'+((oa.comentario||'').replace(/"/g,'&quot;'))+'" placeholder="Detalle del asiento (ej: Compra vehículo Toyota, factura 123)" onblur="emp().otrosAsientos['+i+'].comentario=this.value;saveLS();re()" style="flex:1;font-size:11px;border:1px solid #CBD5E1;border-radius:5px;padding:4px 8px"/>'+
       '</div>';
     }
     // Apply cashBank substitution: replace 111001001 with bank account if banco selected
@@ -2780,7 +2791,7 @@ function renderOtrosAsientos(){
           '</div>';
       } else {
         return '<div style="display:grid;grid-template-columns:1fr 130px 130px auto;gap:6px;margin-bottom:4px;align-items:center">'+
-          '<select onchange="emp().otrosAsientos['+i+'].lines['+j+'].c=this.value;saveLS();re()" style="font-size:11px"><option value="">— Cuenta —</option>'+planOpts.replace('value="'+l.c+'"','value="'+l.c+'" selected')+'</select>'+
+          sdMake('oac'+i+'_'+j,l.c||'','oaLineSet',false,'')+
           '<input id="oal'+i+'_'+j+'_D" type="text" class="g" placeholder="DEBE" value="'+(l.t==='D'?disp:'')+'" oninput="" onblur="emp().otrosAsientos['+i+'].lines['+j+'].t=\'D\';emp().otrosAsientos['+i+'].lines['+j+'].v=pn(this.value)||0;saveLS();re()"/>'+
           '<input id="oal'+i+'_'+j+'_H" type="text" class="g" placeholder="HABER" value="'+(l.t==='H'?disp:'')+'" oninput="" onblur="emp().otrosAsientos['+i+'].lines['+j+'].t=\'H\';emp().otrosAsientos['+i+'].lines['+j+'].v=pn(this.value)||0;saveLS();re()"/>'+
           '<button class="btn-del" onclick="emp().otrosAsientos['+i+'].lines.splice('+j+',1);saveLS();re()">✕</button>'+
@@ -4988,6 +4999,23 @@ function deleteRCVRow(idx){
   });
   saveLS();re();
 }
+function addRcvNit(idx){
+  var e=emp();
+  var arr=(e.rcvData&&e.rcvData.length)?e.rcvData:parseRCV(e.rcvTxt||'').filter(function(r){return r.estado==='CONSOLIDADO';});
+  var r=arr[idx];if(!r)return;
+  var nit=(''+(r.nit||'')).trim();var razon=(r.razon||'').trim();
+  if(!nit){alert('Esta factura no tiene NIT.');return;}
+  var overrides=e.rcvOverrides||{};
+  var lk=nitLookup(nit);var autoCode=lk?lk.cuenta:(CAT_MAP[(r.cat||'').trim()]||'526002001');
+  var code=overrides[idx]||autoCode;
+  if(!S.nits)S.nits=[];
+  var ex=S.nits.findIndex(function(n){return String(n.nit)===String(nit);});
+  if(ex>=0)S.nits[ex]={nit:nit,razon:razon||S.nits[ex].razon,cat:S.nits[ex].cat||(r.cat||''),cuenta:code};
+  else S.nits.push({nit:nit,razon:razon,cat:(r.cat||''),cuenta:code});
+  saveLS();
+  if(typeof showNotif==='function')showNotif('✓ NIT '+nit+' guardado en NIT\'s ('+acctName(code)+')');
+  re();
+}
 function quickAddCuenta(){
   var code=prompt('Código de la nueva cuenta analítica (9 dígitos, ej: 526002003):');
   if(!code)return;code=(''+code).trim();
@@ -5020,6 +5048,19 @@ function miSet(code,sdId){
     emp().ingresos[idx].cuenta=code;
     saveLS();re();
   }
+}
+// V90 — setter buscable para la cuenta de un NIT
+function nitCuentaSet(code,sdId){
+  sdSet(code,sdId);
+  var i=parseInt(sdId.replace('nitc',''));
+  if(!isNaN(i)&&S.nits&&S.nits[i]){S.nits[i].cuenta=code;saveLS();re();}
+}
+// V90 — setter buscable para la cuenta de una línea de asiento libre (sdId = 'oac'+i+'_'+j)
+function oaLineSet(code,sdId){
+  sdSet(code,sdId);
+  var m=sdId.replace('oac','').split('_');var i=+m[0],j=+m[1];
+  var oa=emp().otrosAsientos&&emp().otrosAsientos[i];
+  if(oa&&oa.lines&&oa.lines[j]){oa.lines[j].c=code;saveLS();re();}
 }
 
 // ─── Helpers para AFV con fecha ──────────────────────────────
@@ -5133,7 +5174,7 @@ function getAFFromApertura(){
     var vAct=r2(vH+ajA);
     var meses=getMesesDesde(oa.fecha,cfg.fechaFin);
     var dep=r2(vAct/anios*(meses/12));
-    var label=def.tipo+' — '+(oa.fecha||'')+' (asiento libre'+(oa.nombre?': '+oa.nombre:'')+')';
+    var label=def.tipo+' — '+(oa.fecha||'')+(oa.comentario?' · '+oa.comentario:'')+' (asiento libre'+(oa.nombre?': '+oa.nombre:'')+')';
     items.push({
       tipo:def.tipo,nombre:label,fuente:'Asiento Libre',
       fecha:oa.fecha,ufvCompra:ufvCompra,meses:meses,anios:anios,
