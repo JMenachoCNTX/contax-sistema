@@ -174,8 +174,11 @@ body.dark-mode .emp-box{background:#0d2145!important;color:#E2E8F0!important}
 // VERSIÓN DEL SISTEMA — Única fuente de verdad
 // Al aprobar una versión: subir VERSION y agregar una entrada al inicio de CHANGELOG.
 // ══════════════════════════════════════════════════════════
-const VERSION='V93';
+const VERSION='V94';
 const CHANGELOG=[
+  {v:'V94', fecha:'2026-07-20', cambios:[
+    'Estado de Resultados: las cuentas que creas (ej. 526002004, 526002005) ahora aparecen en su lugar correcto según el código —bajo su Cuenta Principal/Sub Grupo (ej. "OTROS GASTOS")— y ya no al final dentro de "Ajustes y Diferencias de Cambio".'
+  ]},
   {v:'V93', fecha:'2026-07-20', cambios:[
     'Selectores de cuenta buscables (Otros Asientos, RCV, Ingresos, NIT\'s): al desplegar ahora se muestran TODAS las cuentas del plan (antes solo aparecían las primeras 25 y había que escribir para ver el resto). Igual puedes escribir para filtrar.'
   ]},
@@ -3227,10 +3230,20 @@ function renderEE(c){
       var code=x.a||x.c;
       return {a:code,g:x.n||x.g||code,l:'CUENTA ANALITICA',t:x.t||acctTipo(code),b:(''+code)[0]};
     });
-    var planI=PLAN_DEFAULT.filter(function(r){return r.t==='I';})
-      .concat(custAnal.filter(function(x){return x.t==='I'||acctTipo(x.a)==='I';}));
-    var planG=PLAN_DEFAULT.filter(function(r){return r.t==='G';})
-      .concat(custAnal.filter(function(x){return x.t==='G'||acctTipo(x.a)==='G';}));
+    // V94 — insertar cada cuenta personalizada en su lugar por código (no al final),
+    // para que aparezca bajo su Cuenta Principal/Sub Grupo correcto (ej. 526002xxx → OTROS GASTOS).
+    function insSorted(base,extra){
+      var arr=base.slice();
+      extra.forEach(function(cr){
+        var idx=arr.findIndex(function(r){return r.a>cr.a;});
+        if(idx<0)arr.push(cr);else arr.splice(idx,0,cr);
+      });
+      return arr;
+    }
+    var planI=insSorted(PLAN_DEFAULT.filter(function(r){return r.t==='I';}),
+      custAnal.filter(function(x){return x.t==='I'||acctTipo(x.a)==='I';}));
+    var planG=insSorted(PLAN_DEFAULT.filter(function(r){return r.t==='G';}),
+      custAnal.filter(function(x){return x.t==='G'||acctTipo(x.a)==='G';}));
 
     function sumChildren(prefixCode, tipo){
       return Object.keys(M).filter(function(k){
