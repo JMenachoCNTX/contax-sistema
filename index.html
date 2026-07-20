@@ -174,8 +174,13 @@ body.dark-mode .emp-box{background:#161616!important;color:#E2E8F0!important}
 // VERSIÓN DEL SISTEMA — Única fuente de verdad
 // Al aprobar una versión: subir VERSION y agregar una entrada al inicio de CHANGELOG.
 // ══════════════════════════════════════════════════════════
-const VERSION='V105';
+const VERSION='V106';
 const CHANGELOG=[
+  {v:'V106', fecha:'2026-07-20', cambios:[
+    'PDF: todo en hoja carta VERTICAL con márgenes estrechos (7-8mm), para aprovechar el espacio. Encabezado (NUMMEROS) y pie (CONTAX) compactos, ocupan menos.',
+    'El Cuadro de Activos Fijos sale en hoja HORIZONTAL (apaisada) para que la tabla tenga todo el ancho y no quede apretada.',
+    'La carátula ahora también aparece en el PDF de Análisis.'
+  ]},
   {v:'V105', fecha:'2026-07-20', cambios:[
     'PDF: el logo de CONTAX pasó al pie de página (se repite en cada hoja): a la izquierda "Elaborado por CONTAX" y a la derecha el Isologo. Arriba se mantiene el logo de NUMMEROS.',
     'Excel: no se agregan logos (la librería no permite imágenes y varios archivos tienen formato SIAT que no debe alterarse).'
@@ -6100,15 +6105,15 @@ function renderCover(){
 }
 function buildPrintDocument(sections){
   var appCss='';try{var st=document.querySelector('style');if(st)appCss=st.textContent;}catch(e){}
-  var pageStyle=appCss+' @page{size:letter;margin:13mm 15mm 22mm} @page ph{size:letter landscape;margin:10mm 10mm 20mm} .ph{page:ph} body{font-family:Segoe UI,Arial,sans-serif;font-size:10.5px;color:#0D0D0D;background:#fff;height:auto} .pb{page-break-after:always} .card{box-shadow:none;break-inside:avoid} button,.btn,.btn-blue,.btn-green,.btn-orange,.btn-del,.btn-purple,.chat-fab,.chat-float,.nav,.hdr,.nav-toggle{display:none!important}';
-  // Encabezado por sección: sólo NUMMEROS
-  var pdfHdr='<div style="display:flex;justify-content:flex-start;align-items:center;border-bottom:1.5px solid #000;padding-bottom:5px;margin-bottom:9px">'+
-    '<img src="'+NUM_SOLO_POS+'" style="height:18px;width:auto"/>'+
+  var pageStyle=appCss+' @page{size:letter portrait;margin:7mm 8mm 12mm} @page ph{size:letter landscape;margin:7mm 8mm 12mm} .ph{page:ph} body{font-family:Segoe UI,Arial,sans-serif;font-size:10.5px;color:#0D0D0D;background:#fff;height:auto} .pb{page-break-after:always} .card{box-shadow:none;break-inside:avoid;margin-bottom:6px;padding:8px} .tbl-wrap{max-height:none!important;overflow:visible!important} button,.btn,.btn-blue,.btn-green,.btn-orange,.btn-del,.btn-purple,.chat-fab,.chat-float,.nav,.hdr,.nav-toggle{display:none!important}';
+  // Encabezado por sección: sólo NUMMEROS (compacto)
+  var pdfHdr='<div style="display:flex;justify-content:flex-start;align-items:center;border-bottom:1px solid #000;padding-bottom:3px;margin-bottom:6px">'+
+    '<img src="'+NUM_SOLO_POS+'" style="height:14px;width:auto"/>'+
   '</div>';
-  // Pie de página CONTAX (fijo, se repite en cada página impresa)
-  var pdfFoot='<div style="position:fixed;bottom:0;left:0;right:0;height:14mm;display:flex;justify-content:space-between;align-items:center;padding:2.5mm 4mm 0;border-top:1px solid #999">'+
-    '<span style="font-size:9px;color:#555">Elaborado por <strong style="color:#111;letter-spacing:.02em">CONTAX</strong></span>'+
-    '<img src="'+CTX_ISO+'" style="height:23px;width:auto"/>'+
+  // Pie de página CONTAX (fijo, se repite en cada página; compacto)
+  var pdfFoot='<div style="position:fixed;bottom:0;left:0;right:0;height:9mm;display:flex;justify-content:space-between;align-items:center;padding:1.5mm 3mm 0;border-top:1px solid #999">'+
+    '<span style="font-size:8px;color:#555">Elaborado por <strong style="color:#111;letter-spacing:.02em">CONTAX</strong></span>'+
+    '<img src="'+CTX_ISO+'" style="height:15px;width:auto"/>'+
   '</div>';
   return '<!DOCTYPE html><html><head><meta charset="utf-8"><style>'+pageStyle+'</style></head><body>'+pdfFoot+sections.map(function(s,i){var land=String(s).indexOf('<!--LANDSCAPE-->')===0;var cls=(i<sections.length-1?'pb':'')+(land?' ph':'');var isCover=String(s).indexOf(CARATULA_PDF||'###nocover###')>-1;return '<div class="'+cls+'" style="padding:4mm 0">'+(isCover?'':pdfHdr)+s+'</div>';}).join('')+'</body></html>';
 }
@@ -6135,7 +6140,8 @@ function exportPDFSingle(tipo,titulo){
 }
 function exportPDFAnalisis(){
   var c=calcAll();
-  var doc=buildPrintDocument([pdfTributario(),'<div class="pb">'+pdfGraficos(c)+'</div>','<div class="pb">'+renderReporte(c)+'</div>']);
+  var coverPage=CARATULA_PDF?'<div class="pb"><img src="'+CARATULA_PDF+'" style="width:100%;height:auto;display:block"/></div>':(typeof renderCover==='function'?renderCover():'');
+  var doc=buildPrintDocument([coverPage,'<div class="pb">'+pdfTributario()+'</div>','<div class="pb">'+pdfGraficos(c)+'</div>',renderReporte(c)]);
   var win=window.open('','_blank');if(!win){alert('Permite ventanas emergentes.');return;}
   win.document.write(doc);win.document.close();win.onload=function(){win.print();};
 }
