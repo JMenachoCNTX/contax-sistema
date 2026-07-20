@@ -173,8 +173,15 @@ body.dark-mode .emp-box{background:#0d2145!important;color:#E2E8F0!important}
 // VERSIÓN DEL SISTEMA — Única fuente de verdad
 // Al aprobar una versión: subir VERSION y agregar una entrada al inicio de CHANGELOG.
 // ══════════════════════════════════════════════════════════
-const VERSION='V86';
+const VERSION='V87';
 const CHANGELOG=[
+  {v:'V87', fecha:'2026-07-20', cambios:[
+    'Plan de Cuentas: chips para filtrar por tipo (Activo, Pasivo, Patrimonio, Ingresos, Egresos) y encabezados de tabla fijos al desplazar.',
+    'RCV Compras: botón para eliminar un registro individual (no todo el archivo) y botón "➕ Cuenta analítica" para crear una cuenta sin salir de la pestaña.',
+    'Ingresos: al cambiar la cuenta, ahora sí se refleja en el Estado de Resultados (incluye las cuentas analíticas personalizadas).',
+    'Compensaciones: la fila de Multas ahora usa la cuenta 525019002 "Mantenimiento de Valor e Intereses Impositivos" (gasto) y ya NO deja el pasivo 214026001 en negativo en el Balance.',
+    'Otros Asientos: al escribir en un asiento libre ya no se pierde el cursor ni salta la pantalla hacia arriba (se conserva la posición y el foco).'
+  ]},
   {v:'V86', fecha:'2026-07-16', cambios:[
     'DIRECTORIO COMPARTIDO DE EMPRESAS: ahora todas las empresas creadas por cualquier usuario aparecen para todo el equipo. En la ventana de empresas sale el listado completo y cualquiera puede abrir una empresa para colaborar en sus estados financieros, sin necesidad de compartir archivo ni acceso.',
     'Al elegir una empresa que aún no tienes cargada, sus datos se descargan de la nube al instante.',
@@ -963,6 +970,7 @@ const PLAN_DEFAULT=[
   {a:'525004001',b:'5',c:'2',d:'5',e:'004',f:'001',g:'IUE NO COMPENSADO',l:'CUENTA ANALITICA',t:'G'},
   {a:'525019',b:'5',c:'2',d:'5',e:'019',f:'',g:'MULTA POR INCUMPLIMIENTO A DEBERES FORMALES',l:'CUENTA PRINCIPAL',t:'G'},
   {a:'525019001',b:'5',c:'2',d:'5',e:'019',f:'001',g:'MULTAS E INTERESES',l:'CUENTA ANALITICA',t:'G'},
+  {a:'525019002',b:'5',c:'2',d:'5',e:'019',f:'002',g:'MANTENIMIENTO DE VALOR E INTERESES IMPOSITIVOS',l:'CUENTA ANALITICA',t:'G'},
   {a:'526',b:'5',c:'2',d:'6',e:'',f:'',g:'OTROS GASTOS DE ADMINISTRACIÓN',l:'SUB GRUPO',t:'G'},
   {a:'526002',b:'5',c:'2',d:'6',e:'002',f:'',g:'OTROS GASTOS',l:'CUENTA PRINCIPAL',t:'G'},
   {a:'526002001',b:'5',c:'2',d:'6',e:'002',f:'001',g:'GASTOS VARIOS',l:'CUENTA ANALITICA',t:'G'},
@@ -1082,7 +1090,7 @@ const DEF_OA=[
 
 const DEF_TR={caja:0,banco:0,cfIva:0,iueComp:0,vehiculo:0,depVehiculo:0,muebles:0,depMuebles:0,equComp:0,depEquComp:0,equCom:0,depEquCom:0,equOficina:0,depEquOficina:0,equElec:0,depEquElec:0,prestamos:0,dfIva:0,itPagar:0,iuePagar:0,multas:0,capitalSocial:0,ajusteCapital:0,resAcum:0};
 
-const ACCT_HIER={"111001001": {"C": 1, "G": 1, "SG": 1, "CP": "001", "CA": "001"}, "111002001": {"C": 1, "G": 1, "SG": 1, "CP": "002", "CA": "001"}, "116001001": {"C": 1, "G": 1, "SG": 6, "CP": "001", "CA": "001"}, "116006001": {"C": 1, "G": 1, "SG": 6, "CP": "006", "CA": "001"}, "123003001": {"C": 1, "G": 2, "SG": 3, "CP": "003", "CA": "001"}, "123004001": {"C": 1, "G": 2, "SG": 3, "CP": "004", "CA": "001"}, "123006001": {"C": 1, "G": 2, "SG": 3, "CP": "006", "CA": "001"}, "123007001": {"C": 1, "G": 2, "SG": 3, "CP": "007", "CA": "001"}, "123009001": {"C": 1, "G": 2, "SG": 3, "CP": "009", "CA": "001"}, "123010001": {"C": 1, "G": 2, "SG": 3, "CP": "010", "CA": "001"}, "124001001": {"C": 1, "G": 2, "SG": 4, "CP": "001", "CA": "001"}, "124001002": {"C": 1, "G": 2, "SG": 4, "CP": "001", "CA": "002"}, "124001003": {"C": 1, "G": 2, "SG": 4, "CP": "001", "CA": "003"}, "124001004": {"C": 1, "G": 2, "SG": 4, "CP": "001", "CA": "004"}, "124001005": {"C": 1, "G": 2, "SG": 4, "CP": "001", "CA": "005"}, "124001006": {"C": 1, "G": 2, "SG": 4, "CP": "001", "CA": "006"}, "212003001": {"C": 2, "G": 1, "SG": 2, "CP": "003", "CA": "001"}, "214001001": {"C": 2, "G": 1, "SG": 4, "CP": "001", "CA": "001"}, "214004001": {"C": 2, "G": 1, "SG": 4, "CP": "004", "CA": "001"}, "214006001": {"C": 2, "G": 1, "SG": 4, "CP": "006", "CA": "001"}, "214026001": {"C": 2, "G": 1, "SG": 4, "CP": "026", "CA": "001"}, "311001001": {"C": 3, "G": 1, "SG": 1, "CP": "001", "CA": "001"}, "311002001": {"C": 3, "G": 1, "SG": 1, "CP": "002", "CA": "001"}, "313001001": {"C": 3, "G": 1, "SG": 3, "CP": "001", "CA": "001"}, "314001001": {"C": 3, "G": 1, "SG": 4, "CP": "001", "CA": "001"}, "314002001": {"C": 3, "G": 1, "SG": 4, "CP": "002", "CA": "001"}, "411002001": {"C": 4, "G": 1, "SG": 1, "CP": "002", "CA": "001"}, "411002002": {"C": 4, "G": 1, "SG": 1, "CP": "002", "CA": "002"}, "411002003": {"C": 4, "G": 1, "SG": 1, "CP": "002", "CA": "003"}, "411002004": {"C": 4, "G": 1, "SG": 1, "CP": "002", "CA": "004"}, "411009001": {"C": 4, "G": 1, "SG": 1, "CP": "009", "CA": "001"}, "431012001": {"C": 4, "G": 3, "SG": 1, "CP": "012", "CA": "001"}, "441001001": {"C": 4, "G": 4, "SG": 1, "CP": "001", "CA": "001"}, "441002001": {"C": 4, "G": 4, "SG": 1, "CP": "002", "CA": "001"}, "441004001": {"C": 4, "G": 4, "SG": 1, "CP": "004", "CA": "001"}, "522001001": {"C": 5, "G": 2, "SG": 2, "CP": "001", "CA": "001"}, "522002001": {"C": 5, "G": 2, "SG": 2, "CP": "002", "CA": "001"}, "522003001": {"C": 5, "G": 2, "SG": 2, "CP": "003", "CA": "001"}, "522003002": {"C": 5, "G": 2, "SG": 2, "CP": "003", "CA": "002"}, "522005001": {"C": 5, "G": 2, "SG": 2, "CP": "005", "CA": "001"}, "522005002": {"C": 5, "G": 2, "SG": 2, "CP": "005", "CA": "002"}, "522005003": {"C": 5, "G": 2, "SG": 2, "CP": "005", "CA": "003"}, "522005004": {"C": 5, "G": 2, "SG": 2, "CP": "005", "CA": "004"}, "522005005": {"C": 5, "G": 2, "SG": 2, "CP": "005", "CA": "005"}, "522006001": {"C": 5, "G": 2, "SG": 2, "CP": "006", "CA": "001"}, "522008001": {"C": 5, "G": 2, "SG": 2, "CP": "008", "CA": "001"}, "522008002": {"C": 5, "G": 2, "SG": 2, "CP": "008", "CA": "002"}, "522009001": {"C": 5, "G": 2, "SG": 2, "CP": "009", "CA": "001"}, "522009002": {"C": 5, "G": 2, "SG": 2, "CP": "009", "CA": "002"}, "522011001": {"C": 5, "G": 2, "SG": 2, "CP": "011", "CA": "001"}, "522017001": {"C": 5, "G": 2, "SG": 2, "CP": "017", "CA": "001"}, "522018001": {"C": 5, "G": 2, "SG": 2, "CP": "018", "CA": "001"}, "522022001": {"C": 5, "G": 2, "SG": 2, "CP": "022", "CA": "001"}, "522023001": {"C": 5, "G": 2, "SG": 2, "CP": "023", "CA": "001"}, "522023002": {"C": 5, "G": 2, "SG": 2, "CP": "023", "CA": "002"}, "522023003": {"C": 5, "G": 2, "SG": 2, "CP": "023", "CA": "003"}, "522029001": {"C": 5, "G": 2, "SG": 2, "CP": "029", "CA": "001"}, "523002001": {"C": 5, "G": 2, "SG": 3, "CP": "002", "CA": "001"}, "523003001": {"C": 5, "G": 2, "SG": 3, "CP": "003", "CA": "001"}, "523005001": {"C": 5, "G": 2, "SG": 3, "CP": "005", "CA": "001"}, "524001001": {"C": 5, "G": 2, "SG": 4, "CP": "001", "CA": "001"}, "524001002": {"C": 5, "G": 2, "SG": 4, "CP": "001", "CA": "002"}, "524001003": {"C": 5, "G": 2, "SG": 4, "CP": "001", "CA": "003"}, "524001004": {"C": 5, "G": 2, "SG": 4, "CP": "001", "CA": "004"}, "524001005": {"C": 5, "G": 2, "SG": 4, "CP": "001", "CA": "005"}, "524001006": {"C": 5, "G": 2, "SG": 4, "CP": "001", "CA": "006"}, "525001001": {"C": 5, "G": 2, "SG": 5, "CP": "001", "CA": "001"}, "525002001": {"C": 5, "G": 2, "SG": 5, "CP": "002", "CA": "001"}, "525003001": {"C": 5, "G": 2, "SG": 5, "CP": "003", "CA": "001"}, "525004001": {"C": 5, "G": 2, "SG": 5, "CP": "004", "CA": "001"}, "525019001": {"C": 5, "G": 2, "SG": 5, "CP": "019", "CA": "001"}, "526002001": {"C": 5, "G": 2, "SG": 6, "CP": "002", "CA": "001"}, "526002002": {"C": 5, "G": 2, "SG": 6, "CP": "002", "CA": "002"}, "532021001": {"C": 5, "G": 3, "SG": 2, "CP": "021", "CA": "001"}, "533003001": {"C": 5, "G": 3, "SG": 3, "CP": "003", "CA": "001"}, "533004001": {"C": 5, "G": 3, "SG": 3, "CP": "004", "CA": "001"}, "533004002": {"C": 5, "G": 3, "SG": 3, "CP": "004", "CA": "002"}, "534002001": {"C": 5, "G": 3, "SG": 4, "CP": "002", "CA": "001"}, "541002001": {"C": 5, "G": 4, "SG": 1, "CP": "002", "CA": "001"}, "541005001": {"C": 5, "G": 4, "SG": 1, "CP": "005", "CA": "001"}, "551009002": {"C": 5, "G": 5, "SG": 1, "CP": "009", "CA": "002"}, "561001001": {"C": 5, "G": 6, "SG": 1, "CP": "001", "CA": "001"}, "561004001": {"C": 5, "G": 6, "SG": 1, "CP": "004", "CA": "001"}};
+const ACCT_HIER={"111001001": {"C": 1, "G": 1, "SG": 1, "CP": "001", "CA": "001"}, "111002001": {"C": 1, "G": 1, "SG": 1, "CP": "002", "CA": "001"}, "116001001": {"C": 1, "G": 1, "SG": 6, "CP": "001", "CA": "001"}, "116006001": {"C": 1, "G": 1, "SG": 6, "CP": "006", "CA": "001"}, "123003001": {"C": 1, "G": 2, "SG": 3, "CP": "003", "CA": "001"}, "123004001": {"C": 1, "G": 2, "SG": 3, "CP": "004", "CA": "001"}, "123006001": {"C": 1, "G": 2, "SG": 3, "CP": "006", "CA": "001"}, "123007001": {"C": 1, "G": 2, "SG": 3, "CP": "007", "CA": "001"}, "123009001": {"C": 1, "G": 2, "SG": 3, "CP": "009", "CA": "001"}, "123010001": {"C": 1, "G": 2, "SG": 3, "CP": "010", "CA": "001"}, "124001001": {"C": 1, "G": 2, "SG": 4, "CP": "001", "CA": "001"}, "124001002": {"C": 1, "G": 2, "SG": 4, "CP": "001", "CA": "002"}, "124001003": {"C": 1, "G": 2, "SG": 4, "CP": "001", "CA": "003"}, "124001004": {"C": 1, "G": 2, "SG": 4, "CP": "001", "CA": "004"}, "124001005": {"C": 1, "G": 2, "SG": 4, "CP": "001", "CA": "005"}, "124001006": {"C": 1, "G": 2, "SG": 4, "CP": "001", "CA": "006"}, "212003001": {"C": 2, "G": 1, "SG": 2, "CP": "003", "CA": "001"}, "214001001": {"C": 2, "G": 1, "SG": 4, "CP": "001", "CA": "001"}, "214004001": {"C": 2, "G": 1, "SG": 4, "CP": "004", "CA": "001"}, "214006001": {"C": 2, "G": 1, "SG": 4, "CP": "006", "CA": "001"}, "214026001": {"C": 2, "G": 1, "SG": 4, "CP": "026", "CA": "001"}, "311001001": {"C": 3, "G": 1, "SG": 1, "CP": "001", "CA": "001"}, "311002001": {"C": 3, "G": 1, "SG": 1, "CP": "002", "CA": "001"}, "313001001": {"C": 3, "G": 1, "SG": 3, "CP": "001", "CA": "001"}, "314001001": {"C": 3, "G": 1, "SG": 4, "CP": "001", "CA": "001"}, "314002001": {"C": 3, "G": 1, "SG": 4, "CP": "002", "CA": "001"}, "411002001": {"C": 4, "G": 1, "SG": 1, "CP": "002", "CA": "001"}, "411002002": {"C": 4, "G": 1, "SG": 1, "CP": "002", "CA": "002"}, "411002003": {"C": 4, "G": 1, "SG": 1, "CP": "002", "CA": "003"}, "411002004": {"C": 4, "G": 1, "SG": 1, "CP": "002", "CA": "004"}, "411009001": {"C": 4, "G": 1, "SG": 1, "CP": "009", "CA": "001"}, "431012001": {"C": 4, "G": 3, "SG": 1, "CP": "012", "CA": "001"}, "441001001": {"C": 4, "G": 4, "SG": 1, "CP": "001", "CA": "001"}, "441002001": {"C": 4, "G": 4, "SG": 1, "CP": "002", "CA": "001"}, "441004001": {"C": 4, "G": 4, "SG": 1, "CP": "004", "CA": "001"}, "522001001": {"C": 5, "G": 2, "SG": 2, "CP": "001", "CA": "001"}, "522002001": {"C": 5, "G": 2, "SG": 2, "CP": "002", "CA": "001"}, "522003001": {"C": 5, "G": 2, "SG": 2, "CP": "003", "CA": "001"}, "522003002": {"C": 5, "G": 2, "SG": 2, "CP": "003", "CA": "002"}, "522005001": {"C": 5, "G": 2, "SG": 2, "CP": "005", "CA": "001"}, "522005002": {"C": 5, "G": 2, "SG": 2, "CP": "005", "CA": "002"}, "522005003": {"C": 5, "G": 2, "SG": 2, "CP": "005", "CA": "003"}, "522005004": {"C": 5, "G": 2, "SG": 2, "CP": "005", "CA": "004"}, "522005005": {"C": 5, "G": 2, "SG": 2, "CP": "005", "CA": "005"}, "522006001": {"C": 5, "G": 2, "SG": 2, "CP": "006", "CA": "001"}, "522008001": {"C": 5, "G": 2, "SG": 2, "CP": "008", "CA": "001"}, "522008002": {"C": 5, "G": 2, "SG": 2, "CP": "008", "CA": "002"}, "522009001": {"C": 5, "G": 2, "SG": 2, "CP": "009", "CA": "001"}, "522009002": {"C": 5, "G": 2, "SG": 2, "CP": "009", "CA": "002"}, "522011001": {"C": 5, "G": 2, "SG": 2, "CP": "011", "CA": "001"}, "522017001": {"C": 5, "G": 2, "SG": 2, "CP": "017", "CA": "001"}, "522018001": {"C": 5, "G": 2, "SG": 2, "CP": "018", "CA": "001"}, "522022001": {"C": 5, "G": 2, "SG": 2, "CP": "022", "CA": "001"}, "522023001": {"C": 5, "G": 2, "SG": 2, "CP": "023", "CA": "001"}, "522023002": {"C": 5, "G": 2, "SG": 2, "CP": "023", "CA": "002"}, "522023003": {"C": 5, "G": 2, "SG": 2, "CP": "023", "CA": "003"}, "522029001": {"C": 5, "G": 2, "SG": 2, "CP": "029", "CA": "001"}, "523002001": {"C": 5, "G": 2, "SG": 3, "CP": "002", "CA": "001"}, "523003001": {"C": 5, "G": 2, "SG": 3, "CP": "003", "CA": "001"}, "523005001": {"C": 5, "G": 2, "SG": 3, "CP": "005", "CA": "001"}, "524001001": {"C": 5, "G": 2, "SG": 4, "CP": "001", "CA": "001"}, "524001002": {"C": 5, "G": 2, "SG": 4, "CP": "001", "CA": "002"}, "524001003": {"C": 5, "G": 2, "SG": 4, "CP": "001", "CA": "003"}, "524001004": {"C": 5, "G": 2, "SG": 4, "CP": "001", "CA": "004"}, "524001005": {"C": 5, "G": 2, "SG": 4, "CP": "001", "CA": "005"}, "524001006": {"C": 5, "G": 2, "SG": 4, "CP": "001", "CA": "006"}, "525001001": {"C": 5, "G": 2, "SG": 5, "CP": "001", "CA": "001"}, "525002001": {"C": 5, "G": 2, "SG": 5, "CP": "002", "CA": "001"}, "525003001": {"C": 5, "G": 2, "SG": 5, "CP": "003", "CA": "001"}, "525004001": {"C": 5, "G": 2, "SG": 5, "CP": "004", "CA": "001"}, "525019001": {"C": 5, "G": 2, "SG": 5, "CP": "019", "CA": "001"}, "525019002": {"C": 5, "G": 2, "SG": 5, "CP": "019", "CA": "002"}, "526002001": {"C": 5, "G": 2, "SG": 6, "CP": "002", "CA": "001"}, "526002002": {"C": 5, "G": 2, "SG": 6, "CP": "002", "CA": "002"}, "532021001": {"C": 5, "G": 3, "SG": 2, "CP": "021", "CA": "001"}, "533003001": {"C": 5, "G": 3, "SG": 3, "CP": "003", "CA": "001"}, "533004001": {"C": 5, "G": 3, "SG": 3, "CP": "004", "CA": "001"}, "533004002": {"C": 5, "G": 3, "SG": 3, "CP": "004", "CA": "002"}, "534002001": {"C": 5, "G": 3, "SG": 4, "CP": "002", "CA": "001"}, "541002001": {"C": 5, "G": 4, "SG": 1, "CP": "002", "CA": "001"}, "541005001": {"C": 5, "G": 4, "SG": 1, "CP": "005", "CA": "001"}, "551009002": {"C": 5, "G": 5, "SG": 1, "CP": "009", "CA": "002"}, "561001001": {"C": 5, "G": 6, "SG": 1, "CP": "001", "CA": "001"}, "561004001": {"C": 5, "G": 6, "SG": 1, "CP": "004", "CA": "001"}};
 
 function newEmp(id){
   return{id,cfg:{razonSocial:'',ci:'',nit:'',actividad:'',gestion:'2025',fechaInicio:'2025-01-01',fechaFin:'2025-12-31',ciudad:'SANTA CRUZ DE LA SIERRA',ufvInicio:'',ufvFin:'',contadorNombre:'',contadorCI:'',gasNoDed:'0',perdNComp:'0'},
@@ -1244,7 +1252,7 @@ function genEntries(){
   if(ventasXLSX.length>0){
     const conV={};
     ventasXLSX.forEach((v,i)=>{
-      const cuenta=(e.ventasOverrides&&e.ventasOverrides[i])||'411002004';
+      const cuenta=(e.ventasOverrides&&e.ventasOverrides[i])||v.cuenta||'411002004';
       const tot=r2(v.total);
       const ingNeto=r2(tot*0.87);
       const dfIva=r2(tot*0.13);
@@ -1348,7 +1356,7 @@ function genEntries(){
     if(ajCF>0)lines.push({c:'116001001',d:ajCF,h:0});
     if(cDF>0)lines.push({c:'214001001',d:cDF,h:0});
     if(cIT>0)lines.push({c:'214004001',d:cIT,h:0});
-    if(cMul>0)lines.push({c:'214026001',d:cMul,h:0});
+    if(cMul>0)lines.push({c:'525019002',d:cMul,h:0}); // V87: gasto (Mant. de Valor e Intereses), ya no debita el pasivo 214026001 (evita negativo en el Balance)
     if(ajUFV>0)lines.push({c:'441001001',d:0,h:ajUFV});
     if(cCF>0)lines.push({c:'116001001',d:0,h:cCF});
     if(cIUE>0)lines.push({c:'116006001',d:0,h:cIUE});
@@ -1670,6 +1678,7 @@ function renderRCV(){
         'style="font-size:10px;border:1px solid #E2E8F0;border-radius:4px;padding:2px 5px;width:100%"/>'+
       '</td>'+
       (!usingFile?'<td><span class="badge-ok">CONSOL.</span></td>':'')+
+      (usingFile?'<td style="text-align:center"><button class="btn-del" style="font-size:10px;padding:3px 7px" title="Eliminar este registro" onclick="deleteRCVRow('+idx+')">🗑</button></td>':'')+
     '</tr>';
   }).join('');
 
@@ -1679,6 +1688,7 @@ function renderRCV(){
   return '<div class="card"><div class="h2">🧾 RCV — Registro de Compras</div>'+
     '<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:10px">'+
       uploadBtn+
+      '<button class="btn-blue" style="font-size:11px;padding:6px 12px" onclick="quickAddCuenta()">➕ Cuenta analítica</button>'+
       (usingFile?'<button class="btn-del" style="font-size:11px;padding:4px 10px" onclick="emp().rcvData=[];emp().rcvOverrides={};saveLS();re()">🗑 Quitar archivo</button>':'')+
       (Object.keys(overrides).length?'<button onclick="emp().rcvOverrides={};saveLS();re()" class="btn-del" style="font-size:11px;padding:4px 10px">🗑 Limpiar overrides</button>':'')+
     '</div>'+
@@ -1708,6 +1718,7 @@ function renderRCV(){
       '<th>Cuenta <span style="font-weight:400;font-size:9px">verde=auto|naranja=manual</span></th>'+
       '<th style="font-size:10px">☐ Forma de Pago</th><th style="font-size:10px">Comentario</th>'+
       (!usingFile?'<th>Estado</th>':'')+
+      (usingFile?'<th style="font-size:10px">Quitar</th>':'')+
       '</tr></thead><tbody id="rcv-tbody">'+rows+'</tbody></table></div>':'')+
   '</div>';
   if(ventas.length){
@@ -1716,7 +1727,7 @@ function renderRCV(){
       const isOver=!!vOvr[i];
       const sdId='vo'+i;
       const tot=r2(pn(v.total)),ing=r2(tot*0.87),df=r2(tot*0.13);
-      const cuenta=vOvr[i]||(v.cuenta||'411002001');
+      const cuenta=vOvr[i]||(v.cuenta||'411002004');
       const cellSt=isOver
         ?'min-width:180px;padding:2px 4px;background:#FFF7ED;border-radius:3px;border:1px solid #F97316'
         :'min-width:180px;padding:2px 4px;background:#F0FDF4;border-radius:3px;border:1px solid #22C55E';
@@ -1815,7 +1826,7 @@ function renderIngresos(){
       const isOver=!!vOvr[i];
       const sdId='vo'+i;
       const tot=r2(pn(v.total)),ing=r2(tot*0.87),df=r2(tot*0.13);
-      const cuenta=vOvr[i]||(v.cuenta||'411002001');
+      const cuenta=vOvr[i]||(v.cuenta||'411002004');
       const cellSt=isOver?'min-width:180px;padding:2px 4px;background:#FFF7ED;border-radius:3px;border:1px solid #F97316':'min-width:180px;padding:2px 4px;background:#F0FDF4;border-radius:3px;border:1px solid #22C55E';
       return '<tr style="background:'+(i%2?'#F8FAFC':'#fff')+'">'+
         '<td style="width:28px;text-align:center"><input type="checkbox" class="vc" data-i="'+i+'" onchange="toggleVentaSel('+i+',this.checked)" style="width:13px;height:13px"/></td>'+
@@ -2007,7 +2018,12 @@ function renderPlan(){
     var c=customPlan.find(function(x){return (x.a||x.c)===r.a;});
     return c?Object.assign({},r,{g:c.n||c.g||r.g,_modified:true}):r;
   }
-  var filtered=q?plan.filter(function(r){return r.a.includes(q)||(r.g||'').toLowerCase().includes(q);}):plan;
+  var tf=S.planTipo||'';
+  var filtered=plan.filter(function(r){
+    if(q&&!(r.a.includes(q)||(r.g||'').toLowerCase().includes(q)))return false;
+    if(tf&&r.b!==tf)return false;
+    return true;
+  });
   var editing=S.planEdit;
   var creating=S.planCreate;
 
@@ -2097,6 +2113,11 @@ function renderPlan(){
   }).join('');
 
   var hasCustom=customPlan.length>0;
+  var tipos=[['','Todas'],['1','Activo'],['2','Pasivo'],['3','Patrimonio'],['4','Ingresos'],['5','Egresos']];
+  var chips='<div style="display:flex;gap:6px;margin-bottom:8px;flex-wrap:wrap">'+tipos.map(function(t){
+    var on=tf===t[0];
+    return '<button onclick="S.planTipo=\''+t[0]+'\';re()" style="border:1px solid '+(on?'#031740':'#CBD5E1')+';background:'+(on?'#031740':'#fff')+';color:'+(on?'#fff':'#475569')+';border-radius:14px;padding:4px 13px;font-size:11px;cursor:pointer;font-weight:'+(on?'700':'500')+'">'+t[1]+'</button>';
+  }).join('')+'</div>';
   return '<div class="card">'+editForm+createForm+
     '<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;flex-wrap:wrap">'+
       '<div class="h2" style="flex:1;margin:0">📋 Plan de Cuentas CONTAX <span style="font-size:11px;font-weight:400;color:#77888C">('+plan.length+' filas)</span></div>'+
@@ -2108,19 +2129,20 @@ function renderPlan(){
       (hasCustom?'<button onclick="resetAllPlan()" style="background:#FEF2F2;border:1px solid #FECACA;border-radius:6px;padding:7px 10px;font-size:11px;cursor:pointer;color:#DC2626">↺ Restaurar todo</button>':'')+
     '</div>'+
     legend+
+    chips+
     '<div style="margin-bottom:8px"><input type="text" placeholder="🔍 Buscar por código o nombre..." value="'+(S.planQ||'')+'" oninput="S.planQ=this.value;re()" style="width:100%;padding:6px 10px;border:1px solid #E2E8F0;border-radius:6px;font-size:12px;outline:none"/></div>'+
     (filtered.length<plan.length?'<div style="font-size:11px;color:#77888C;margin-bottom:6px">Mostrando '+filtered.length+' de '+plan.length+'</div>':'')+
     '<div class="tbl-wrap" style="max-height:580px"><table style="width:100%;border-collapse:collapse">'+
-    '<thead><tr style="background:#031740;color:#fff;font-size:10px">'+
-      '<th style="padding:6px 8px;text-align:left">Nro Cuenta</th>'+
-      '<th style="padding:6px 4px;text-align:center" title="Cuenta">C</th>'+
-      '<th style="padding:6px 4px;text-align:center" title="Grupo">G</th>'+
-      '<th style="padding:6px 4px;text-align:center" title="Sub Grupo">SG</th>'+
-      '<th style="padding:6px 4px;text-align:center" title="Cuenta Principal">CP</th>'+
-      '<th style="padding:6px 4px;text-align:center" title="Cuenta Analítica">CA</th>'+
-      '<th style="padding:6px 8px;text-align:left">Nombre de la Cuenta</th>'+
-      '<th style="padding:6px 8px;text-align:left">Tipo de Cuenta</th>'+
-      '<th style="padding:6px 4px"></th>'+
+    '<thead><tr style="font-size:10px">'+
+      '<th style="padding:6px 8px;text-align:left;position:sticky;top:0;background:#031740;color:#fff;z-index:2">Nro Cuenta</th>'+
+      '<th style="padding:6px 4px;text-align:center;position:sticky;top:0;background:#031740;color:#fff;z-index:2" title="Cuenta">C</th>'+
+      '<th style="padding:6px 4px;text-align:center;position:sticky;top:0;background:#031740;color:#fff;z-index:2" title="Grupo">G</th>'+
+      '<th style="padding:6px 4px;text-align:center;position:sticky;top:0;background:#031740;color:#fff;z-index:2" title="Sub Grupo">SG</th>'+
+      '<th style="padding:6px 4px;text-align:center;position:sticky;top:0;background:#031740;color:#fff;z-index:2" title="Cuenta Principal">CP</th>'+
+      '<th style="padding:6px 4px;text-align:center;position:sticky;top:0;background:#031740;color:#fff;z-index:2" title="Cuenta Analítica">CA</th>'+
+      '<th style="padding:6px 8px;text-align:left;position:sticky;top:0;background:#031740;color:#fff;z-index:2">Nombre de la Cuenta</th>'+
+      '<th style="padding:6px 8px;text-align:left;position:sticky;top:0;background:#031740;color:#fff;z-index:2">Tipo de Cuenta</th>'+
+      '<th style="padding:6px 4px;position:sticky;top:0;background:#031740;color:#fff;z-index:2"></th>'+
     '</tr></thead><tbody>'+rows+'</tbody></table></div>'+
   '</div>';
 }
@@ -2688,14 +2710,14 @@ function renderOtrosAsientos(){
         return '<div style="display:grid;grid-template-columns:100px 1fr 130px 130px;gap:6px;margin-bottom:4px;align-items:center;font-size:11px">'+
           '<span style="font-family:monospace;font-size:10px;color:#555">'+l.c+'</span>'+
           '<span>'+acctName(l.c)+'</span>'+
-          '<input type="text" '+(l.t==='D'?'class="g"':'class="ro n"')+' placeholder="DEBE" value="'+(l.t==='D'?disp:'')+'" oninput="" onblur="emp().otrosAsientos['+i+'].lines['+j+'].v=pn(this.value)||0;saveLS();reLazy()"/>'+
-          '<input type="text" '+(l.t==='H'?'class="g"':'class="ro n"')+' placeholder="HABER" value="'+(l.t==='H'?disp:'')+'" oninput="" onblur="emp().otrosAsientos['+i+'].lines['+j+'].v=pn(this.value)||0;saveLS();reLazy()"/>'+
+          '<input id="oaf'+i+'_'+j+'_D" type="text" '+(l.t==='D'?'class="g"':'class="ro n"')+' placeholder="DEBE" value="'+(l.t==='D'?disp:'')+'" oninput="" onblur="emp().otrosAsientos['+i+'].lines['+j+'].v=pn(this.value)||0;saveLS();re()"/>'+
+          '<input id="oaf'+i+'_'+j+'_H" type="text" '+(l.t==='H'?'class="g"':'class="ro n"')+' placeholder="HABER" value="'+(l.t==='H'?disp:'')+'" oninput="" onblur="emp().otrosAsientos['+i+'].lines['+j+'].v=pn(this.value)||0;saveLS();re()"/>'+
           '</div>';
       } else {
         return '<div style="display:grid;grid-template-columns:1fr 130px 130px auto;gap:6px;margin-bottom:4px;align-items:center">'+
-          '<select onchange="emp().otrosAsientos['+i+'].lines['+j+'].c=this.value;saveLS()" style="font-size:11px"><option value="">— Cuenta —</option>'+planOpts.replace('value="'+l.c+'"','value="'+l.c+'" selected')+'</select>'+
-          '<input type="text" class="g" placeholder="DEBE" value="'+(l.t==='D'?disp:'')+'" oninput="" onblur="emp().otrosAsientos['+i+'].lines['+j+'].t=\'D\';emp().otrosAsientos['+i+'].lines['+j+'].v=pn(this.value)||0;saveLS();reLazy()"/>'+
-          '<input type="text" class="g" placeholder="HABER" value="'+(l.t==='H'?disp:'')+'" oninput="" onblur="emp().otrosAsientos['+i+'].lines['+j+'].t=\'H\';emp().otrosAsientos['+i+'].lines['+j+'].v=pn(this.value)||0;saveLS();reLazy()"/>'+
+          '<select onchange="emp().otrosAsientos['+i+'].lines['+j+'].c=this.value;saveLS();re()" style="font-size:11px"><option value="">— Cuenta —</option>'+planOpts.replace('value="'+l.c+'"','value="'+l.c+'" selected')+'</select>'+
+          '<input id="oal'+i+'_'+j+'_D" type="text" class="g" placeholder="DEBE" value="'+(l.t==='D'?disp:'')+'" oninput="" onblur="emp().otrosAsientos['+i+'].lines['+j+'].t=\'D\';emp().otrosAsientos['+i+'].lines['+j+'].v=pn(this.value)||0;saveLS();re()"/>'+
+          '<input id="oal'+i+'_'+j+'_H" type="text" class="g" placeholder="HABER" value="'+(l.t==='H'?disp:'')+'" oninput="" onblur="emp().otrosAsientos['+i+'].lines['+j+'].t=\'H\';emp().otrosAsientos['+i+'].lines['+j+'].v=pn(this.value)||0;saveLS();re()"/>'+
           '<button class="btn-del" onclick="emp().otrosAsientos['+i+'].lines.splice('+j+',1);saveLS();re()">✕</button>'+
           '</div>';
       }
@@ -3065,9 +3087,20 @@ function renderEE(c){
     const iueER=resTribER>0?r2(resTribER*0.25):0;
     const utilDespues=r2(util-iueER);
 
-    // ── Jerarquía desde PLAN_DEFAULT ──────────────────────
-    var planI=PLAN_DEFAULT.filter(function(r){return r.t==='I';});
-    var planG=PLAN_DEFAULT.filter(function(r){return r.t==='G';});
+    // ── Jerarquía desde PLAN_DEFAULT + cuentas analíticas personalizadas ──
+    // V87 — incluir cuentas creadas por el usuario (S.planCuentas) que no están en PLAN_DEFAULT,
+    // para que al asignar una cuenta en Ingresos/RCV se refleje como línea en el Estado de Resultados.
+    var custAnal=(S.planCuentas||[]).filter(function(x){
+      var code=x.a||x.c;
+      return code&&(''+code).length===9&&!PLAN_DEFAULT.find(function(r){return r.a===code;});
+    }).map(function(x){
+      var code=x.a||x.c;
+      return {a:code,g:x.n||x.g||code,l:'CUENTA ANALITICA',t:x.t||acctTipo(code),b:(''+code)[0]};
+    });
+    var planI=PLAN_DEFAULT.filter(function(r){return r.t==='I';})
+      .concat(custAnal.filter(function(x){return x.t==='I'||acctTipo(x.a)==='I';}));
+    var planG=PLAN_DEFAULT.filter(function(r){return r.t==='G';})
+      .concat(custAnal.filter(function(x){return x.t==='G'||acctTipo(x.a)==='G';}));
 
     function sumChildren(prefixCode, tipo){
       return Object.keys(M).filter(function(k){
@@ -4876,6 +4909,35 @@ function rcSet(code,sdId){
     saveLS();re();
   }
 }
+function deleteRCVRow(idx){
+  var e=emp();
+  if(!e.rcvData||!e.rcvData.length){alert('Solo se pueden eliminar registros individuales cuando cargaste un archivo XLSX. En modo pegado, edita el texto directamente.');return;}
+  if(!confirm('¿Eliminar este registro del RCV? (no borra el resto)'))return;
+  e.rcvData.splice(idx,1);
+  // Reindexar overrides guardados en la empresa
+  if(e.rcvOverrides){var o={};Object.keys(e.rcvOverrides).forEach(function(k){var n=+k;if(n===idx)return;o[n>idx?n-1:n]=e.rcvOverrides[k];});e.rcvOverrides=o;}
+  // Reindexar pagos y comentarios (localStorage por empresa)
+  ['cx_rcv_pay_','cx_rcv_cmt_'].forEach(function(pre){
+    var key=pre+S.activeId;var raw=localStorage.getItem(key);if(!raw)return;
+    try{var m=JSON.parse(raw);var out={};Object.keys(m).forEach(function(k){var n=+k;if(n===idx)return;out[n>idx?n-1:n]=m[k];});localStorage.setItem(key,JSON.stringify(out));}catch(er){}
+  });
+  saveLS();re();
+}
+function quickAddCuenta(){
+  var code=prompt('Código de la nueva cuenta analítica (9 dígitos, ej: 526002003):');
+  if(!code)return;code=(''+code).trim();
+  if(!/^[0-9]{9}$/.test(code)){alert('El código debe tener 9 dígitos numéricos.');return;}
+  var name=prompt('Nombre de la cuenta:');
+  if(!name)return;name=(''+name).trim();if(!name){alert('El nombre no puede estar vacío.');return;}
+  if(PLAN_DEFAULT.find(function(r){return r.a===code;})){alert('El código '+code+' ya existe en el plan.');return;}
+  var cp=(S.planCuentas&&S.planCuentas.length)?JSON.parse(JSON.stringify(S.planCuentas)):[];
+  if(cp.find(function(r){return (r.a||r.c)===code;})){alert('El código '+code+' ya existe.');return;}
+  var t=code[0]==='1'?'A':code[0]==='2'?'P':code[0]==='3'?'PT':code[0]==='4'?'I':'G';
+  cp.push({a:code,c:code,n:name,g:name,t:t,nivel:'CUENTA ANALITICA',l:'CUENTA ANALITICA',b:code[0],c2:'',d:'',e:'',f:''});
+  S.planCuentas=cp;savePlanCuentas(cp);saveLS();
+  alert('✓ Cuenta '+code+' — '+name+' agregada. Ya puedes seleccionarla en la columna Cuenta.');
+  re();
+}
 function voSet(code,sdId){
   sdSet(code,sdId);
   // Extract index from sdId (format: 'vo{idx}')
@@ -4891,7 +4953,7 @@ function miSet(code,sdId){
   var idx=parseInt(sdId.replace('mi',''));
   if(!isNaN(idx)&&emp().ingresos&&emp().ingresos[idx]){
     emp().ingresos[idx].cuenta=code;
-    saveLS();reLazy();
+    saveLS();re();
   }
 }
 
@@ -5194,7 +5256,7 @@ function renderCompensaciones(c){
         compInp(mes,'compIT',m.compIT,hasTribData,calcIT,''),null),
       asientoRow('116006001',acctName('116006001'),
         null,compInp(mes,'compIUE',m.compIUE,false,0,'color:#059669')),
-      asientoRow('525019001',acctName('525019001'),
+      asientoRow('525019002',acctName('525019002'),
         compInp(mes,'compMultas',m.compMultas,false,0,''),null),
       asientoRow('111001001',acctName('111001001'),
         null,compInp(mes,'compCaja',m.compCaja,false,0,'color:#059669')),
@@ -6016,6 +6078,10 @@ function re(){
   const navHTML=navSecs.map(function(sec){
     return '<div class="nav-sec">'+sec.sec+'</div>'+sec.items.map(navItem).join('');
   }).join('');
+  // V87 — preservar scroll y foco (evita que la pantalla salte arriba y se pierda el cursor al escribir)
+  var _pmc=document.getElementById('main-cnt');var _pscroll=_pmc?_pmc.scrollTop:0;var _pwin=window.scrollY||window.pageYOffset||0;
+  var _pae=document.activeElement;var _paeId=(_pae&&_pae.id)?_pae.id:null;var _paeSel=null;
+  try{if(_pae&&_pae.selectionStart!=null)_paeSel=_pae.selectionStart;}catch(e){}
   document.getElementById('root').innerHTML=
     (S.showChangelog?renderChangelogModal():'')+
     (S.showExport?renderExportModal():'')+
@@ -6052,6 +6118,10 @@ function re(){
       applyReadOnly();
     }
   }
+  // V87 — restaurar scroll y foco tras reconstruir el DOM
+  var _nmc=document.getElementById('main-cnt');if(_nmc&&_pscroll)_nmc.scrollTop=_pscroll;
+  if(_pwin)try{window.scrollTo(0,_pwin);}catch(e){}
+  if(_paeId){var _nel=document.getElementById(_paeId);if(_nel){try{_nel.focus({preventScroll:true});if(_paeSel!=null&&_nel.setSelectionRange)_nel.setSelectionRange(_paeSel,_paeSel);}catch(e){}}}
   if(S.tab==='listaeeff'&&typeof gsFilter==='function')setTimeout(gsFilter,0);
   if(S.tab==='rcv'&&typeof filterRCVInPlace==='function')setTimeout(function(){filterRCVInPlace(_rcvFilter||'');filterVenInPlace(_venFilter||'');},0);
   if(S.tab==='ingresos'&&typeof filterVenInPlace==='function')setTimeout(function(){filterVenInPlace(_venFilter||'');},0);
