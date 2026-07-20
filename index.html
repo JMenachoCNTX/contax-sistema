@@ -174,8 +174,11 @@ body.dark-mode .emp-box{background:#0d2145!important;color:#E2E8F0!important}
 // VERSIÓN DEL SISTEMA — Única fuente de verdad
 // Al aprobar una versión: subir VERSION y agregar una entrada al inicio de CHANGELOG.
 // ══════════════════════════════════════════════════════════
-const VERSION='V92';
+const VERSION='V93';
 const CHANGELOG=[
+  {v:'V93', fecha:'2026-07-20', cambios:[
+    'Selectores de cuenta buscables (Otros Asientos, RCV, Ingresos, NIT\'s): al desplegar ahora se muestran TODAS las cuentas del plan (antes solo aparecían las primeras 25 y había que escribir para ver el resto). Igual puedes escribir para filtrar.'
+  ]},
   {v:'V92', fecha:'2026-07-20', cambios:[
     'RCV Compras (y todos los selectores de cuenta): ahora aparecen TODAS las cuentas de egreso del plan (antes el buscador solo mostraba algunas). Los selectores toman las cuentas del plan base + las que creaste − las eliminadas, así lo que asignas figura correctamente en el Estado de Resultados.',
     'Plan de Cuentas: ARREGLADO el botón 🗑 para eliminar cuenta (una función vacía duplicada lo anulaba y por eso no hacía nada). Ahora pide confirmación y elimina de verdad; se recupera con "↺ Restaurar todo".'
@@ -2367,7 +2370,7 @@ function sdFilter(id,query,onSelect,ft){
   const list=document.getElementById('sd-list-'+id);if(!list)return;
   const q=((query||'').split('—')[0]||'').toLowerCase().trim();
   const pool=sdFilterAccts(ft||'');
-  const matches=pool.filter(a=>!q||(a.c.includes(q)||a.n.toLowerCase().includes(q))).slice(0,25);
+  const matches=pool.filter(a=>!q||(a.c.includes(q)||a.n.toLowerCase().includes(q))).slice(0,300);
   list.innerHTML=matches.map(a=>'<div class="sd-item" onmousedown="sdCancel();'+onSelect+'(\''+a.c+'\',\''+id+'\');"><span class="sd-code">'+a.c+'</span><span class="sd-name">'+a.n+'</span></div>').join('')
     ||(q?'<div class="sd-item" style="color:#888;font-size:11px">Sin resultados para "'+q+'"</div>':'<div class="sd-item" style="color:#888;font-size:11px">Escribe para buscar...</div>');
 }
