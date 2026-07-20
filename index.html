@@ -174,12 +174,12 @@ body.dark-mode .emp-box{background:#161616!important;color:#E2E8F0!important}
 // VERSIÓN DEL SISTEMA — Única fuente de verdad
 // Al aprobar una versión: subir VERSION y agregar una entrada al inicio de CHANGELOG.
 // ══════════════════════════════════════════════════════════
-const VERSION='V107';
+const VERSION='V108';
 const CHANGELOG=[
-  {v:'V107', fecha:'2026-07-20', cambios:[
-    'Carátula oficial en SVG (tu archivo Caratula EEFF): nítida, ajustada a una sola hoja.',
-    'Arreglada la hoja en blanco al inicio del PDF (el pie de página fijo ahora va al final del documento y la carátula ya no genera un salto de página doble).',
-    'Cuadro de Activos Fijos: ahora sale girado de abajo hacia arriba en una hoja VERTICAL, para que tenga todo el alto de la hoja carta y no quede apretado.'
+  {v:'V108', fecha:'2026-07-20', cambios:[
+    'Carátula oficial en SVG a tamaño completo (llena la hoja; antes salía pequeña porque el navegador usaba su tamaño en píxeles).',
+    'Arreglada la hoja en blanco al inicio del PDF (el pie de página fijo va al final del documento y la carátula ya no genera doble salto de página).',
+    'Cuadro de Activos Fijos: vuelve a la hoja HORIZONTAL (apaisada) como antes.'
   ]},
   {v:'V106', fecha:'2026-07-20', cambios:[
     'PDF: todo en hoja carta VERTICAL con márgenes estrechos (7-8mm), para aprovechar el espacio. Encabezado (NUMMEROS) y pie (CONTAX) compactos, ocupan menos.',
@@ -6122,14 +6122,9 @@ function buildPrintDocument(sections){
   '</div>';
   var body=sections.map(function(s,i){
     var str=String(s);
-    var isRot=str.indexOf('<!--LANDSCAPE-->')===0;      // Cuadro A.F.: girar de abajo hacia arriba en hoja vertical
+    var land=str.indexOf('<!--LANDSCAPE-->')===0;       // Cuadro A.F.: hoja horizontal (apaisada)
     var isCover=str.indexOf(CARATULA_PDF||'###nocover###')>-1;
-    var cls=(i<sections.length-1?'pb':'');
-    if(isRot){
-      return '<div class="'+cls+'" style="position:relative;width:100%;height:252mm">'+
-        '<div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%) rotate(-90deg);transform-origin:center;width:252mm">'+str+'</div>'+
-      '</div>';
-    }
+    var cls=(i<sections.length-1?'pb':'')+(land?' ph':'');
     return '<div class="'+cls+'" style="padding:3mm 0">'+(isCover?'':pdfHdr)+str+'</div>';
   }).join('');
   return '<!DOCTYPE html><html><head><meta charset="utf-8"><style>'+pageStyle+'</style></head><body>'+body+pdfFoot+'</body></html>';
@@ -6138,7 +6133,7 @@ function exportPDFCompleto(){
   var c=calcAll();var cfg=emp().cfg;
   var nombre=(cfg.razonSocial||'').replace(/[^a-zA-Z0-9]/g,'_').substring(0,20);
   var year=cfg.gestion||'2025';
-  var coverPage=CARATULA_PDF?'<img src="'+CARATULA_PDF+'" style="display:block;margin:0 auto;width:auto;max-width:100%;max-height:250mm"/>':renderCover();
+  var coverPage=CARATULA_PDF?'<img src="'+CARATULA_PDF+'" style="display:block;margin:0 auto;height:250mm;width:auto;max-width:100%"/>':renderCover();
   var sections=[coverPage,pdfBG(c),pdfER(c),pdfSS(c),pdfFlujo(c),pdfPatrimonio(c),pdfCuadroAF(),renderNotasEEFF(c)];
   var doc=buildPrintDocument(sections);
   var win=window.open('','_blank','width=900,height=700');if(!win){alert('Permite ventanas emergentes.');return;}
@@ -6157,7 +6152,7 @@ function exportPDFSingle(tipo,titulo){
 }
 function exportPDFAnalisis(){
   var c=calcAll();
-  var coverPage=CARATULA_PDF?'<img src="'+CARATULA_PDF+'" style="display:block;margin:0 auto;width:auto;max-width:100%;max-height:250mm"/>':(typeof renderCover==='function'?renderCover():'');
+  var coverPage=CARATULA_PDF?'<img src="'+CARATULA_PDF+'" style="display:block;margin:0 auto;height:250mm;width:auto;max-width:100%"/>':(typeof renderCover==='function'?renderCover():'');
   var doc=buildPrintDocument([coverPage,'<div class="pb">'+pdfTributario()+'</div>','<div class="pb">'+pdfGraficos(c)+'</div>',renderReporte(c)]);
   var win=window.open('','_blank');if(!win){alert('Permite ventanas emergentes.');return;}
   win.document.write(doc);win.document.close();win.onload=function(){win.print();};
