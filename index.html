@@ -174,8 +174,11 @@ body.dark-mode .emp-box{background:#161616!important;color:#E2E8F0!important}
 // VERSIÓN DEL SISTEMA — Única fuente de verdad
 // Al aprobar una versión: subir VERSION y agregar una entrada al inicio de CHANGELOG.
 // ══════════════════════════════════════════════════════════
-const VERSION='V3.03';
+const VERSION='V3.04';
 const CHANGELOG=[
+  {v:'V3.04', fecha:'2026-07-20', cambios:[
+    'Excel del Formato S&S: las columnas Debe, Haber, Deudor y Acreedor ya no quedan vacías; cuando no hay valor muestran 0.'
+  ]},
   {v:'V3.03', fecha:'2026-07-20', cambios:[
     'Excel del Formato S&S: ahora sale EXACTAMENTE con el formato que exige Impuestos Nacionales (SIAT): cabeceras combinadas (Codificación / Nombre / Sumas / Saldos), clase-grupo-subgrupo-cuenta principal-analítica, saldos separados deudor/acreedor, totales con fórmulas SUM y la nota del PUCT al final.',
     'PDF de Notas: corregida la hoja en blanco al inicio.'
@@ -5976,7 +5979,7 @@ function exportExcelSS(){
       Number(s.charAt(0))||0, Number(s.charAt(1))||0, Number(s.charAt(2))||0,
       s.slice(3,6), s.slice(6,9), acctName(k),
       r2(m.debe||0), r2(m.haber||0),
-      sd>0?sd:null, sh>0?sh:null
+      sd, sh
     ]);
   });
   var lastData=5+c.ssA.length;      // fila Excel del último dato (datos empiezan en fila 6)
