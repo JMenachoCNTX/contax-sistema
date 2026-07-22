@@ -174,8 +174,11 @@ body.dark-mode .emp-box{background:#161616!important;color:#E2E8F0!important}
 // VERSIÓN DEL SISTEMA — Única fuente de verdad
 // Al aprobar una versión: subir VERSION y agregar una entrada al inicio de CHANGELOG.
 // ══════════════════════════════════════════════════════════
-const VERSION='V109';
+const VERSION='V110';
 const CHANGELOG=[
+  {v:'V110', fecha:'2026-07-20', cambios:[
+    'Excel del Formato S&S (y la hoja de Sumas y Saldos del Excel SIAT): ahora descargan TODAS las cuentas con movimiento, igual que se ven en pantalla. Antes faltaban filas porque el export tomaba solo las cuentas del plan guardado.'
+  ]},
   {v:'V109', fecha:'2026-07-20', cambios:[
     'Carátula: se reemplazó por la versión de tu PDF (convertida a imagen de alta resolución). Se ve nítida y completa, como antes.'
   ]},
@@ -5934,7 +5937,7 @@ function exportExcelGeneral(){
   const pRows=[['EVOLUCIÓN DEL PATRIMONIO'],[cfg.razonSocial+' | Gestión '+year],[],['CONCEPTO','CAPITAL','RES.ACUM.','UTILIDAD','TOTAL'],['Saldo Inicio',capA,resA,0,r2(capA+resA)],['+ Utilidad','—','—',c.util,c.util],['SALDO FINAL',r2(capA+c.ajC),resA,c.util,r2(capA+c.ajC+resA+c.util)]];
   XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(pRows),'Patrimonio');
   const ssRows=[['SUMAS Y SALDOS'],[cfg.razonSocial+' | NIT: '+nit+' | Gestión '+year],[],['Código','Cuenta','Suma Debe','Suma Haber','Saldo Deudor','Saldo Acreedor']];
-  S.planCuentas.filter(function(a){return c.M[a.c]&&(c.M[a.c].sD||c.M[a.c].sH);}).forEach(function(a){var m=c.M[a.c];ssRows.push([a.c,a.n,m.debe||0,m.haber||0,m.sD||0,m.sH||0]);});
+  c.ssA.forEach(function(k){var m=c.M[k];ssRows.push([k,acctName(k),r2(m.debe||0),r2(m.haber||0),r2(m.sD||0),r2(m.sH||0)]);});
   ssRows.push(['','TOTALES',c.ssTSD,c.ssTSH,c.ssTSD,c.ssTSH]);
   XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(ssRows),'Sumas y Saldos');
   const afItems=getAFFromApertura();
@@ -5950,7 +5953,7 @@ function exportExcelSS(){
   const nit=cfg.nit||'NIT';const year=cfg.gestion||'2025';
   const wb=XLSX.utils.book_new();
   const ssRows=[['SUMAS Y SALDOS — FORMATO SIAT'],[cfg.razonSocial+' | NIT: '+nit+' | Gestión '+year],[],['C','G','SG','CP','CA','NOMBRE','SUMA DEBE','SUMA HABER','SALDO DEUDOR','SALDO ACREEDOR']];
-  S.planCuentas.filter(function(a){return c.M[a.c]&&(c.M[a.c].sD||c.M[a.c].sH);}).forEach(function(a){var m=c.M[a.c];var h=getHier(a.c);ssRows.push([h?h.C:'',h?h.G:'',h?h.SG:'',h?h.CP:'',h?h.CA:'',a.n,m.debe||0,m.haber||0,m.sD||0,m.sH||0]);});
+  c.ssA.forEach(function(k){var m=c.M[k];var h=getHier(k);ssRows.push([h?h.C:'',h?h.G:'',h?h.SG:'',h?h.CP:'',h?h.CA:'',acctName(k),r2(m.debe||0),r2(m.haber||0),r2(m.sD||0),r2(m.sH||0)]);});
   ssRows.push(['','','','','','TOTALES',c.ssTSD,c.ssTSH,c.ssTSD,c.ssTSH]);
   XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(ssRows),'Sumas y Saldos SIAT');
   XLSX.writeFile(wb,'SIAT-BSS-'+nit+'-'+year+'-12.xlsx');
