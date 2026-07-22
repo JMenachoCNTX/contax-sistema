@@ -174,8 +174,15 @@ body.dark-mode .emp-box{background:#161616!important;color:#E2E8F0!important}
 // VERSIÓN DEL SISTEMA — Única fuente de verdad
 // Al aprobar una versión: subir VERSION y agregar una entrada al inicio de CHANGELOG.
 // ══════════════════════════════════════════════════════════
-const VERSION='V110';
+const VERSION='V3.02';
 const CHANGELOG=[
+  {v:'V3.02', fecha:'2026-07-20', cambios:[
+    'Nuevo esquema de versiones: ahora el sistema se numera como V3.02, V3.03, etc.',
+    'Notas a los EEFF: nueva opción para descargarlas en PDF (hoja carta), con el nombre SIAT-EEFF-[NIT]-[Gestión]-12, tomando el NIT y la gestión de Configuración.'
+  ]},
+  {v:'V111', fecha:'2026-07-20', cambios:[
+    'Excel del Formato S&S: corregidos los TOTALES. Antes, las columnas Suma Debe y Suma Haber mostraban por error los totales de saldos; ahora suman correctamente el Debe y el Haber, y los saldos van en sus columnas.'
+  ]},
   {v:'V110', fecha:'2026-07-20', cambios:[
     'Excel del Formato S&S (y la hoja de Sumas y Saldos del Excel SIAT): ahora descargan TODAS las cuentas con movimiento, igual que se ven en pantalla. Antes faltaban filas porque el export tomaba solo las cuentas del plan guardado.'
   ]},
@@ -5592,7 +5599,7 @@ const CONTAX_LOGO=CONTAX_LOGO_VERTICAL; // backwards compat
 // ═══ SPLASH SCREEN ══════════════════════════════════════
 function renderSplash(){
   const cfg=emp().cfg;const c=calcAll();
-  const version='V.2 — '+VERSION;
+  const version=VERSION;
   const dm=S.darkMode;
   const logo=dm?CONTAX_ISOTIPO_NEG:LOGO_CONTAX_H;
   const muted=dm?'#888888':'#777777';
@@ -5938,7 +5945,7 @@ function exportExcelGeneral(){
   XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(pRows),'Patrimonio');
   const ssRows=[['SUMAS Y SALDOS'],[cfg.razonSocial+' | NIT: '+nit+' | Gestión '+year],[],['Código','Cuenta','Suma Debe','Suma Haber','Saldo Deudor','Saldo Acreedor']];
   c.ssA.forEach(function(k){var m=c.M[k];ssRows.push([k,acctName(k),r2(m.debe||0),r2(m.haber||0),r2(m.sD||0),r2(m.sH||0)]);});
-  ssRows.push(['','TOTALES',c.ssTSD,c.ssTSH,c.ssTSD,c.ssTSH]);
+  ssRows.push(['','TOTALES',c.ssTD,c.ssTH,c.ssTSD,c.ssTSH]);
   XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(ssRows),'Sumas y Saldos');
   const afItems=getAFFromApertura();
   const afRows=[['CUADRO DE ACTIVOS FIJOS'],[cfg.razonSocial+' | Gestión '+year],[],['Descripción','Fuente','Fecha','Meses','Años','Valor Neto (87%)','Increm. Actualiz.','Valor Actualizado','Deprec. Año','Acum. Ant.','Increm. Acum.','Dep. Acum. Actualiz.','Inventario Final']];
@@ -5954,7 +5961,7 @@ function exportExcelSS(){
   const wb=XLSX.utils.book_new();
   const ssRows=[['SUMAS Y SALDOS — FORMATO SIAT'],[cfg.razonSocial+' | NIT: '+nit+' | Gestión '+year],[],['C','G','SG','CP','CA','NOMBRE','SUMA DEBE','SUMA HABER','SALDO DEUDOR','SALDO ACREEDOR']];
   c.ssA.forEach(function(k){var m=c.M[k];var h=getHier(k);ssRows.push([h?h.C:'',h?h.G:'',h?h.SG:'',h?h.CP:'',h?h.CA:'',acctName(k),r2(m.debe||0),r2(m.haber||0),r2(m.sD||0),r2(m.sH||0)]);});
-  ssRows.push(['','','','','','TOTALES',c.ssTSD,c.ssTSH,c.ssTSD,c.ssTSH]);
+  ssRows.push(['','','','','','TOTALES',c.ssTD,c.ssTH,c.ssTSD,c.ssTSH]);
   XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(ssRows),'Sumas y Saldos SIAT');
   XLSX.writeFile(wb,'SIAT-BSS-'+nit+'-'+year+'-12.xlsx');
 }
@@ -6163,6 +6170,14 @@ function exportPDFAnalisis(){
   var win=window.open('','_blank');if(!win){alert('Permite ventanas emergentes.');return;}
   win.document.write(doc);win.document.close();win.onload=function(){win.print();};
 }
+function exportNotasPDF(){
+  var c=calcAll();var cfg=emp().cfg;
+  var nit=(cfg.nit||'NIT');var year=(cfg.gestion||'2025');
+  var doc=buildPrintDocument([renderNotasEEFF(c)]);
+  var win=window.open('','_blank');if(!win){alert('Permite ventanas emergentes para descargar el PDF.');return;}
+  win.document.write(doc);win.document.close();
+  win.onload=function(){win.document.title='SIAT-EEFF-'+nit+'-'+year+'-12';win.print();};
+}
 function exportNotasWord(){
   var c=calcAll();var cfg=emp().cfg;
   var body=renderNotasEEFF(c);
@@ -6231,6 +6246,7 @@ function renderExportModal(){
     {icon:'<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-0.14em;margin-right:4px"><rect x="6" y="4" width="12" height="18" rx="1"/><path d="M9 4V2h6v2M9 10h6M9 14h6"/></svg>',title:'Excel Sumas y Saldos',desc:'Formato S&S para el SIAT',file:'SIAT-BSS-'+nit+'-'+year+'-12.xlsx',color:'#333333',action:'exportExcelSS()'},
     {icon:'<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-0.14em;margin-right:4px"><path d="M6 2h8l4 4v16H6z"/><path d="M14 2v4h4M9 12h6M9 16h6"/></svg>',title:'PDF Completo (con carátula)',desc:'Carátula + BG + ER + S&S + Flujo + Patrimonio + AF + Notas. Hoja carta.',file:'EEFF-'+nombre+'-'+year+'.pdf',color:'#DC2626',action:'exportPDFCompleto()'},
     {icon:'<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-0.14em;margin-right:4px"><path d="M3 7l6 6 4-4 7 8"/><path d="M17 17h4v-4"/></svg>',title:'PDF Análisis',desc:'Resumen Tributario + Gráficos + Reporte Ejecutivo',file:'Analisis-'+nombre+'-'+year+'.pdf',color:'#000000',action:'exportPDFAnalisis()'},
+    {icon:'<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-0.14em;margin-right:4px"><path d="M6 2h8l4 4v16H6z"/><path d="M14 2v4h4M9 12h6M9 16h6"/></svg>',title:'PDF — Notas EEFF',desc:'Notas a los Estados Financieros en PDF (hoja carta).',file:'SIAT-EEFF-'+nit+'-'+year+'-12.pdf',color:'#DC2626',action:'exportNotasPDF()'},
     {icon:'<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-0.14em;margin-right:4px"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M14 6l4 4"/></svg>',title:'Word — Notas EEFF',desc:'Notas en formato Word editable',file:'Notas_EEFF_'+nombre+'_'+year+'.doc',color:'#142740',action:'exportNotasWord()'},
     {icon:'<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-0.14em;margin-right:4px"><path d="M5 3h11l3 3v15H5z"/><path d="M8 3v6h7M8 21v-6h8v6"/></svg>',title:'Respaldo completo (JSON)',desc:'TODOS los datos del sistema. Guárdalo como copia de seguridad o para pasar a otro equipo.',file:'CONTAX_respaldo_'+VERSION+'.json',color:'#2B2B2B',action:'exportBackup()'},
   ];
