@@ -174,8 +174,12 @@ body.dark-mode .emp-box{background:#161616!important;color:#E2E8F0!important}
 // VERSIÓN DEL SISTEMA — Única fuente de verdad
 // Al aprobar una versión: subir VERSION y agregar una entrada al inicio de CHANGELOG.
 // ══════════════════════════════════════════════════════════
-const VERSION='V3.02';
+const VERSION='V3.03';
 const CHANGELOG=[
+  {v:'V3.03', fecha:'2026-07-20', cambios:[
+    'Excel del Formato S&S: ahora sale EXACTAMENTE con el formato que exige Impuestos Nacionales (SIAT): cabeceras combinadas (Codificación / Nombre / Sumas / Saldos), clase-grupo-subgrupo-cuenta principal-analítica, saldos separados deudor/acreedor, totales con fórmulas SUM y la nota del PUCT al final.',
+    'PDF de Notas: corregida la hoja en blanco al inicio.'
+  ]},
   {v:'V3.02', fecha:'2026-07-20', cambios:[
     'Nuevo esquema de versiones: ahora el sistema se numera como V3.02, V3.03, etc.',
     'Notas a los EEFF: nueva opción para descargarlas en PDF (hoja carta), con el nombre SIAT-EEFF-[NIT]-[Gestión]-12, tomando el NIT y la gestión de Configuración.'
@@ -5958,11 +5962,36 @@ function exportExcelGeneral(){
 function exportExcelSS(){
   const c=calcAll();const cfg=emp().cfg;
   const nit=cfg.nit||'NIT';const year=cfg.gestion||'2025';
+  // Formato EXACTO exigido por Impuestos Nacionales (SIAT)
+  var aoa=[];
+  aoa.push(['BALANCE DE COMPROBACIÓN DE SUMAS Y SALDOS']);
+  aoa.push(['(EXPRESADO EN BOLIVIANOS)']);
+  aoa.push([]);
+  aoa.push(['CODIFICACIÓN DE LA CUENTA','','','','','NOMBRE DE LA CUENTA','SUMAS','','SALDOS','']);
+  aoa.push(['CLASE','GRUPO','SUBGRUPO','CUENTA PRINCIPAL','CUENTA ANALÍTICA','','DEBE','HABER','DEUDOR','ACREEDOR']);
+  c.ssA.forEach(function(k){
+    var m=c.M[k];var s=String(k);
+    var sd=r2(m.sD||0),sh=r2(m.sH||0);
+    aoa.push([
+      Number(s.charAt(0))||0, Number(s.charAt(1))||0, Number(s.charAt(2))||0,
+      s.slice(3,6), s.slice(6,9), acctName(k),
+      r2(m.debe||0), r2(m.haber||0),
+      sd>0?sd:null, sh>0?sh:null
+    ]);
+  });
+  var lastData=5+c.ssA.length;      // fila Excel del último dato (datos empiezan en fila 6)
+  var totalRow=lastData+1;
+  aoa.push(['TOTALES']);            // las fórmulas se colocan luego
+  aoa.push([]);
+  aoa.push(['NOTA: CONSIDERE QUE LAS CUENTAS Y SU RESPECTIVA CODIFICACIÓN AL CUARTO NIVEL DEBEN REALIZARSE CONFORME EL PLAN ÚNICO DE CUENTAS TRIBUTARIO (PUCT).']);
+  var ws=XLSX.utils.aoa_to_sheet(aoa);
+  // Totales con fórmulas SUM (como el archivo oficial)
+  ['G','H','I','J'].forEach(function(col){ ws[col+totalRow]={t:'n',f:'SUM('+col+'6:'+col+lastData+')'}; });
+  // Celdas combinadas iguales al oficial
+  ws['!merges']=['A1:J1','A2:J2','A4:E4','F4:F5','G4:H4','I4:J4','A'+totalRow+':F'+totalRow].map(function(r){return XLSX.utils.decode_range(r);});
+  ws['!cols']=[{wch:7},{wch:7},{wch:9},{wch:16},{wch:16},{wch:36},{wch:12},{wch:12},{wch:12},{wch:12}];
   const wb=XLSX.utils.book_new();
-  const ssRows=[['SUMAS Y SALDOS — FORMATO SIAT'],[cfg.razonSocial+' | NIT: '+nit+' | Gestión '+year],[],['C','G','SG','CP','CA','NOMBRE','SUMA DEBE','SUMA HABER','SALDO DEUDOR','SALDO ACREEDOR']];
-  c.ssA.forEach(function(k){var m=c.M[k];var h=getHier(k);ssRows.push([h?h.C:'',h?h.G:'',h?h.SG:'',h?h.CP:'',h?h.CA:'',acctName(k),r2(m.debe||0),r2(m.haber||0),r2(m.sD||0),r2(m.sH||0)]);});
-  ssRows.push(['','','','','','TOTALES',c.ssTD,c.ssTH,c.ssTSD,c.ssTSH]);
-  XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(ssRows),'Sumas y Saldos SIAT');
+  XLSX.utils.book_append_sheet(wb,ws,'Hoja1');
   XLSX.writeFile(wb,'SIAT-BSS-'+nit+'-'+year+'-12.xlsx');
 }
 
@@ -6173,7 +6202,8 @@ function exportPDFAnalisis(){
 function exportNotasPDF(){
   var c=calcAll();var cfg=emp().cfg;
   var nit=(cfg.nit||'NIT');var year=(cfg.gestion||'2025');
-  var doc=buildPrintDocument([renderNotasEEFF(c)]);
+  var body=renderNotasEEFF(c).replace('<div class="card">','<div style="padding:2px">'); // sin break-inside:avoid en el contenedor (evita hoja en blanco)
+  var doc=buildPrintDocument([body]);
   var win=window.open('','_blank');if(!win){alert('Permite ventanas emergentes para descargar el PDF.');return;}
   win.document.write(doc);win.document.close();
   win.onload=function(){win.document.title='SIAT-EEFF-'+nit+'-'+year+'-12';win.print();};
