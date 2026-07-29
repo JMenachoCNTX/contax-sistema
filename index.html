@@ -174,8 +174,11 @@ body.dark-mode .emp-box{background:#161616!important;color:#E2E8F0!important}
 // VERSIÓN DEL SISTEMA — Única fuente de verdad
 // Al aprobar una versión: subir VERSION y agregar una entrada al inicio de CHANGELOG.
 // ══════════════════════════════════════════════════════════
-const VERSION='V3.05';
+const VERSION='V3.06';
 const CHANGELOG=[
+  {v:'V3.06', fecha:'2026-07-20', cambios:[
+    'Asiento de Apertura: corregido el manejo del resultado de gestión anterior. Ahora "Utilidad/Pérdida Gestión Anterior (314001001)" SÍ se registra en el asiento, y tanto ese campo como "Resultados Acumulados (313001001)" aceptan pérdidas (valores negativos) registrándolas del lado correcto (Debe), por lo que ya cuadra en Sumas y Saldos.'
+  ]},
   {v:'V3.05', fecha:'2026-07-20', cambios:[
     'ARREGLO: al crear un usuario nuevo ya no desaparece al recargar la página. Ahora la lista de usuarios se sube a la nube en el momento de guardarla, y si la copia de la nube llegara vacía, ya NO borra la lista local (en su lugar la vuelve a subir).'
   ]},
@@ -1307,7 +1310,11 @@ function genEntries(){
   addA('212003001',0,tr.prestamos);addA('214001001',0,tr.dfIva);
   addA('214004001',0,tr.itPagar);addA('214006001',0,tr.iuePagar);
   addA('214026001',0,tr.multas);addA('311001001',0,tr.capitalSocial);
-  addA('311002001',0,tr.ajusteCapital);addA('313001001',0,tr.resAcum);
+  addA('311002001',0,tr.ajusteCapital);
+  // Resultados Acumulados (313001001) y Utilidad/Pérdida Gestión Anterior (314001001):
+  // pueden ser negativos (pérdida). Se registran con el signo correcto: pérdida=Debe, utilidad=Haber.
+  var _ra=r2(pn(tr.resAcum||0));            addA('313001001', _ra<0?-_ra:0, _ra>0?_ra:0);
+  var _ua=r2(pn(tr.utilidadAnterior||0));   addA('314001001', _ua<0?-_ua:0, _ua>0?_ua:0);
   (e.extraApertura||[]).forEach(function(ea){if(!ea.cuenta||!ea.monto)return;const tp2=acctTipo(ea.cuenta);const mt2=r2(pn(ea.monto));if(tp2==='A'||tp2==='G')aL.push({c:ea.cuenta,d:mt2,h:0});else aL.push({c:ea.cuenta,d:0,h:mt2});});
   if(aL.length)E.push({id:'APE',tipo:'T',desc:'ASIENTO DE APERTURA',lines:aL});
 
@@ -1716,7 +1723,7 @@ function renderApertura(){
     '<div style="font-size:10px;font-weight:700;color:#059669;margin:6px 0 4px;text-transform:uppercase;letter-spacing:.04em">Neto</div>'+
     tfA('Capital Social','capitalSocial')+tfA('Ajuste del Capital','ajusteCapital')+tfA('Resultados Acumulados','resAcum')+
     tfA('Utilidad/Pérdida Gestión Anterior (314001001)','utilidadAnterior')+
-    '<div class="nota" style="font-size:10px">Si hubo utilidad el año anterior, colócala aquí → se genera automáticamente el asiento de Traspaso a Resultados Acumulados (313001001). Si ya está en Resultados Acumulados, déjalo en cero.</div>'+
+    '<div class="nota" style="font-size:10px">Resultado de la gestión anterior. Utilidad = valor positivo, Pérdida = valor negativo (con signo −). Se registra en la cuenta 314001001. Si ese saldo ya lo pusiste arriba en "Resultados Acumulados" (313001001), deja este campo en cero para no duplicarlo.</div>'+
     '<div style="border-top:2px solid #059669;margin-top:8px;padding-top:6px;font-weight:700;font-size:12px;color:#059669;display:flex;justify-content:space-between"><span>TOTAL PATRIMONIO</span><span>'+fmt(patT)+' Bs</span></div>'+
     '</div></div>'+
     '<div class="sep"></div>'+
