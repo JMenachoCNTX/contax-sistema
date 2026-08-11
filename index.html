@@ -174,8 +174,13 @@ body.dark-mode .emp-box{background:#161616!important;color:#E2E8F0!important}
 // VERSIÓN DEL SISTEMA — Única fuente de verdad
 // Al aprobar una versión: subir VERSION y agregar una entrada al inicio de CHANGELOG.
 // ══════════════════════════════════════════════════════════
-const VERSION='V3.06';
+const VERSION='V3.07';
 const CHANGELOG=[
+  {v:'V3.07', fecha:'2026-07-20', cambios:[
+    'Gestión Multi-Empresa: barra de búsqueda por nombre y por gestión.',
+    'Se puede marcar cada empresa como TERMINADA (botón por empresa); las terminadas muestran un check verde y quedan resaltadas. El estado se comparte con el equipo.',
+    'Eliminar empresa (X) ya pide confirmación antes de borrar (para evitar borrados por error).'
+  ]},
   {v:'V3.06', fecha:'2026-07-20', cambios:[
     'Asiento de Apertura: corregido el manejo del resultado de gestión anterior. Ahora "Utilidad/Pérdida Gestión Anterior (314001001)" SÍ se registra en el asiento, y tanto ese campo como "Resultados Acumulados (313001001)" aceptan pérdidas (valores negativos) registrándolas del lado correcto (Debe), por lo que ya cuadra en Sumas y Saldos.'
   ]},
@@ -732,7 +737,7 @@ function applyEmpSnapshot(id,snap){
 function fbPushEmpMeta(e){
   if(!fbDb||!fbUser||!e)return;
   try{
-    var meta={id:e.id,razon:(e.cfg&&e.cfg.razonSocial)||'',nit:(e.cfg&&e.cfg.nit)||'',gestion:(e.cfg&&e.cfg.gestion)||''};
+    var meta={id:e.id,razon:(e.cfg&&e.cfg.razonSocial)||'',nit:(e.cfg&&e.cfg.nit)||'',gestion:(e.cfg&&e.cfg.gestion)||'',terminado:!!(e.cfg&&e.cfg.terminado)};
     var payload={emps:{}};payload.emps[e.id]=meta;
     fbDb.collection('contax_config').doc('empresas').set(payload,{merge:true}).catch(function(er){console.warn('push dir:',er.message);});
   }catch(er){}
@@ -757,8 +762,19 @@ function fbListenEmpDir(){
 function empDirList(){
   var m={};
   (S.empDir||[]).forEach(function(e){if(e&&e.id)m[e.id]=e;});
-  (S.empresas||[]).forEach(function(e){if(e&&e.id)m[e.id]={id:e.id,razon:(e.cfg&&e.cfg.razonSocial)||'',nit:(e.cfg&&e.cfg.nit)||'',gestion:(e.cfg&&e.cfg.gestion)||''};});
+  (S.empresas||[]).forEach(function(e){if(e&&e.id)m[e.id]={id:e.id,razon:(e.cfg&&e.cfg.razonSocial)||'',nit:(e.cfg&&e.cfg.nit)||'',gestion:(e.cfg&&e.cfg.gestion)||'',terminado:!!(e.cfg&&e.cfg.terminado)};});
   return Object.keys(m).map(function(k){return m[k];});
+}
+// Marca/desmarca una empresa como terminada (se refleja en el directorio compartido)
+function toggleEmpDone(id){
+  var le=(S.empresas||[]).find(function(x){return x.id===id;});
+  var de=(S.empDir||[]).find(function(x){return x.id===id;});
+  var cur=le&&le.cfg?!!le.cfg.terminado:(de?!!de.terminado:false);
+  var nv=!cur;
+  if(le&&le.cfg){le.cfg.terminado=nv;saveLS();fbPushEmpMeta(le);}
+  if(de)de.terminado=nv;
+  if(fbDb){var p={emps:{}};p.emps[id]={terminado:nv};fbDb.collection('contax_config').doc('empresas').set(p,{merge:true}).catch(function(){});}
+  re();
 }
 // Abrir una empresa: si no está local, se descarga de la nube
 function openEmpresa(id){
@@ -4322,20 +4338,33 @@ function fbDeleteEmp(id){
 function renderEmpModal(){
   var isAdmin=(typeof currentRol==='function'&&currentRol()==='Administrador');
   var localIds={};(S.empresas||[]).forEach(function(e){localIds[e.id]=true;});
-  var list=empDirList().sort(function(a,b){return (a.razon||'').localeCompare(b.razon||'');});
+  var qn=(S.empQName||'').toLowerCase().trim();var qg=(''+(S.empQGest||'')).toLowerCase().trim();
+  var list=empDirList().filter(function(e){
+    if(qn&&(e.razon||'').toLowerCase().indexOf(qn)<0)return false;
+    if(qg&&(''+(e.gestion||'')).toLowerCase().indexOf(qg)<0)return false;
+    return true;
+  }).sort(function(a,b){return (a.razon||'').localeCompare(b.razon||'');});
+  var CHK='<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="#16A34A" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-0.12em"><path d="M20 6L9 17l-5-5"/></svg>';
   var rows=list.map(function(e){
-    var active=e.id===S.activeId;
-    var tag=active?'<span style="font-size:9px;background:#16A34A;color:#fff;padding:1px 6px;border-radius:8px;margin-left:6px">activa</span>':(localIds[e.id]?'':'<span style="font-size:9px;background:#ECECEC;color:#333333;padding:1px 6px;border-radius:8px;margin-left:6px"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-0.14em;margin-right:4px"><path d="M6 18a4 4 0 010-7.5A5 5 0 0116 9a3.5 3.5 0 011.5 6.7"/><path d="M6 18h11"/></svg> nube</span>');
-    var del=(isAdmin&&!active)?'<button class="btn-del" onclick="event.stopPropagation();fbDeleteEmp(\''+e.id+'\')"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-0.14em;margin-right:4px"><path d="M18 6L6 18M6 6l12 12"/></svg></button>':'';
-    return '<div class="emp-item'+(active?' ea':'')+'" onclick="openEmpresa(\''+e.id+'\')">'+
-      '<div><strong>'+(e.razon||'(Sin nombre)')+'</strong>'+tag+'<br><span style="font-size:10px;color:#888">NIT: '+(e.nit||'—')+' | '+(e.gestion||'—')+'</span></div>'+
-      del+'</div>';
+    var active=e.id===S.activeId;var done=!!e.terminado;
+    var tag=active?'<span style="font-size:9px;background:#16A34A;color:#fff;padding:1px 6px;border-radius:8px;margin-left:6px">activa</span>':(localIds[e.id]?'':'<span style="font-size:9px;background:#ECECEC;color:#333333;padding:1px 6px;border-radius:8px;margin-left:6px">nube</span>');
+    var doneTag=done?'<span title="Terminado" style="margin-left:6px">'+CHK+'</span>':'';
+    var toggleBtn='<button onclick="event.stopPropagation();toggleEmpDone(\''+e.id+'\')" title="'+(done?'Reabrir (marcar como pendiente)':'Marcar como terminado')+'" style="background:'+(done?'#ECECEC':'#16A34A')+';color:'+(done?'#333':'#fff')+';border:none;border-radius:6px;padding:4px 9px;font-size:10px;cursor:pointer;white-space:nowrap">'+(done?'Reabrir':'Terminado')+'</button>';
+    var del=(isAdmin&&!active)?'<button class="btn-del" title="Eliminar empresa" onclick="event.stopPropagation();fbDeleteEmp(\''+e.id+'\')"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-0.14em"><path d="M18 6L6 18M6 6l12 12"/></svg></button>':'';
+    return '<div class="emp-item'+(active?' ea':'')+'" style="'+(done?'background:#F0FDF4;':'')+'" onclick="openEmpresa(\''+e.id+'\')">'+
+      '<div style="flex:1;min-width:0"><strong>'+(e.razon||'(Sin nombre)')+'</strong>'+doneTag+tag+'<br><span style="font-size:10px;color:#888">NIT: '+(e.nit||'—')+' | Gestión '+(e.gestion||'—')+'</span></div>'+
+      '<div style="display:flex;gap:6px;align-items:center;flex-shrink:0">'+toggleBtn+del+'</div></div>';
   }).join('');
-  if(!rows)rows='<div class="nota" style="padding:8px">No hay empresas todavía. Crea la primera.</div>';
+  if(!rows)rows='<div class="nota" style="padding:8px">'+((qn||qg)?'No hay empresas que coincidan con la búsqueda.':'No hay empresas todavía. Crea la primera.')+'</div>';
+  var searchBar='<div style="display:flex;gap:8px;margin-bottom:10px">'+
+    '<input id="emp-q-name" type="text" placeholder="Buscar por nombre..." value="'+(S.empQName||'').replace(/"/g,'&quot;')+'" oninput="S.empQName=this.value;re()" style="flex:1;background:#fff;border:1px solid #E2E8F0;border-radius:6px;padding:6px 10px;font-size:12px;outline:none"/>'+
+    '<input id="emp-q-gest" type="text" placeholder="Gestión..." value="'+(S.empQGest||'').replace(/"/g,'&quot;')+'" oninput="S.empQGest=this.value;re()" style="width:110px;background:#fff;border:1px solid #E2E8F0;border-radius:6px;padding:6px 10px;font-size:12px;outline:none"/>'+
+  '</div>';
   return '<div class="emp-modal" onclick="S.showEmp=false;re()"><div class="emp-box" onclick="event.stopPropagation()">'+
     '<div style="font-size:15px;font-weight:700;color:#111111;margin-bottom:4px">Gestión Multi-Empresa</div>'+
-    '<p class="nota" style="margin:0 0 10px"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-0.14em;margin-right:4px"><path d="M3 8a2 2 0 012-2h4l2 2h8a2 2 0 012 2v7a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><path d="M3 10h18"/></svg> Todas las empresas del equipo. Elige una para trabajar; se comparte y edita en la nube.</p>'+
-    rows+'<div class="sep"></div>'+
+    '<p class="nota" style="margin:0 0 10px"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-0.14em;margin-right:4px"><path d="M3 8a2 2 0 012-2h4l2 2h8a2 2 0 012 2v7a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><path d="M3 10h18"/></svg> Todas las empresas del equipo. El check verde indica terminadas.</p>'+
+    searchBar+
+    '<div style="max-height:48vh;overflow-y:auto">'+rows+'</div><div class="sep"></div>'+
     '<div style="display:flex;gap:8px;flex-wrap:wrap">'+
     '<button class="btn-green" onclick="const id=\'emp_\'+Date.now();S.empresas.push(newEmp(id));S.activeId=id;S.showEmp=false;saveLS();fbPushEmpMeta(S.empresas.find(function(x){return x.id===id;}));re()">+ Nueva Empresa</button>'+
     '<button class="btn-orange" onclick="importJSON()"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-0.14em;margin-right:4px"><path d="M12 3v9M8.5 8.5L12 12l3.5-3.5"/><path d="M4 15v3a2 2 0 002 2h12a2 2 0 002-2v-3"/></svg> Importar JSON</button>'+
