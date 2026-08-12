@@ -174,8 +174,13 @@ body.dark-mode .emp-box{background:#161616!important;color:#E2E8F0!important}
 // VERSIÓN DEL SISTEMA — Única fuente de verdad
 // Al aprobar una versión: subir VERSION y agregar una entrada al inicio de CHANGELOG.
 // ══════════════════════════════════════════════════════════
-const VERSION='V3.10';
+const VERSION='V3.11';
 const CHANGELOG=[
+  {v:'V3.11', fecha:'2026-08-11', cambios:[
+    'Flujo de Efectivo: la línea "Compras activos fijos (efectivo real)" era en realidad un residual (variación real de caja − operación − financiamiento) que absorbía cualquier descuadre. Como el sistema no registra compras de activos fijos durante la gestión (todos vienen del asiento de apertura), ese residual no es inversión.',
+    'Ahora ese residual se clasifica en OPERACIÓN como "(±) Otras variaciones (neto)", de modo que el Flujo de Operación refleja el 100% del efectivo no financiero, y el Flujo de Inversión queda en 0.',
+    'En Cálculos Auxiliares del Flujo se agregó un desglose que identifica, cuenta por cuenta, qué movimientos del período componen esas "Otras variaciones" (impuestos en otras subcuentas, redondeos, etc.), para poder rastrear su origen.'
+  ]},
   {v:'V3.10', fecha:'2026-08-11', cambios:[
     'Balance General: se corrigió el TOTAL PATRIMONIO y el TOTAL PASIVO + PATRIMONIO en pantalla, que sumaban la Utilidad de la Gestión dos veces. Ahora ambos lados del Balance cuadran con el mismo total del Activo.',
     'Estado de Evolución del Patrimonio: ahora incluye el ajuste automático por UFV de Resultados Acumulados (fila "+ Ajuste Resultados Acumulados (UFV)"). El saldo de cierre de Res. Acumulados y el TOTAL coinciden con el Balance General. Aplicado también en el PDF y el Excel.'
@@ -1584,16 +1589,40 @@ function calcAll(){
   const difF=r2(cajaMN-sI);                                         // variación real de efectivo (exacta)
   // Operación (método indirecto) y Financiamiento (préstamos). Inversión = el resto (residual),
   // que corresponde a las compras de activos fijos pagadas en efectivo/banco.
-  const fOp=r2(util+dep+gUFV-iUFV-vCF-vIC+vDF+vIT+vIUE-vCxC+vCxP+vMultas);
+  const fOpNamed=r2(util+dep+gUFV-iUFV-vCF-vIC+vDF+vIT+vIUE-vCxC+vCxP+vMultas);
   const fFin=r2(vPr);
-  const inv=r2(difF-fOp-fFin);                                      // inversión = variación real − operación − financiamiento
+  // ── Otras variaciones de operación (a prueba de fugas) ─────────────────────
+  // El sistema no modela compras de activos fijos DURANTE la gestión (todos vienen del asiento de apertura),
+  // por lo que el residual histórico NO es inversión: es la variación de cuentas de balance que la lista fija
+  // de arriba no captura (impuestos en otras subcuentas, redondeos que no netean contra caja/CF, etc.).
+  // Se clasifica en OPERACIÓN para que el flujo operativo refleje el 100%. La inversión queda en 0.
+  const otrosOp=r2(difF-fOpNamed-fFin);
+  const fOp=r2(fOpNamed+otrosOp);                                   // operación = 100% (todo lo no financiero)
+  const inv=0;                                                      // sin compras de A.F. modeladas en la gestión
   const sF=r2(sI+difF);                                             // = efectivo final → siempre cuadra
+  // ── Diagnóstico: qué cuentas componen "otras variaciones" (movimientos del período, sin apertura) ──
+  const _Emov=E.filter(function(x){return x.id!=='APE';});
+  const _Mmov=buildM(_Emov);
+  const _gsMov=function(k){return r2((_Mmov[k]&&_Mmov[k].saldo)||0);};
+  const _contrib=function(k){var t=acctTipo(k);return (t==='A'||t==='G')?-_gsMov(k):_gsMov(k);};
+  const _named={'111001001':1,'111002001':1,'113001001':1,'116001001':1,'116006001':1,'212003001':1,'212004001':1,'214001001':1,'214004001':1,'214006001':1,'214026001':1};
+  const _proxy={'561001001':1,'441001001':1};                       // no monetarias (UFV) y sus contrapartes
+  _Emov.forEach(function(en){var cs=(en.lines||[]).map(function(l){return l.c;});if(cs.indexOf('561001001')>=0||cs.indexOf('441001001')>=0){cs.forEach(function(cc){_proxy[cc]=1;});}});
+  const flowLeak=[];
+  Object.keys(_Mmov).forEach(function(k){
+    var t=acctTipo(k);if(t==='I'||t==='G')return;                   // P&L → ya está en Utilidad
+    if(k.charAt(0)==='1'&&k.charAt(1)==='2')return;                 // activos fijos → proxy dep/UFV
+    if(k.indexOf('524')===0)return;                                 // depreciación acumulada → proxy 'dep'
+    if(_named[k]||_proxy[k])return;
+    var v=_contrib(k);if(Math.abs(v)>=0.005)flowLeak.push({k:k,name:acctName(k),v:v});
+  });
+  flowLeak.sort(function(a,b){return Math.abs(b.v)-Math.abs(a.v);});
   const ssA=Object.keys(M).filter(k=>M[k].debe>0||M[k].haber>0).sort();
   const ssTD=r2(ssA.reduce((s,k)=>r2(s+r2(M[k].debe)),0));
   const ssTH=r2(ssA.reduce((s,k)=>r2(s+r2(M[k].haber)),0));
   const ssTSD=r2(ssA.reduce((s,k)=>r2(s+r2(M[k].sD||0)),0));
   const ssTSH=r2(ssA.reduce((s,k)=>r2(s+r2(M[k].sH||0)),0));
-  return{E,M,gs,util,tI,tG,aC,aNC,tA,tP,tPT,difBG,dep,gUFV,iUFV,vCF,vIC,vDF,vIT,vIUE,vPr,inv,fOp,fFin,difF,sI,sF,cajaMN,ajC,vCxC,vCxP,vMultas,ssA,ssTD,ssTH,ssTSD,ssTSH,bgOK:difBG===0,ssOK:r2(ssTSD-ssTSH)===0,fOK:r2(sF-cajaMN)===0};
+  return{E,M,gs,util,tI,tG,aC,aNC,tA,tP,tPT,difBG,dep,gUFV,iUFV,vCF,vIC,vDF,vIT,vIUE,vPr,inv,fOp,fOpNamed,otrosOp,flowLeak,fFin,difF,sI,sF,cajaMN,ajC,vCxC,vCxP,vMultas,ssA,ssTD,ssTH,ssTSD,ssTSH,bgOK:difBG===0,ssOK:r2(ssTSD-ssTSH)===0,fOK:r2(sF-cajaMN)===0};
 }
 
 // HELPERS
@@ -3504,9 +3533,10 @@ function renderEE(c){
       (c.vCxC!==0?'<tr><td style="padding-left:18px">Variación Cuentas por Cobrar</td><td class="r">'+fmt(-c.vCxC)+'</td></tr>':'')+
       (c.vCxP!==0?'<tr><td style="padding-left:18px">Variación Cuentas por Pagar</td><td class="r">'+fmt(c.vCxP)+'</td></tr>':'')+
       (c.vMultas!==0?'<tr><td style="padding-left:18px">Variación Multas por Pagar</td><td class="r">'+fmt(c.vMultas)+'</td></tr>':'')+
+      (c.otrosOp!==0?'<tr><td style="padding-left:18px" title="Variación de cuentas de balance no incluidas en las líneas anteriores. Ver detalle en Cálculos Auxiliares.">(±) Otras variaciones (neto)</td><td class="r">'+fmt(c.otrosOp)+'</td></tr>':'')+
       '<tr class="tr-t"><td>TOTAL OPERACIÓN</td><td class="r">'+fmt(fOp)+'</td></tr>'+
       '<tr class="tr-g"><td colspan="2">ACTIVIDADES DE INVERSIÓN</td></tr>'+
-      '<tr><td style="padding-left:18px">Compras activos fijos (efectivo real)</td><td class="r">'+fmt(inv)+'</td></tr>'+
+      '<tr><td style="padding-left:18px">Compras de activos fijos (no registradas en la gestión)</td><td class="r">'+fmt(inv)+'</td></tr>'+
       '<tr class="tr-t"><td>TOTAL INVERSIÓN</td><td class="r">'+fmt(inv)+'</td></tr>'+
       '<tr class="tr-g"><td colspan="2">ACTIVIDADES DE FINANCIAMIENTO</td></tr>'+
       (vPr!==0?'<tr><td style="padding-left:18px">Variación Préstamos</td><td class="r">'+fmt(vPr)+'</td></tr>':'')+
@@ -5463,9 +5493,11 @@ function eeFlujoAux(c){
     auxLine('(−) Variación Cuentas por Cobrar','',-c.vCxC)+
     auxLine('(+) Variación Cuentas por Pagar','',c.vCxP)+
     auxLine('(+) Variación Multas por Pagar','',c.vMultas)+
-    auxLine('= Flujo de Operación','suma de lo anterior',c.fOp)+
-    auxLine('Flujo de Inversión (compras de A.F.)','',c.inv)+
+    auxLine('(±) Otras variaciones (neto)','cuentas de balance no listadas — ver detalle abajo',c.otrosOp)+
+    auxLine('= Flujo de Operación','suma de lo anterior (100% de lo no financiero)',c.fOp)+
+    auxLine('Flujo de Inversión','sin compras de A.F. modeladas en la gestión',c.inv)+
     auxLine('Flujo de Financiamiento (préstamos)','',c.fFin)+
+    (c.otrosOp!==0?(function(){var listed=r2((c.flowLeak||[]).reduce(function(s,x){return r2(s+x.v);},0));var resto=r2(c.otrosOp-listed);var rows=(c.flowLeak||[]).map(function(x){return '<div style="display:flex;justify-content:space-between;font-size:11px;padding:2px 0"><span style="color:#475569"><span style="font-family:monospace;color:#94a3b8;margin-right:5px">'+x.k+'</span>'+x.name+'</span><span style="font-family:monospace">'+fmt(x.v)+'</span></div>';}).join('');if(Math.abs(resto)>=0.005)rows+='<div style="display:flex;justify-content:space-between;font-size:11px;padding:2px 0;color:#94a3b8"><span>Diferencia no asignada (redondeo / partidas no monetarias)</span><span style="font-family:monospace">'+fmt(resto)+'</span></div>';return '<div style="margin-top:10px;padding:8px 10px;background:#F8FAFC;border:1px solid #E2E8F0;border-radius:6px"><div style="font-weight:700;font-size:11px;color:#334155;margin-bottom:4px">Detalle de "Otras variaciones" (movimientos del período, sin apertura)</div>'+rows+'<div style="display:flex;justify-content:space-between;font-size:11px;padding:4px 0 0;margin-top:4px;border-top:1px solid #E2E8F0;font-weight:700"><span>= Otras variaciones (neto)</span><span style="font-family:monospace">'+fmt(c.otrosOp)+'</span></div></div>';})():'')+
     auxLine('Variación neta de efectivo','Operación + Inversión + Financiamiento',c.difF)+
     auxLine('Saldo inicial (Caja + Banco)','',c.sI)+
     auxLine('Saldo final calculado','Inicial + Variación neta',c.sF)+
@@ -6211,9 +6243,10 @@ function flujoLines(c){
   if(c.vCxC!==0)L.push({label:'Variación Cuentas por Cobrar',v:-c.vCxC});
   if(c.vCxP!==0)L.push({label:'Variación Cuentas por Pagar',v:c.vCxP});
   if(c.vMultas!==0)L.push({label:'Variación Multas por Pagar',v:c.vMultas});
+  if(c.otrosOp!==0)L.push({label:'(±) Otras variaciones (neto)',v:c.otrosOp});
   L.push({t:'tot',label:'TOTAL OPERACIÓN',v:c.fOp});
   L.push({t:'grp',label:'ACTIVIDADES DE INVERSIÓN'});
-  L.push({label:'Compras de activos fijos (efectivo)',v:c.inv});
+  L.push({label:'Compras de activos fijos (no registradas en la gestión)',v:c.inv});
   L.push({t:'tot',label:'TOTAL INVERSIÓN',v:c.inv});
   L.push({t:'grp',label:'ACTIVIDADES DE FINANCIAMIENTO'});
   if(c.vPr!==0)L.push({label:'Variación Préstamos',v:c.vPr});
