@@ -174,8 +174,11 @@ body.dark-mode .emp-box{background:#161616!important;color:#E2E8F0!important}
 // VERSIÓN DEL SISTEMA — Única fuente de verdad
 // Al aprobar una versión: subir VERSION y agregar una entrada al inicio de CHANGELOG.
 // ══════════════════════════════════════════════════════════
-const VERSION='V3.11';
+const VERSION='V3.12';
 const CHANGELOG=[
+  {v:'V3.12', fecha:'2026-08-11', cambios:[
+    'Verificaciones: el cuadre de "Evolución del Patrimonio" ahora incluye el ajuste UFV de Resultados Acumulados (108,07) en el patrimonio final, igual que el cuadro y el Balance. Ya no marca falso "NO CUADRA".'
+  ]},
   {v:'V3.11', fecha:'2026-08-11', cambios:[
     'Flujo de Efectivo: la línea "Compras activos fijos (efectivo real)" era en realidad un residual (variación real de caja − operación − financiamiento) que absorbía cualquier descuadre. Como el sistema no registra compras de activos fijos durante la gestión (todos vienen del asiento de apertura), ese residual no es inversión.',
     'Ahora ese residual se clasifica en OPERACIÓN como "(±) Otras variaciones (neto)", de modo que el Flujo de Operación refleja el 100% del efectivo no financiero, y el Flujo de Inversión queda en 0.',
@@ -5959,7 +5962,9 @@ function renderVerificaciones(c){
   var trp=(e.traspaso||{});
   var capT=r2(pn(trp.capitalSocial)+pn(trp.ajusteCapital));
   var resA=r2(pn(trp.resAcum));
-  var patFinal=r2(capT+(c.ajC||0)+resA+util);
+  var _vuiPT=pn(e.cfg&&e.cfg.ufvInicio),_vufPT=pn(e.cfg&&e.cfg.ufvFin),_uRPT=_vuiPT>0?(_vufPT/_vuiPT):1;
+  var ajRAPT=(_vuiPT>0&&resA>0)?r2(resA*(_uRPT-1)):0;
+  var patFinal=r2(capT+(c.ajC||0)+resA+ajRAPT+util);
   var afList=(typeof getAFFromApertura==='function')?(getAFFromApertura()||[]):[];
   var afNeto=r2(afList.reduce(function(s,a){return r2(s+pn(a.vNeto));},0));
   var aNC=c.aNC||0;
