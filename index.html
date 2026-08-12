@@ -174,8 +174,11 @@ body.dark-mode .emp-box{background:#161616!important;color:#E2E8F0!important}
 // VERSIÓN DEL SISTEMA — Única fuente de verdad
 // Al aprobar una versión: subir VERSION y agregar una entrada al inicio de CHANGELOG.
 // ══════════════════════════════════════════════════════════
-const VERSION='V3.09';
+const VERSION='V3.10';
 const CHANGELOG=[
+  {v:'V3.10', fecha:'2026-08-11', cambios:[
+    'Balance General: se corrigió el TOTAL PATRIMONIO y el TOTAL PASIVO + PATRIMONIO en pantalla, que sumaban la Utilidad de la Gestión dos veces. Ahora ambos lados del Balance cuadran con el mismo total del Activo.'
+  ]},
   {v:'V3.09', fecha:'2026-08-11', cambios:[
     'En el chat de NUMMEROS IA ahora puedes adjuntar una imagen (captura de pantalla) con el botón de clip y preguntarle a la IA sobre ella.',
     'Soporte de visión con Claude, ChatGPT (gpt-4o-mini) y Gemini. DeepSeek no admite imágenes: si intentas adjuntar una, te avisa para cambiar de proveedor.',
@@ -3330,9 +3333,9 @@ function renderEE(c){
       '<tr class="tr-g"><td colspan="2">PASIVO CORRIENTE</td></tr>'+pasR+'<tr class="tr-t"><td>TOTAL PASIVO</td><td class="r">'+fmt(tP)+'</td></tr>'+
       '<tr class="tr-g"><td colspan="2">PATRIMONIO</td></tr>'+patR+
       '<tr><td style="padding-left:18px">UTILIDAD DE LA GESTIÓN</td><td class="r">'+fmt(util)+'</td></tr>'+
-      '<tr class="tr-t"><td>TOTAL PATRIMONIO</td><td class="r">'+fmt(r2(tPT+util))+'</td></tr>'+
+      '<tr class="tr-t"><td>TOTAL PATRIMONIO</td><td class="r">'+fmt(tPT)+'</td></tr>'+
       '</tbody><tfoot>'+
-      '<tr class="tr-f"><td>TOTAL PASIVO + PATRIMONIO</td><td class="r">'+fmt(r2(tP+tPT+util))+'</td></tr>'+
+      '<tr class="tr-f"><td>TOTAL PASIVO + PATRIMONIO</td><td class="r">'+fmt(r2(tP+tPT))+'</td></tr>'+
       '<tr class="'+(bgOK?'bok':'ber')+'"><td>DIFERENCIA</td><td class="r '+(bgOK?'cok':'cer')+'">'+fmt(difBG)+' '+(bgOK?'<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-0.12em"><path d="M20 6L9 17l-5-5"/></svg>':'')+'</td></tr>'+
       '</tfoot></table></div>';
   } else if(st==='er'){
