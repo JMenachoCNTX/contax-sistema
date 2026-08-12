@@ -174,8 +174,13 @@ body.dark-mode .emp-box{background:#161616!important;color:#E2E8F0!important}
 // VERSIÓN DEL SISTEMA — Única fuente de verdad
 // Al aprobar una versión: subir VERSION y agregar una entrada al inicio de CHANGELOG.
 // ══════════════════════════════════════════════════════════
-const VERSION='V3.08';
+const VERSION='V3.09';
 const CHANGELOG=[
+  {v:'V3.09', fecha:'2026-08-11', cambios:[
+    'En el chat de NUMMEROS IA ahora puedes adjuntar una imagen (captura de pantalla) con el botón de clip y preguntarle a la IA sobre ella.',
+    'Soporte de visión con Claude, ChatGPT (gpt-4o-mini) y Gemini. DeepSeek no admite imágenes: si intentas adjuntar una, te avisa para cambiar de proveedor.',
+    'Vista previa de la imagen adjunta con opción de quitarla antes de enviar. Límite de 4.5 MB por imagen.'
+  ]},
   {v:'V3.08', fecha:'2026-07-20', cambios:[
     'Se quitaron los indicadores BG/S&S/Flujo del encabezado. En su lugar hay un botón FINALIZAR: al presionarlo pregunta si deseas dar por terminado el Estado Financiero.',
     'Por defecto cada empresa aparece como "En Curso" en Gestión Multi-Empresa; solo al presionar FINALIZAR pasa a "Finalizado" (check verde). Se puede reabrir.'
@@ -4790,28 +4795,59 @@ function renderFloatChat(){
       ${msgHTML||'<div style="text-align:center;color:rgba(255,255,255,.4);padding:30px 0;font-size:12px"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-0.14em;margin-right:4px"><path d="M21 12a8 8 0 01-11.5 7.2L4 20l1-4.5A8 8 0 1121 12z"/></svg> Pregúntame sobre tu balance</div>'}
       ${!key?'<div style="background:rgba(255,165,0,.15);border:1px solid rgba(255,165,0,.3);border-radius:6px;padding:8px;font-size:11px;color:#FCD34D;margin-top:8px"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-0.12em"><path d="M12 2l10 19H2z"/><path d="M12 9v5M12 18h.01"/></svg> Configura tu API key en la pestaña "NUMMEROS IA"</div>':''}
     </div>
+    ${window._iaImg?'<div style="display:flex;align-items:center;gap:8px;padding:6px 10px;background:#000;border-top:1px solid rgba(255,255,255,.08)"><img src="'+window._iaImg.url+'" style="height:36px;width:36px;object-fit:cover;border-radius:5px;border:1px solid rgba(255,255,255,.25)"/><span style="flex:1;font-size:11px;color:rgba(255,255,255,.7)">Imagen adjunta</span><button onclick="iaClearImage()" title="Quitar imagen" style="background:none;border:none;color:rgba(255,255,255,.7);cursor:pointer;font-size:14px;line-height:1">✕</button></div>':''}
     <div class="chat-float-inp">
+      <label title="Adjuntar imagen" style="display:flex;align-items:center;justify-content:center;width:34px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);border-radius:6px;cursor:pointer;color:#fff;flex:none"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg><input type="file" accept="image/*" style="display:none" onchange="iaPickImage(this)"/></label>
       <input type="text" id="fc-input" placeholder="Escribe tu pregunta..." onkeydown="if(event.key==='Enter')sendFloatIA()"/>
       <button onclick="sendFloatIA()" style="background:#111111;color:#fff;border:none;border-radius:6px;padding:6px 12px;cursor:pointer;font-size:12px">Enviar</button>
     </div>
   </div>
   <button class="chat-fab" onclick="toggleChat()" title="Cerrar chat" style="background:linear-gradient(135deg,#000000,#111111)"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-0.14em;margin-right:4px"><path d="M18 6L6 18M6 6l12 12"/></svg></button>`;
 }
+function iaPickImage(input){
+  var f=input&&input.files&&input.files[0];if(!f)return;
+  if(f.type.indexOf('image/')!==0){alert('Selecciona una imagen.');return;}
+  if(f.size>4.5*1024*1024){alert('La imagen es muy grande (máximo 4.5 MB).');input.value='';return;}
+  var rd=new FileReader();
+  rd.onload=function(){var url=rd.result;var m=/^data:([^;]+);base64,(.*)$/.exec(url);
+    window._iaImg={mime:m?m[1]:'image/png',data:m?m[2]:'',url:url};re();};
+  rd.readAsDataURL(f);input.value='';
+}
+function iaClearImage(){window._iaImg=null;re();}
 async function sendFloatIA(){
-  const inp=document.getElementById('fc-input');const msg=inp?.value?.trim();if(!msg)return;
+  const inp=document.getElementById('fc-input');const msg=(inp&&inp.value?inp.value:'').trim();
+  const img=window._iaImg;
+  if(!msg&&!img)return;
   const key=localStorage.getItem('ia_key')||'';const prov=localStorage.getItem('ia_prov')||'claude';
   if(!key){alert('Configura tu API key en la pestaña NUMMEROS IA');return;}
+  if(img&&prov==='deepseek'){alert('DeepSeek no admite imágenes. Cambia a Claude, ChatGPT o Gemini para analizar una imagen.');return;}
   const msgs=getIaMsgs();
   const c=calcAll();const cfg=emp().cfg;
   const ctx=iaContext();
-  msgs.push({role:'user',content:msg});setIaMsgs(msgs);S.iaScroll=Date.now();re();
-  inp.value='';
+  const userText=msg||'Analiza esta imagen.';
+  msgs.push({role:'user',content:userText+(img?'  📷 [imagen adjunta]':'')});setIaMsgs(msgs);S.iaScroll=Date.now();
+  window._iaImg=null;re();
+  if(inp)inp.value='';
+  var sys='Eres un contador experto boliviano. Responde SOLO con base en los datos reales del sistema CONTAX que se te dan a continuación; si un dato no aparece en el contexto, dilo claramente y NO lo inventes. Todos los montos están en Bolivianos (Bs). Contexto: '+ctx;
   try{
     let resp='';
-    if(prov==='claude'){const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01'},body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:500,system:'Eres un contador experto boliviano. Responde SOLO con base en los datos reales del sistema CONTAX que se te dan a continuación; si un dato no aparece en el contexto, dilo claramente y NO lo inventes. Todos los montos están en Bolivianos (Bs). Contexto: '+ctx,messages:msgs})});const d=await r.json();resp=d.content?.[0]?.text||'Error';}
-    else if(prov==='openai'){const r=await fetch('https://api.openai.com/v1/chat/completions',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+key},body:JSON.stringify({model:'gpt-4o-mini',messages:[{role:'system',content:'Eres un contador experto boliviano. Responde SOLO con base en los datos reales del sistema CONTAX que se te dan a continuación; si un dato no aparece en el contexto, dilo claramente y NO lo inventes. Todos los montos están en Bolivianos (Bs). '+ctx},...msgs]})});const d=await r.json();resp=d.choices?.[0]?.message?.content||'Error';}
-    else if(prov==='deepseek'){const r=await fetch('https://api.deepseek.com/v1/chat/completions',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+key},body:JSON.stringify({model:'deepseek-chat',messages:[{role:'system',content:ctx},...msgs]})});const d=await r.json();resp=d.choices?.[0]?.message?.content||'Error';}
-    else{const r=await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key='+key,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({contents:[{parts:[{text:ctx+' '+msgs.map(m=>m.role+': '+m.content).join(' ')}]}]})});const d=await r.json();resp=d.candidates?.[0]?.content?.parts?.[0]?.text||'Error';}
+    if(prov==='claude'){
+      var cm=msgs.map(function(m,i){
+        if(i===msgs.length-1&&img)return {role:m.role,content:[{type:'text',text:userText},{type:'image',source:{type:'base64',media_type:img.mime,data:img.data}}]};
+        return {role:m.role,content:m.content};
+      });
+      const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01'},body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:700,system:sys,messages:cm})});const d=await r.json();resp=(d.content&&d.content[0]&&d.content[0].text)||(d.error&&d.error.message)||'Error';}
+    else if(prov==='openai'){
+      var om=msgs.map(function(m,i){
+        if(i===msgs.length-1&&img)return {role:m.role,content:[{type:'text',text:userText},{type:'image_url',image_url:{url:img.url}}]};
+        return {role:m.role,content:m.content};
+      });
+      const r=await fetch('https://api.openai.com/v1/chat/completions',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+key},body:JSON.stringify({model:'gpt-4o-mini',messages:[{role:'system',content:sys},...om]})});const d=await r.json();resp=(d.choices&&d.choices[0]&&d.choices[0].message&&d.choices[0].message.content)||(d.error&&d.error.message)||'Error';}
+    else if(prov==='deepseek'){const r=await fetch('https://api.deepseek.com/v1/chat/completions',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+key},body:JSON.stringify({model:'deepseek-chat',messages:[{role:'system',content:ctx},...msgs]})});const d=await r.json();resp=(d.choices&&d.choices[0]&&d.choices[0].message&&d.choices[0].message.content)||'Error';}
+    else{
+      var parts=[{text:sys+'\n\nConversación:\n'+msgs.map(function(m){return m.role+': '+m.content;}).join('\n')}];
+      if(img)parts.push({inlineData:{mimeType:img.mime,data:img.data}});
+      const r=await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key='+key,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({contents:[{parts:parts}]})});const d=await r.json();resp=(d.candidates&&d.candidates[0]&&d.candidates[0].content&&d.candidates[0].content.parts&&d.candidates[0].content.parts[0]&&d.candidates[0].content.parts[0].text)||'Error';}
     msgs.push({role:'assistant',content:resp});
   }catch(e){msgs.push({role:'assistant',content:'Error: '+e.message});}
   setIaMsgs(msgs);S.iaScroll=Date.now();re();
