@@ -177,7 +177,8 @@ body.dark-mode .emp-box{background:#161616!important;color:#E2E8F0!important}
 const VERSION='V3.10';
 const CHANGELOG=[
   {v:'V3.10', fecha:'2026-08-11', cambios:[
-    'Balance General: se corrigió el TOTAL PATRIMONIO y el TOTAL PASIVO + PATRIMONIO en pantalla, que sumaban la Utilidad de la Gestión dos veces. Ahora ambos lados del Balance cuadran con el mismo total del Activo.'
+    'Balance General: se corrigió el TOTAL PATRIMONIO y el TOTAL PASIVO + PATRIMONIO en pantalla, que sumaban la Utilidad de la Gestión dos veces. Ahora ambos lados del Balance cuadran con el mismo total del Activo.',
+    'Estado de Evolución del Patrimonio: ahora incluye el ajuste automático por UFV de Resultados Acumulados (fila "+ Ajuste Resultados Acumulados (UFV)"). El saldo de cierre de Res. Acumulados y el TOTAL coinciden con el Balance General. Aplicado también en el PDF y el Excel.'
   ]},
   {v:'V3.09', fecha:'2026-08-11', cambios:[
     'En el chat de NUMMEROS IA ahora puedes adjuntar una imagen (captura de pantalla) con el botón de clip y preguntarle a la IA sobre ella.',
@@ -3529,14 +3530,24 @@ function renderEE(c){
     var capI=r2(pn(tr.capitalSocial));
     var ajCapI=r2(pn(tr.ajusteCapital));
     var resAI=r2(pn(tr.resAcum));
+    var _uvi=pn(cfg.ufvInicio),_uvf=pn(cfg.ufvFin),_uR=_uvi>0?(_uvf/_uvi):1;
+    var ajResAcum=(_uvi>0&&resAI>0)?r2(resAI*(_uR-1)):0;
+    var resAcumF=r2(resAI+ajResAcum);
     var totalInicio=r2(capI+ajCapI+resAI);
-    var totalCierre=r2(capI+ajCapI+ajC+resAI+util);
+    var totalCierre=r2(capI+ajCapI+ajC+resAcumF+util);
     var ajCRow=ajC?('<tr><td style="padding:5px 10px 5px 24px;font-size:11px;color:#666666">+ Ajuste del Capital (UFV)</td>'+
       '<td style="text-align:right;padding:5px 10px;font-family:monospace;font-size:11px">—</td>'+
       '<td style="text-align:right;padding:5px 10px;font-family:monospace;font-size:11px;color:#059669">'+fmt(ajC)+'</td>'+
       '<td style="text-align:right;padding:5px 10px;color:#aaa">—</td>'+
       '<td style="text-align:right;padding:5px 10px;color:#aaa">—</td>'+
       '<td style="text-align:right;padding:5px 10px;font-family:monospace;font-size:11px;color:#059669">'+fmt(ajC)+'</td>'+
+    '</tr>'):'';
+    var ajRARow=ajResAcum?('<tr><td style="padding:5px 10px 5px 24px;font-size:11px;color:#666666">+ Ajuste Resultados Acumulados (UFV)</td>'+
+      '<td style="text-align:right;padding:5px 10px;color:#aaa">—</td>'+
+      '<td style="text-align:right;padding:5px 10px;color:#aaa">—</td>'+
+      '<td style="text-align:right;padding:5px 10px;font-family:monospace;font-size:11px;color:#059669">'+fmt(ajResAcum)+'</td>'+
+      '<td style="text-align:right;padding:5px 10px;color:#aaa">—</td>'+
+      '<td style="text-align:right;padding:5px 10px;font-family:monospace;font-size:11px;color:#059669">'+fmt(ajResAcum)+'</td>'+
     '</tr>'):'';
     var utilColor=util>=0?'#059669':'#DC2626';
     ee='<div style="overflow-x:auto">'+
@@ -3564,6 +3575,7 @@ function renderEE(c){
         '<td style="padding:8px 10px;text-align:right;font-family:monospace;font-weight:700">'+fmt(totalInicio)+'</td>'+
       '</tr>'+
       ajCRow+
+      ajRARow+
       '<tr>'+
         '<td style="padding:5px 10px 5px 24px;font-size:11px;color:#666666">+ Utilidad / Pérdida del período</td>'+
         '<td style="padding:5px 10px;text-align:right;color:#aaa">—</td>'+
@@ -3578,7 +3590,7 @@ function renderEE(c){
         '<td style="padding:10px;font-weight:700;font-size:13px">Saldo al CIERRE del período</td>'+
         '<td style="padding:10px;text-align:right;font-family:monospace;font-weight:700">'+fmt(capI)+'</td>'+
         '<td style="padding:10px;text-align:right;font-family:monospace;font-weight:700">'+fmt(r2(ajCapI+ajC))+'</td>'+
-        '<td style="padding:10px;text-align:right;font-family:monospace;font-weight:700">'+fmt(resAI)+'</td>'+
+        '<td style="padding:10px;text-align:right;font-family:monospace;font-weight:700">'+fmt(resAcumF)+'</td>'+
         '<td style="padding:10px;text-align:right;font-family:monospace;font-weight:700">'+fmt(util)+'</td>'+
         '<td style="padding:10px;text-align:right;font-family:monospace;font-weight:800;font-size:14px">'+fmt(totalCierre)+'</td>'+
       '</tr>'+
@@ -6045,7 +6057,12 @@ function exportExcelGeneral(){
   const fRows=[['ESTADO DE FLUJO DE EFECTIVO'],[cfg.razonSocial+' | Gestión '+year],[]];
   flujoLines(c).forEach(function(l){fRows.push(l.t==='grp'?[l.label]:[l.label,r2(l.v)]);});
   XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(fRows),'Flujo de Efectivo');
-  const pRows=[['EVOLUCIÓN DEL PATRIMONIO'],[cfg.razonSocial+' | Gestión '+year],[],['CONCEPTO','CAPITAL','RES.ACUM.','UTILIDAD','TOTAL'],['Saldo Inicio',capA,resA,0,r2(capA+resA)],['+ Utilidad','—','—',c.util,c.util],['SALDO FINAL',r2(capA+c.ajC),resA,c.util,r2(capA+c.ajC+resA+c.util)]];
+  var _pvi=pn(cfg.ufvInicio),_pvf=pn(cfg.ufvFin),_pR=_pvi>0?(_pvf/_pvi):1;
+  var _ajRA=(_pvi>0&&resA>0)?r2(resA*(_pR-1)):0;var _resF=r2(resA+_ajRA);
+  const pRows=[['EVOLUCIÓN DEL PATRIMONIO'],[cfg.razonSocial+' | Gestión '+year],[],['CONCEPTO','CAPITAL','RES.ACUM.','UTILIDAD','TOTAL'],['Saldo Inicio',capA,resA,0,r2(capA+resA)]];
+  if(c.ajC)pRows.push(['+ Ajuste Capital (UFV)',c.ajC,0,0,c.ajC]);
+  if(_ajRA)pRows.push(['+ Ajuste Res. Acumulados (UFV)',0,_ajRA,0,_ajRA]);
+  pRows.push(['+ Utilidad','—','—',c.util,c.util],['SALDO FINAL',r2(capA+c.ajC),_resF,c.util,r2(capA+c.ajC+_resF+c.util)]);
   XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(pRows),'Patrimonio');
   const ssRows=[['SUMAS Y SALDOS'],[cfg.razonSocial+' | NIT: '+nit+' | Gestión '+year],[],['Código','Cuenta','Suma Debe','Suma Haber','Saldo Deudor','Saldo Acreedor']];
   c.ssA.forEach(function(k){var m=c.M[k];ssRows.push([k,acctName(k),r2(m.debe||0),r2(m.haber||0),r2(m.sD||0),r2(m.sH||0)]);});
@@ -6220,11 +6237,16 @@ function pdfFlujo(c){
 function pdfPatrimonio(c){
   var cfg=emp().cfg;var tr2=emp().traspaso;
   var capA=r2(pn(tr2.capitalSocial)+pn(tr2.ajusteCapital)),resA=r2(pn(tr2.resAcum));
+  var _uvi=pn(cfg.ufvInicio),_uvf=pn(cfg.ufvFin),_uR=_uvi>0?(_uvf/_uvi):1;
+  var ajRA=(_uvi>0&&resA>0)?r2(resA*(_uR-1)):0;
+  var resF=r2(resA+ajRA);
   return pdfHeader('Evolución del Patrimonio')+'<div style="text-align:center;margin-bottom:10px"><div style="font-size:13px;font-weight:700;color:#000000">EVOLUCIÓN DEL PATRIMONIO</div></div>'+
     '<table style="width:100%;border-collapse:collapse"><thead style="background:#000000;color:#fff"><tr><th>CONCEPTO</th><th style="text-align:right">CAPITAL</th><th style="text-align:right">RES.ACUM.</th><th style="text-align:right">UTILIDAD</th><th style="text-align:right">TOTAL</th></tr></thead>'+
     '<tbody><tr style="background:#E2E8F0"><td style="padding:5px 6px;font-weight:700">Saldo INICIO</td><td style="text-align:right;font-family:monospace">'+fmt(capA)+'</td><td style="text-align:right;font-family:monospace">'+fmt(resA)+'</td><td style="text-align:right">0,00</td><td style="text-align:right;font-weight:700;font-family:monospace">'+fmt(r2(capA+resA))+'</td></tr>'+
+    (c.ajC?'<tr><td style="padding:3px 6px 3px 18px">+ Ajuste Capital (UFV)</td><td style="text-align:right;font-family:monospace">'+fmt(c.ajC)+'</td><td colspan="2" style="text-align:center">—</td><td style="text-align:right;font-family:monospace">'+fmt(c.ajC)+'</td></tr>':'')+
+    (ajRA?'<tr><td style="padding:3px 6px 3px 18px">+ Ajuste Res. Acumulados (UFV)</td><td style="text-align:center">—</td><td style="text-align:right;font-family:monospace">'+fmt(ajRA)+'</td><td style="text-align:center">—</td><td style="text-align:right;font-family:monospace">'+fmt(ajRA)+'</td></tr>':'')+
     '<tr><td style="padding:3px 6px 3px 18px">+ Utilidad del período</td><td colspan="2" style="text-align:center">—</td><td style="text-align:right;font-family:monospace">'+fmt(c.util)+'</td><td style="text-align:right;font-family:monospace">'+fmt(c.util)+'</td></tr></tbody>'+
-    '<tfoot><tr style="background:#000000;color:#fff"><td style="padding:6px 8px;font-weight:700">Saldo FINAL</td><td style="text-align:right;font-family:monospace">'+fmt(r2(capA+c.ajC))+'</td><td style="text-align:right;font-family:monospace">'+fmt(resA)+'</td><td style="text-align:right;font-family:monospace">'+fmt(c.util)+'</td><td style="text-align:right;font-weight:700;font-family:monospace">'+fmt(r2(capA+c.ajC+resA+c.util))+'</td></tr></tfoot>'+
+    '<tfoot><tr style="background:#000000;color:#fff"><td style="padding:6px 8px;font-weight:700">Saldo FINAL</td><td style="text-align:right;font-family:monospace">'+fmt(r2(capA+c.ajC))+'</td><td style="text-align:right;font-family:monospace">'+fmt(resF)+'</td><td style="text-align:right;font-family:monospace">'+fmt(c.util)+'</td><td style="text-align:right;font-weight:700;font-family:monospace">'+fmt(r2(capA+c.ajC+resF+c.util))+'</td></tr></tfoot>'+
     '</table>'+pdfFirmas(c);
 }
 function pdfTributario(){
