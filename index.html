@@ -174,8 +174,18 @@ body.dark-mode .emp-box{background:#161616!important;color:#E2E8F0!important}
 // VERSIÓN DEL SISTEMA — Única fuente de verdad
 // Al aprobar una versión: subir VERSION y agregar una entrada al inicio de CHANGELOG.
 // ══════════════════════════════════════════════════════════
-const VERSION='V3.12';
+const VERSION='V3.14';
 const CHANGELOG=[
+  {v:'V3.14', fecha:'2026-08-11', cambios:[
+    'RCV Compras: se quitó el tratamiento especial de Gift Card. Todo el pago de la factura (incluido cualquier importe de gift card) va contra Caja/Banco, como siempre se ha manejado. Se eliminó la cuenta "Gift Cards / Vales por usar".',
+    'Se mantiene el manejo de descuentos sobre compras (Ley 843 Art. 7): crédito fiscal íntegro y el descuento a "Descuento sobre compras" (411009001) + Débito Fiscal IVA (214001001).'
+  ]},
+  {v:'V3.13', fecha:'2026-08-11', cambios:[
+    'RCV Compras: ahora se leen las columnas del SIAT de Descuentos (sujetos al IVA) y Gift Card, y se contabilizan automáticamente en el comprobante de egresos.',
+    'Descuento en compras (Ley 843 Art. 7): el Crédito Fiscal se mantiene íntegro sobre el total; el descuento se registra 87% en "Descuento sobre compras" (411009001) y 13% en "Débito Fiscal IVA" (214001001), y la caja pagada se reduce por el descuento.',
+    'Gift Card: es solo un medio de pago (no afecta el IVA). Se acredita la nueva cuenta de activo "Gift Cards / Vales por usar" (111003001) en lugar de Caja, por el importe pagado con gift card.',
+    'El panel de RCV Compras muestra el total de descuentos y de gift cards detectados en el archivo.'
+  ]},
   {v:'V3.12', fecha:'2026-08-11', cambios:[
     'Verificaciones: el cuadre de "Evolución del Patrimonio" ahora incluye el ajuste UFV de Resultados Acumulados (108,07) en el patrimonio final, igual que el cuadro y el Balance. Ya no marca falso "NO CUADRA".'
   ]},
@@ -1318,7 +1328,7 @@ function parseRCV(txt){
     const c=r.split('\t');
     return{nro:c[0]?.trim(),nit:c[1]?.trim(),razon:c[2]?.trim(),fecha:c[6]?.trim(),
       total:pn(c[7]),ice:pn(c[8]),iehd:pn(c[9]),ipj:pn(c[10]),tasas:pn(c[11]),
-      noSujeto:pn(c[12]),exentos:pn(c[13]),baseCF:pn(c[18]),cf:pn(c[19]),
+      noSujeto:pn(c[12]),exentos:pn(c[13]),descuento:pn(c[16]),giftCard:pn(c[17]),baseCF:pn(c[18]),cf:pn(c[19]),
       derechoCF:c[22]?.trim(),estado:c[23]?.trim(),cat:c[24]?.trim()};
   }).filter(r=>r.nro&&!isNaN(parseFloat(r.nro)));
 }
@@ -1405,7 +1415,13 @@ function genEntries(){
       }
       add2(code,gastoAmt,0);
       if(cfAmt)add2('116001001',cfAmt,0);
-      var _pg=(getRCVPayments()[fullIdx])||'efectivo';var _cc=_pg==='transferencia'?'111002001':_pg==='porpagar'?'212004001':'111001001';add2(_cc,0,totalN);
+      // Descuento sobre compras (Ley 843 Art. 7): CF íntegro; el descuento (IVA incluido) va 87% a cuenta
+      // regularizadora "Descuento sobre compras" (411009001) y 13% a Débito Fiscal IVA (214001001).
+      var _desc=r2(pn(r.descuento||0));
+      if(_desc>0){add2('411009001',0,r2(_desc*0.87));add2('214001001',0,r2(_desc*0.13));}
+      // Pago (efectivo/banco/por pagar) = total − descuento. Todo el pago va contra caja (sin cuenta de gift card).
+      var _efec=r2(totalN-_desc);
+      var _pg=(getRCVPayments()[fullIdx])||'efectivo';var _cc=_pg==='transferencia'?'111002001':_pg==='porpagar'?'212004001':'111001001';if(Math.abs(_efec)>0.001)add2(_cc,0,_efec);
     });
     // Balancear diferencia de redondeo
     const td=r2(Object.values(con).reduce((s,v)=>r2(s+v.d),0));
@@ -1916,6 +1932,7 @@ function renderRCV(){
         (usingFile?'<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-0.14em;margin-right:4px"><path d="M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg> Archivo: ':'<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-0.14em;margin-right:4px"><rect x="6" y="4" width="12" height="18" rx="1"/><path d="M9 4V2h6v2M9 10h6M9 14h6"/></svg> Pegado: ')+
         '<strong>'+allRCV.length+'</strong> registros | CF: <strong>'+fmt(totCF)+'</strong> Bs | Total: <strong>'+fmt(totCompras)+'</strong> Bs'+
         (Object.keys(overrides).length?' <span style="color:#F97316">| <svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-0.14em;margin-right:4px"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M14 6l4 4"/></svg> '+Object.keys(overrides).length+' editadas</span>':'')+
+        (function(){var td=r2(allRCV.reduce(function(s,r){return r2(s+pn(r.descuento||0));},0));return td>0?(' <span style="color:#7C3AED">| Descuentos: <strong>'+fmt(td)+'</strong> Bs</span>'):'';})()+
       '</div>':
       '<div class="info iy">Carga un archivo XLSX o pega los datos del RCV.</div>'+
     '')+
@@ -2584,6 +2601,7 @@ function uploadRCV(file){
       ice:parseFloat(r[8])||0,iehd:parseFloat(r[9])||0,
       ipj:parseFloat(r[10])||0,tasas:parseFloat(r[11])||0,
       noSujeto:parseFloat(r[12])||0,exentos:parseFloat(r[13])||0,
+      descuento:parseFloat(r[16])||0,giftCard:parseFloat(r[17])||0,
       baseCF:parseFloat(r[18])||0,cf:parseFloat(r[19])||0,
       tipoCompra:r[20],derechoCF:r[22],estado:r[23]
     })).filter(r=>r.tipoCompra==='INTERNO/ACTIVIDADES GRAVADAS');
