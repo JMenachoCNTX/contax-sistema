@@ -186,8 +186,13 @@ body.dark-mode .emp-box{background:#161616!important;color:#E2E8F0!important}
 // VERSIÓN DEL SISTEMA — Única fuente de verdad
 // Al aprobar una versión: subir VERSION y agregar una entrada al inicio de CHANGELOG.
 // ══════════════════════════════════════════════════════════
-const VERSION='V3.18';
+const VERSION='V3.19';
 const CHANGELOG=[
+  {v:'V3.19', fecha:'2026-08-11', cambios:[
+    'RCV Compras: nueva opción "Forma de contabilización del RCV". Puedes elegir entre: (1) un solo asiento anual con todas las facturas (como estaba antes), (2) un asiento por mes agrupando las facturas de cada mes, o (3) un asiento por cada factura.',
+    'El panel indica si todas las facturas tienen cuenta asignada o cuántas usan "Gastos Varios" (sin cuenta específica), para revisarlas antes de contabilizar.',
+    'Cualquiera de los 3 modos cuadra y produce el mismo resultado en los Estados Financieros; solo cambia el nivel de detalle de los comprobantes.'
+  ]},
   {v:'V3.18', fecha:'2026-08-11', cambios:[
     'NUMMEROS IA: ahora puedes configurar una segunda API Key SOLO para imágenes/capturas (Visión), aparte de la principal. Por ejemplo: DeepSeek para el chat normal y Gemini para leer capturas del SIAT y adjuntar imágenes.',
     'La key de Visión se usa automáticamente al "Rellenar desde captura del SIAT" y al adjuntar una imagen en el chat. Si no configuras key de Visión, se usa la principal (como antes). Ambas keys se sincronizan con el equipo.'
@@ -1364,6 +1369,17 @@ function parseRCV(txt){
       derechoCF:c[22]?.trim(),estado:c[23]?.trim(),cat:c[24]?.trim()};
   }).filter(r=>r.nro&&!isNaN(parseFloat(r.nro)));
 }
+// Clave de mes (YYYY-MM) a partir de una fecha DD/MM/YYYY o YYYY-MM-DD, para agrupar el RCV por mes.
+function rcvMonthKey(f){
+  var s=String(f||'').trim();if(!s)return '0000-00';
+  if(s.indexOf('/')>=0){var p=s.split('/');if(p.length===3)return p[2]+'-'+('0'+p[1]).slice(-2);}
+  if(s.indexOf('-')>=0){var q=s.split('-');if(q.length===3)return q[0]+'-'+('0'+q[1]).slice(-2);}
+  return '0000-00';
+}
+function rcvMonthLabel(mk){
+  var MN=['','ENERO','FEBRERO','MARZO','ABRIL','MAYO','JUNIO','JULIO','AGOSTO','SEPTIEMBRE','OCTUBRE','NOVIEMBRE','DICIEMBRE'];
+  var p=String(mk||'').split('-');var m=parseInt(p[1],10)||0;return (MN[m]||mk)+' '+(p[0]||'');
+}
 
 function nitLookup(nit){
   return (S.nits||[]).find(n=>String(n.nit)===String(nit));
@@ -1426,44 +1442,47 @@ function genEntries(){
   const rcvFull=rcvFromXLSX.length>0?rcvFromXLSX:rcvFromPaste;
   const valid=rcvFull;
   if(valid.length){
-    const con={};
-    const add2=(c,d,h)=>{if(!con[c])con[c]={d:0,h:0};con[c].d=r2(con[c].d+(d||0));con[c].h=r2(con[c].h+(h||0));};
-    valid.forEach(r=>{
-      const overrides=e.rcvOverrides||{};
-      const fullIdx=rcvFull.indexOf(r);
-      const lk=nitLookup(r.nit);
-      const autoCode=lk?lk.cuenta:(CAT_MAP[r.cat?.trim()]||'526002001');
-      const code=overrides[fullIdx]||autoCode;
-      const totalN=r2(r.total-r.ice-r.iehd-r.ipj-r.tasas);
-      let gastoAmt,cfAmt;
-      if(r.noSujeto>0){
-        // COMBUSTIBLE: 30% no sujeto + 70% base
-        const base70=r2(totalN*0.70);
-        cfAmt=r.derechoCF==='SI'?r2(base70*0.13):0;
-        gastoAmt=r2(r.noSujeto+base70*0.87);
-      } else {
-        cfAmt=r.derechoCF==='SI'?r2(totalN*0.13):0;
-        gastoAmt=r2(totalN*0.87);
+    const overrides=e.rcvOverrides||{};
+    const pays=getRCVPayments();
+    // Construye las líneas (balanceadas) de un conjunto de facturas.
+    function rcvLinesFor(list){
+      const con={};
+      const add2=(c,d,h)=>{if(!con[c])con[c]={d:0,h:0};con[c].d=r2(con[c].d+(d||0));con[c].h=r2(con[c].h+(h||0));};
+      list.forEach(r=>{
+        const fullIdx=rcvFull.indexOf(r);
+        const lk=nitLookup(r.nit);
+        const autoCode=lk?lk.cuenta:(CAT_MAP[r.cat?.trim()]||'526002001');
+        const code=overrides[fullIdx]||autoCode;
+        const totalN=r2(r.total-r.ice-r.iehd-r.ipj-r.tasas);
+        let gastoAmt,cfAmt;
+        if(r.noSujeto>0){const base70=r2(totalN*0.70);cfAmt=r.derechoCF==='SI'?r2(base70*0.13):0;gastoAmt=r2(r.noSujeto+base70*0.87);}
+        else {cfAmt=r.derechoCF==='SI'?r2(totalN*0.13):0;gastoAmt=r2(totalN*0.87);}
+        add2(code,gastoAmt,0);
+        if(cfAmt)add2('116001001',cfAmt,0);
+        var _desc=r2(pn(r.descuento||0));
+        if(_desc>0){add2('411009001',0,r2(_desc*0.87));add2('214001001',0,r2(_desc*0.13));}
+        var _efec=r2(totalN-_desc);
+        var _pg=(pays[fullIdx])||'efectivo';var _cc=_pg==='transferencia'?'111002001':_pg==='porpagar'?'212004001':'111001001';if(Math.abs(_efec)>0.001)add2(_cc,0,_efec);
+      });
+      const td=r2(Object.values(con).reduce((s,v)=>r2(s+v.d),0));
+      const th=r2(Object.values(con).reduce((s,v)=>r2(s+v.h),0));
+      const diff=r2(td-th);
+      if(Math.abs(diff)>0.001){
+        if(diff>0){if(!con['441004001'])con['441004001']={d:0,h:0};con['441004001'].h=r2((con['441004001'].h||0)+diff);}
+        else{if(!con['561004001'])con['561004001']={d:0,h:0};con['561004001'].d=r2((con['561004001'].d||0)-diff);}
       }
-      add2(code,gastoAmt,0);
-      if(cfAmt)add2('116001001',cfAmt,0);
-      // Descuento sobre compras (Ley 843 Art. 7): CF íntegro; el descuento (IVA incluido) va 87% a cuenta
-      // regularizadora "Descuento sobre compras" (411009001) y 13% a Débito Fiscal IVA (214001001).
-      var _desc=r2(pn(r.descuento||0));
-      if(_desc>0){add2('411009001',0,r2(_desc*0.87));add2('214001001',0,r2(_desc*0.13));}
-      // Pago (efectivo/banco/por pagar) = total − descuento. Todo el pago va contra caja (sin cuenta de gift card).
-      var _efec=r2(totalN-_desc);
-      var _pg=(getRCVPayments()[fullIdx])||'efectivo';var _cc=_pg==='transferencia'?'111002001':_pg==='porpagar'?'212004001':'111001001';if(Math.abs(_efec)>0.001)add2(_cc,0,_efec);
-    });
-    // Balancear diferencia de redondeo
-    const td=r2(Object.values(con).reduce((s,v)=>r2(s+v.d),0));
-    const th=r2(Object.values(con).reduce((s,v)=>r2(s+v.h),0));
-    const diff=r2(td-th);
-    if(Math.abs(diff)>0.001){
-      if(diff>0){if(!con['441004001'])con['441004001']={d:0,h:0};con['441004001'].h=r2((con['441004001'].h||0)+diff);}
-      else{if(!con['561004001'])con['561004001']={d:0,h:0};con['561004001'].d=r2((con['561004001'].d||0)-diff);}
+      return Object.entries(con).map(([c,v])=>({c,d:v.d,h:v.h}));
     }
-    E.push({id:'RCVE',tipo:'E',desc:'COMPROBANTE DE EGRESOS — RCV COMPRAS',lines:Object.entries(con).map(([c,v])=>({c,d:v.d,h:v.h}))});
+    var rcvMode=(e.cfg&&e.cfg.rcvMode)||'anual';
+    if(rcvMode==='factura'){
+      valid.forEach(function(r){var idx=rcvFull.indexOf(r);var lines=rcvLinesFor([r]);if(lines.length)E.push({id:'RCVE'+idx,tipo:'E',desc:'COMPROBANTE EGRESO — '+String(r.razon||'RCV').slice(0,40)+(r.fecha?(' | '+r.fecha):''),lines:lines});});
+    } else if(rcvMode==='mensual'){
+      var groups={};
+      valid.forEach(function(r){var mk=rcvMonthKey(r.fecha);(groups[mk]=groups[mk]||[]).push(r);});
+      Object.keys(groups).sort().forEach(function(mk){var lines=rcvLinesFor(groups[mk]);if(lines.length)E.push({id:'RCVE_'+mk,tipo:'E',desc:'COMPROBANTE EGRESOS — RCV COMPRAS '+rcvMonthLabel(mk),lines:lines});});
+    } else {
+      var lines=rcvLinesFor(valid);if(lines.length)E.push({id:'RCVE',tipo:'E',desc:'COMPROBANTE DE EGRESOS — RCV COMPRAS',lines:lines});
+    }
   }
 
   // INGRESOS XLSX (ventas cargadas)
@@ -2032,6 +2051,20 @@ function renderRCV(){
       '</div>':
       '<div class="info iy">Carga un archivo XLSX o pega los datos del RCV.</div>'+
     '')+
+    (allRCV.length?(function(){
+      var rcvMode=(emp().cfg&&emp().cfg.rcvMode)||'anual';
+      var sinCuenta=allRCV.filter(function(r,i){var lk=nitLookup(r.nit);var auto=lk?lk.cuenta:(CAT_MAP[r.cat&&r.cat.trim()]||'');return !(overrides[i]||auto);}).length;
+      return '<div style="display:flex;align-items:center;gap:10px;margin:8px 0;padding:10px 12px;background:#FEFCE8;border:1px solid #FDE68A;border-radius:8px;flex-wrap:wrap">'+
+        '<span style="font-size:12px;font-weight:700;color:#92400E"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-0.14em;margin-right:4px"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg> Forma de contabilización del RCV:</span>'+
+        '<select onchange="emp().cfg.rcvMode=this.value;saveLS();re()" style="font-size:12px;border:1px solid #FCD34D;border-radius:5px;padding:5px 8px;background:#fff;font-weight:600">'+
+          '<option value="anual"'+(rcvMode==='anual'?' selected':'')+'>Un solo asiento anual (todas las facturas)</option>'+
+          '<option value="mensual"'+(rcvMode==='mensual'?' selected':'')+'>Un asiento por mes</option>'+
+          '<option value="factura"'+(rcvMode==='factura'?' selected':'')+'>Un asiento por cada factura</option>'+
+        '</select>'+
+        (sinCuenta>0
+          ? '<span style="font-size:11px;color:#B45309"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-0.12em;margin-right:3px"><path d="M12 2l10 19H2z"/><path d="M12 9v5M12 18h.01"/></svg> '+sinCuenta+' factura(s) sin cuenta específica (van a Gastos Varios). Asígnalas abajo si deseas.</span>'
+          : '<span style="font-size:11px;color:#059669"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-0.12em;margin-right:3px"><path d="M20 6L9 17l-5-5"/></svg> Todas las facturas tienen cuenta asignada</span>')+
+      '</div>';})():'')+
     (allRCV.length?
       '<div style="display:flex;gap:8px;margin-bottom:6px;flex-wrap:wrap">'+
         '<input type="text" placeholder="Filtrar por razón social, NIT o factura..." value="'+(_rcvFilter||'')+'" oninput="filterRCVInPlace(this.value)" style="flex:1;min-width:200px;padding:6px 10px;border:1px solid #E2E8F0;border-radius:6px;font-size:12px;outline:none"/>'+
