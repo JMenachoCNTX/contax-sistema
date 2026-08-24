@@ -186,8 +186,13 @@ body.dark-mode .emp-box{background:#161616!important;color:#E2E8F0!important}
 // VERSIÓN DEL SISTEMA — Única fuente de verdad
 // Al aprobar una versión: subir VERSION y agregar una entrada al inicio de CHANGELOG.
 // ══════════════════════════════════════════════════════════
-const VERSION='V3.20';
+const VERSION='V3.21';
 const CHANGELOG=[
+  {v:'V3.21', fecha:'2026-08-11', cambios:[
+    'Comprobantes: cada comprobante tiene un botón "Ver" (ícono de ojo) que lo abre como documento imprimible, con opción de Imprimir o Guardar como PDF.',
+    'Comprobantes: botón "Descargar / Imprimir PDF" que genera un solo PDF con todos los comprobantes mostrados (cada uno en su página). Usa el filtro de arriba para elegir Todos, Ingresos, Egresos o Traspasos.',
+    'Ideal para empresas grandes (S.A./S.R.L.) que necesitan el físico ordenado; combinado con los modos de contabilización anual/mensual/por factura, cada empresa imprime al nivel de detalle que necesita.'
+  ]},
   {v:'V3.20', fecha:'2026-08-11', cambios:[
     'Ingresos: se agregó la misma opción "Forma de contabilización" que en RCV Compras, para las ventas cargadas por archivo (XLSX). Puedes elegir: (1) un solo asiento anual con todas las ventas, (2) un asiento por mes, o (3) un asiento por cada factura de venta.',
     'Los tres modos cuadran y dan el mismo resultado en los Estados Financieros; solo cambia el detalle de los comprobantes de ingresos. Los ingresos manuales no se ven afectados (siguen generando su propio asiento).'
@@ -3261,7 +3266,8 @@ function renderComprobantes(c){
     return '<div style="border:1px solid '+(cuad?'#E2E8F0':'#FCA5A5')+';border-radius:8px;margin-bottom:12px;overflow:hidden">'+
       '<div style="background:'+col+';color:#fff;padding:8px 12px;display:flex;justify-content:space-between;align-items:center">'+
       '<div><span style="font-size:12px;font-weight:700">'+tl+'</span><span style="margin-left:10px;font-weight:400;font-size:11px;opacity:.8">'+e.id+' — '+e.desc+'</span></div>'+
-      '<div>'+
+      '<div style="display:flex;gap:8px;align-items:center">'+
+      '<span onclick="verComprobante(\''+e.id+'\')" title="Ver / Imprimir / Guardar PDF" style="cursor:pointer;background:rgba(255,255,255,.22);padding:3px 9px;border-radius:6px;display:inline-flex;align-items:center;gap:4px;font-size:11px"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-0.12em"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg> Ver</span>'+
       (cuad?'<span style="background:rgba(255,255,255,.2);padding:2px 10px;border-radius:10px;font-size:11px;font-weight:700"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-0.12em"><path d="M20 6L9 17l-5-5"/></svg> CUADRADO</span>':
             '<span style="background:#EF4444;padding:2px 10px;border-radius:10px;font-size:11px;font-weight:700"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-0.12em"><path d="M18 6L6 18M6 6l12 12"/></svg> DIFERENCIA: '+fmt(diff)+'</span>')+
       '</div></div>'+
@@ -3277,7 +3283,11 @@ function renderComprobantes(c){
     cTab('E','Egresos',totE,'#000000')+
     cTab('T','Traspasos',totT,'#142740')+
     '</div>'+
-    (filteredE.length>0?'<div class="info iy" style="margin-bottom:8px;font-size:11px">Mostrando '+filteredE.length+' comprobantes. Los marcados con <svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-0.12em"><path d="M18 6L6 18M6 6l12 12"/></svg> tienen diferencia y deben revisarse.</div>':'')+
+    (filteredE.length>0?'<div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;flex-wrap:wrap">'+
+      '<button onclick="imprimirComprobantes(S.subComp||\'all\')" class="btn-orange" style="font-size:12px"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-0.14em;margin-right:4px"><path d="M6 9V3h12v6M6 18H4a2 2 0 01-2-2v-3a2 2 0 012-2h16a2 2 0 012 2v3a2 2 0 01-2 2h-2M8 14h8v6H8z"/></svg> Descargar / Imprimir PDF ('+({all:'Todos',I:'Ingresos',E:'Egresos',T:'Traspasos'}[S.subComp||'all'])+')</button>'+
+      '<span style="font-size:11px;color:#666">Genera un solo PDF con los '+filteredE.length+' comprobantes mostrados (cada uno en su página). Cambia el filtro de arriba para elegir el tipo.</span>'+
+    '</div>':'')+
+    (filteredE.length>0?'<div class="info iy" style="margin-bottom:8px;font-size:11px">Mostrando '+filteredE.length+' comprobantes. Usa <strong>Ver</strong> para visualizar/imprimir uno solo. Los marcados con <svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-0.12em"><path d="M18 6L6 18M6 6l12 12"/></svg> tienen diferencia y deben revisarse.</div>':'')+
     (cards||'<div class="info iy">No hay comprobantes.</div>')+
     '</div>';
 }
@@ -6517,6 +6527,51 @@ function buildPrintDocument(sections){
     return '<div class="'+cls+'" style="padding:3mm 0">'+(isCover?'':pdfHdr)+str+'</div>';
   }).join('');
   return '<!DOCTYPE html><html><head><meta charset="utf-8"><style>'+pageStyle+'</style></head><body>'+body+pdfFoot+'</body></html>';
+}
+// ═══ COMPROBANTES — PDF individual y combinado ═══════════
+function buildComprobanteHTML(e){
+  var cfg=emp().cfg;
+  var totD=r2((e.lines||[]).reduce(function(s,l){return r2(s+r2(l.d));},0));
+  var totH=r2((e.lines||[]).reduce(function(s,l){return r2(s+r2(l.h));},0));
+  var tl={I:'COMPROBANTE DE INGRESO',E:'COMPROBANTE DE EGRESO',T:'COMPROBANTE DE TRASPASO'}[e.tipo]||'COMPROBANTE';
+  var rows=(e.lines||[]).filter(function(l){return l.d||l.h;}).map(function(l){return '<tr><td style="font-family:monospace;font-size:10px;padding:3px 8px;border-bottom:1px solid #eee">'+l.c+'</td><td style="padding:3px 8px;border-bottom:1px solid #eee;font-size:11px">'+acctName(l.c)+'</td><td style="text-align:right;font-family:monospace;padding:3px 8px;border-bottom:1px solid #eee">'+(l.d?fmt(r2(l.d)):'')+'</td><td style="text-align:right;font-family:monospace;padding:3px 8px;border-bottom:1px solid #eee">'+(l.h?fmt(r2(l.h)):'')+'</td></tr>';}).join('');
+  return '<div>'+
+    '<div style="display:flex;justify-content:space-between;align-items:flex-start;border-bottom:2px solid #000;padding-bottom:6px;margin-bottom:10px">'+
+      '<div><div style="font-weight:700;font-size:14px">'+tl+'</div><div style="font-size:11px;color:#555;margin-top:2px">'+e.id+' — '+e.desc+'</div></div>'+
+      '<div style="text-align:right;font-size:11px"><div style="font-weight:700">'+(cfg.razonSocial||'')+'</div><div style="color:#555">NIT: '+(cfg.nit||'—')+' | Gestión '+(cfg.gestion||'')+'</div></div>'+
+    '</div>'+
+    '<table style="width:100%;border-collapse:collapse;font-size:11px"><thead><tr style="background:#111;color:#fff"><th style="text-align:left;padding:5px 8px">CUENTA</th><th style="text-align:left;padding:5px 8px">NOMBRE</th><th style="text-align:right;padding:5px 8px">DEBE</th><th style="text-align:right;padding:5px 8px">HABER</th></tr></thead>'+
+    '<tbody>'+rows+'</tbody>'+
+    '<tfoot><tr style="background:#000;color:#fff;font-weight:700"><td colspan="2" style="padding:5px 8px">TOTALES</td><td style="text-align:right;padding:5px 8px;font-family:monospace">'+fmt(totD)+'</td><td style="text-align:right;padding:5px 8px;font-family:monospace">'+fmt(totH)+'</td></tr></tfoot></table>'+
+    '<div style="margin-top:38px;display:grid;grid-template-columns:1fr 1fr;gap:60px;max-width:460px">'+
+      '<div style="text-align:center;border-top:1px solid #000;padding-top:5px;font-size:10px;color:#555">Elaborado por</div>'+
+      '<div style="text-align:center;border-top:1px solid #000;padding-top:5px;font-size:10px;color:#555">Revisado por</div>'+
+    '</div></div>';
+}
+function verComprobante(id){
+  var E=calcAll().E;var e=E.find(function(x){return x.id===id;});
+  if(!e){alert('Comprobante no encontrado.');return;}
+  var doc=buildPrintDocument([buildComprobanteHTML(e)]);
+  var toolbar='<div class="no-print" style="position:fixed;top:0;left:0;right:0;background:#111;color:#fff;padding:8px 14px;display:flex;gap:10px;align-items:center;z-index:99999;font-family:Segoe UI,Arial,sans-serif">'+
+    '<span style="font-weight:700;font-size:13px">'+e.id+' — '+({I:'Ingreso',E:'Egreso',T:'Traspaso'}[e.tipo]||'Comprobante')+'</span>'+
+    '<div style="flex:1"></div>'+
+    '<span onclick="window.print()" style="cursor:pointer;background:#F59E0B;padding:6px 14px;border-radius:6px;font-size:12px;font-weight:600">Imprimir / Guardar PDF</span>'+
+    '<span onclick="window.close()" style="cursor:pointer;background:#374151;padding:6px 12px;border-radius:6px;font-size:12px">Cerrar</span>'+
+  '</div><div class="no-print" style="height:46px"></div>';
+  doc=doc.replace('<body>','<body><style>@media print{.no-print{display:none!important}}</style>'+toolbar);
+  var win=window.open('','_blank','width=900,height=820');if(!win){alert('Permite ventanas emergentes para visualizar el comprobante.');return;}
+  win.document.write(doc);win.document.close();
+}
+function imprimirComprobantes(tipo){
+  var E=calcAll().E;
+  var list=E.filter(function(e){return (e.lines&&e.lines.length)&&(tipo==='all'||e.tipo===tipo);});
+  if(!list.length){alert('No hay comprobantes de ese tipo para imprimir.');return;}
+  var sections=list.map(buildComprobanteHTML);
+  var doc=buildPrintDocument(sections);
+  var cfg=emp().cfg;var nombre=(cfg.razonSocial||'Comprobantes').replace(/[^a-zA-Z0-9]/g,'_').substring(0,24);
+  var etq={all:'Todos',I:'Ingresos',E:'Egresos',T:'Traspasos'}[tipo]||'';
+  var win=window.open('','_blank','width=900,height=760');if(!win){alert('Permite ventanas emergentes para descargar el PDF.');return;}
+  win.document.write(doc);win.document.close();win.onload=function(){win.document.title='Comprobantes-'+etq+'-'+nombre;win.print();};
 }
 function exportPDFCompleto(){
   var c=calcAll();var cfg=emp().cfg;
