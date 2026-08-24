@@ -186,8 +186,12 @@ body.dark-mode .emp-box{background:#161616!important;color:#E2E8F0!important}
 // VERSIÓN DEL SISTEMA — Única fuente de verdad
 // Al aprobar una versión: subir VERSION y agregar una entrada al inicio de CHANGELOG.
 // ══════════════════════════════════════════════════════════
-const VERSION='V3.24';
+const VERSION='V3.25';
 const CHANGELOG=[
+  {v:'V3.25', fecha:'2026-08-11', cambios:[
+    'Libro Diario: nuevo botón "Libro Diario (PDF)" en la pestaña Comprobantes. Genera el registro cronológico continuo de todos los asientos (número, glosa, cuentas Debe/Haber, subtotal por asiento y totales generales), con cabecera de empresa/NIT/gestión/ciudad.',
+    'Respeta el filtro de arriba (Todos, Ingresos, Egresos o Traspasos). El botón de comprobantes se renombró a "Comprobantes PDF" (cada asiento en su página) para diferenciarlo del Libro Diario (continuo).'
+  ]},
   {v:'V3.24', fecha:'2026-08-11', cambios:[
     'Mayor General (Libros Mayores): cada cuenta tiene botón "Ver" (ícono de ojo) que abre su Libro Mayor imprimible, con opción de Imprimir o Guardar como PDF.',
     'Botón "Descargar / Imprimir PDF" que genera un solo PDF con los libros mayores (cada cuenta en su página), con filtro por tipo: Todos, Activo, Pasivo, Patrimonio, Ingreso o Gasto.',
@@ -3332,8 +3336,9 @@ function renderComprobantes(c){
     cTab('T','Traspasos',totT,'#142740')+
     '</div>'+
     (filteredE.length>0?'<div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;flex-wrap:wrap">'+
-      '<button onclick="imprimirComprobantes(S.subComp||\'all\')" class="btn-orange" style="font-size:12px"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-0.14em;margin-right:4px"><path d="M6 9V3h12v6M6 18H4a2 2 0 01-2-2v-3a2 2 0 012-2h16a2 2 0 012 2v3a2 2 0 01-2 2h-2M8 14h8v6H8z"/></svg> Descargar / Imprimir PDF ('+({all:'Todos',I:'Ingresos',E:'Egresos',T:'Traspasos'}[S.subComp||'all'])+')</button>'+
-      '<span style="font-size:11px;color:#666">Genera un solo PDF con los '+filteredE.length+' comprobantes mostrados (cada uno en su página). Cambia el filtro de arriba para elegir el tipo.</span>'+
+      '<button onclick="imprimirComprobantes(S.subComp||\'all\')" class="btn-orange" style="font-size:12px"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-0.14em;margin-right:4px"><path d="M6 9V3h12v6M6 18H4a2 2 0 01-2-2v-3a2 2 0 012-2h16a2 2 0 012 2v3a2 2 0 01-2 2h-2M8 14h8v6H8z"/></svg> Comprobantes PDF ('+({all:'Todos',I:'Ingresos',E:'Egresos',T:'Traspasos'}[S.subComp||'all'])+')</button>'+
+      '<button onclick="imprimirLibroDiario(S.subComp||\'all\')" class="btn-blue" style="font-size:12px"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-0.14em;margin-right:4px"><path d="M4 19.5A2.5 2.5 0 016.5 17H20M4 4.5A2.5 2.5 0 016.5 2H20v20H6.5A2.5 2.5 0 014 19.5z"/></svg> Libro Diario (PDF)</button>'+
+      '<span style="font-size:11px;color:#666">"Comprobantes PDF": cada asiento en su página. "Libro Diario": registro cronológico continuo. Ambos respetan el filtro de arriba.</span>'+
     '</div>':'')+
     (filteredE.length>0?'<div class="info iy" style="margin-bottom:8px;font-size:11px">Mostrando '+filteredE.length+' comprobantes. Usa <strong>Ver</strong> para visualizar/imprimir uno solo. Los marcados con <svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-0.12em"><path d="M18 6L6 18M6 6l12 12"/></svg> tienen diferencia y deben revisarse.</div>':'')+
     (cards||'<div class="info iy">No hay comprobantes.</div>')+
@@ -6708,6 +6713,51 @@ function imprimirMayores(tipo){
   var etq={all:'Todos',A:'Activo',P:'Pasivo',PT:'Patrimonio',I:'Ingreso',G:'Gasto'}[tipo]||'Todos';
   var win=window.open('','_blank','width=900,height=760');if(!win){alert('Permite ventanas emergentes para descargar el PDF.');return;}
   win.document.write(doc);win.document.close();win.onload=function(){win.document.title='LibrosMayores-'+etq+'-'+nombre;win.print();};
+}
+// ═══ LIBRO DIARIO — registro cronológico continuo ════════
+function buildLibroDiarioHTML(tipo){
+  var cfg=emp().cfg;var E=calcAll().E;var numMap=comprobanteNums(E);
+  var ciudad=(cfg.ciudad||'').trim();var ciudadTxt=ciudad?(ciudad+' - BOLIVIA'):'BOLIVIA';
+  var list=E.filter(function(e){return (e.lines&&e.lines.length)&&(!tipo||tipo==='all'||e.tipo===tipo);});
+  var totDG=0,totHG=0;
+  var body=list.map(function(e){
+    var td=r2((e.lines||[]).reduce(function(s,l){return r2(s+r2(l.d));},0));
+    var th=r2((e.lines||[]).reduce(function(s,l){return r2(s+r2(l.h));},0));
+    totDG=r2(totDG+td);totHG=r2(totHG+th);
+    var num=numMap[e.id]||e.id;var glosa=(e.glosa&&String(e.glosa).trim())||e.desc||'';
+    var lns=(e.lines||[]).filter(function(l){return l.d||l.h;}).map(function(l){
+      return '<tr>'+
+        '<td style="padding:2px 6px;font-family:monospace;font-size:9px;color:#555">'+l.c+'</td>'+
+        '<td style="padding:2px 6px;font-size:10px">'+(l.h?'<span style="display:inline-block;width:14px"></span>':'')+acctName(l.c)+'</td>'+
+        '<td style="padding:2px 6px;text-align:right;font-family:monospace">'+(l.d?fmt(r2(l.d)):'')+'</td>'+
+        '<td style="padding:2px 6px;text-align:right;font-family:monospace">'+(l.h?fmt(r2(l.h)):'')+'</td>'+
+      '</tr>';
+    }).join('');
+    return '<tbody style="break-inside:avoid">'+
+      '<tr style="background:#F0F4F8"><td colspan="4" style="padding:4px 6px;font-weight:700;font-size:10px;border-top:1px solid #999">'+num+' — '+glosa+'</td></tr>'+
+      lns+
+      '<tr><td colspan="2" style="padding:2px 6px;text-align:right;font-weight:700;font-size:9px;border-bottom:1px solid #ccc">Subtotal</td><td style="padding:2px 6px;text-align:right;font-family:monospace;font-weight:700;border-bottom:1px solid #ccc">'+fmt(td)+'</td><td style="padding:2px 6px;text-align:right;font-family:monospace;font-weight:700;border-bottom:1px solid #ccc">'+fmt(th)+'</td></tr>'+
+    '</tbody>';
+  }).join('');
+  return '<div>'+
+    '<div style="text-align:center;margin-bottom:8px"><div style="font-weight:700;font-size:15px">LIBRO DIARIO</div><div style="font-size:11px;color:#555">'+(cfg.razonSocial||'')+' | NIT: '+(cfg.nit||'—')+' | Gestión '+(cfg.gestion||'')+' | '+ciudadTxt+'</div></div>'+
+    '<table style="width:100%;border-collapse:collapse;font-size:10px">'+
+    '<thead><tr style="background:#111;color:#fff"><th style="text-align:left;padding:4px 6px">CÓDIGO</th><th style="text-align:left;padding:4px 6px">CUENTA / DETALLE</th><th style="text-align:right;padding:4px 6px">DEBE</th><th style="text-align:right;padding:4px 6px">HABER</th></tr></thead>'+
+    body+
+    '<tbody><tr style="background:#000;color:#fff;font-weight:700"><td colspan="2" style="padding:5px 6px">TOTALES GENERALES</td><td style="text-align:right;padding:5px 6px;font-family:monospace">'+fmt(totDG)+'</td><td style="text-align:right;padding:5px 6px;font-family:monospace">'+fmt(totHG)+'</td></tr></tbody>'+
+    '</table></div>';
+}
+function imprimirLibroDiario(tipo){
+  var E=calcAll().E;
+  var list=E.filter(function(e){return (e.lines&&e.lines.length)&&(!tipo||tipo==='all'||e.tipo===tipo);});
+  if(!list.length){alert('No hay asientos para el Libro Diario de ese tipo.');return;}
+  var etq={all:'Todos',I:'Ingresos',E:'Egresos',T:'Traspasos'}[tipo]||'Todos';
+  var doc=buildPrintDocument([buildLibroDiarioHTML(tipo)]);
+  var foot='<div style="position:fixed;bottom:9.5mm;left:8mm;font-size:8px;color:#888;font-weight:700">LIBRO DIARIO — '+etq+'</div>';
+  doc=doc.replace('</body>', foot+'</body>');
+  var cfg=emp().cfg;var nombre=(cfg.razonSocial||'LibroDiario').replace(/[^a-zA-Z0-9]/g,'_').substring(0,24);
+  var win=window.open('','_blank','width=900,height=760');if(!win){alert('Permite ventanas emergentes para descargar el PDF.');return;}
+  win.document.write(doc);win.document.close();win.onload=function(){win.document.title='LibroDiario-'+etq+'-'+nombre;win.print();};
 }
 function exportPDFCompleto(){
   var c=calcAll();var cfg=emp().cfg;
