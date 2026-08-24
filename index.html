@@ -186,8 +186,12 @@ body.dark-mode .emp-box{background:#161616!important;color:#E2E8F0!important}
 // VERSIÓN DEL SISTEMA — Única fuente de verdad
 // Al aprobar una versión: subir VERSION y agregar una entrada al inicio de CHANGELOG.
 // ══════════════════════════════════════════════════════════
-const VERSION='V3.19';
+const VERSION='V3.20';
 const CHANGELOG=[
+  {v:'V3.20', fecha:'2026-08-11', cambios:[
+    'Ingresos: se agregó la misma opción "Forma de contabilización" que en RCV Compras, para las ventas cargadas por archivo (XLSX). Puedes elegir: (1) un solo asiento anual con todas las ventas, (2) un asiento por mes, o (3) un asiento por cada factura de venta.',
+    'Los tres modos cuadran y dan el mismo resultado en los Estados Financieros; solo cambia el detalle de los comprobantes de ingresos. Los ingresos manuales no se ven afectados (siguen generando su propio asiento).'
+  ]},
   {v:'V3.19', fecha:'2026-08-11', cambios:[
     'RCV Compras: nueva opción "Forma de contabilización del RCV". Puedes elegir entre: (1) un solo asiento anual con todas las facturas (como estaba antes), (2) un asiento por mes agrupando las facturas de cada mes, o (3) un asiento por cada factura.',
     'El panel indica si todas las facturas tienen cuenta asignada o cuántas usan "Gastos Varios" (sin cuenta específica), para revisarlas antes de contabilizar.',
@@ -1488,24 +1492,37 @@ function genEntries(){
   // INGRESOS XLSX (ventas cargadas)
   const ventasXLSX=e.ventasData||[];
   if(ventasXLSX.length>0){
-    const conV={};
-    ventasXLSX.forEach((v,i)=>{
-      const cuenta=(e.ventasOverrides&&e.ventasOverrides[i])||v.cuenta||'411002004';
-      const tot=r2(v.total);
-      const ingNeto=r2(tot*0.87);
-      const dfIva=r2(tot*0.13);
-      const it=r2(tot*0.03);
-      var _vp=(getVentasPayments()[i])||'efectivo';var _cd=_vp==='porcobrar'?'113001001':_vp==='banco'?'111002001':'111001001';if(!conV[_cd])conV[_cd]={d:0,h:0};conV[_cd].d=r2(conV[_cd].d+tot);
-      if(!conV[cuenta])conV[cuenta]={d:0,h:0};conV[cuenta].h=r2(conV[cuenta].h+ingNeto);
-      if(!conV['214001001'])conV['214001001']={d:0,h:0};conV['214001001'].h=r2(conV['214001001'].h+dfIva);
-      if(!conV['525002001'])conV['525002001']={d:0,h:0};conV['525002001'].d=r2(conV['525002001'].d+it);
-      if(!conV['214004001'])conV['214004001']={d:0,h:0};conV['214004001'].h=r2(conV['214004001'].h+it);
-    });
-    const tdV=r2(Object.values(conV).reduce((s,v)=>r2(s+v.d),0));
-    const thV=r2(Object.values(conV).reduce((s,v)=>r2(s+v.h),0));
-    const diffV=r2(tdV-thV);
-    if(Math.abs(diffV)>0.001){if(diffV>0){if(!conV['441004001'])conV['441004001']={d:0,h:0};conV['441004001'].h=r2((conV['441004001'].h||0)+diffV);}else{if(!conV['561004001'])conV['561004001']={d:0,h:0};conV['561004001'].d=r2((conV['561004001'].d||0)-diffV);}}
-    E.push({id:'VXLS',tipo:'I',desc:'COMPROBANTE DE INGRESOS — VENTAS (XLSX)',lines:Object.entries(conV).map(([c,v])=>({c,d:v.d,h:v.h}))});
+    const vov=e.ventasOverrides||{};
+    const vpays=getVentasPayments();
+    // Construye las líneas (balanceadas) de un conjunto de ventas.
+    function ventasLinesFor(list){
+      const conV={};
+      list.forEach(function(v){
+        var i=ventasXLSX.indexOf(v);
+        var cuenta=(vov&&vov[i])||v.cuenta||'411002004';
+        var tot=r2(v.total);var ingNeto=r2(tot*0.87);var dfIva=r2(tot*0.13);var it=r2(tot*0.03);
+        var _vp=(vpays[i])||'efectivo';var _cd=_vp==='porcobrar'?'113001001':_vp==='banco'?'111002001':'111001001';
+        if(!conV[_cd])conV[_cd]={d:0,h:0};conV[_cd].d=r2(conV[_cd].d+tot);
+        if(!conV[cuenta])conV[cuenta]={d:0,h:0};conV[cuenta].h=r2(conV[cuenta].h+ingNeto);
+        if(!conV['214001001'])conV['214001001']={d:0,h:0};conV['214001001'].h=r2(conV['214001001'].h+dfIva);
+        if(!conV['525002001'])conV['525002001']={d:0,h:0};conV['525002001'].d=r2(conV['525002001'].d+it);
+        if(!conV['214004001'])conV['214004001']={d:0,h:0};conV['214004001'].h=r2(conV['214004001'].h+it);
+      });
+      var tdV=r2(Object.values(conV).reduce((s,v)=>r2(s+v.d),0));
+      var thV=r2(Object.values(conV).reduce((s,v)=>r2(s+v.h),0));
+      var diffV=r2(tdV-thV);
+      if(Math.abs(diffV)>0.001){if(diffV>0){if(!conV['441004001'])conV['441004001']={d:0,h:0};conV['441004001'].h=r2((conV['441004001'].h||0)+diffV);}else{if(!conV['561004001'])conV['561004001']={d:0,h:0};conV['561004001'].d=r2((conV['561004001'].d||0)-diffV);}}
+      return Object.entries(conV).map(([c,v])=>({c,d:v.d,h:v.h}));
+    }
+    var ventasMode=(e.cfg&&e.cfg.ventasMode)||'anual';
+    if(ventasMode==='factura'){
+      ventasXLSX.forEach(function(v){var i=ventasXLSX.indexOf(v);var lines=ventasLinesFor([v]);if(lines.length)E.push({id:'VXLS'+i,tipo:'I',desc:'COMPROBANTE INGRESO — '+String(v.razon||'Venta').slice(0,40)+(v.fecha?(' | '+v.fecha):''),lines:lines});});
+    } else if(ventasMode==='mensual'){
+      var vg={};ventasXLSX.forEach(function(v){var mk=rcvMonthKey(v.fecha);(vg[mk]=vg[mk]||[]).push(v);});
+      Object.keys(vg).sort().forEach(function(mk){var lines=ventasLinesFor(vg[mk]);if(lines.length)E.push({id:'VXLS_'+mk,tipo:'I',desc:'COMPROBANTE INGRESOS — VENTAS '+rcvMonthLabel(mk),lines:lines});});
+    } else {
+      var lines=ventasLinesFor(ventasXLSX);if(lines.length)E.push({id:'VXLS',tipo:'I',desc:'COMPROBANTE DE INGRESOS — VENTAS (XLSX)',lines:lines});
+    }
   }
 
   // INGRESOS MANUALES — 87% ingreso, 13% DF, 3% IT sobre total
@@ -2227,6 +2244,13 @@ function renderIngresos(){
     '</div>'+
     (ventas.length?
       '<div class="info ig" style="margin-bottom:6px">Total ventas: <strong>'+fmt(totVentas)+' Bs</strong></div>'+
+      (function(){var vm=(emp().cfg&&emp().cfg.ventasMode)||'anual';return '<div style="display:flex;align-items:center;gap:10px;margin:0 0 8px;padding:10px 12px;background:#ECFDF5;border:1px solid #A7F3D0;border-radius:8px;flex-wrap:wrap">'+
+        '<span style="font-size:12px;font-weight:700;color:#065F46"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-0.14em;margin-right:4px"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg> Forma de contabilización de Ingresos:</span>'+
+        '<select onchange="emp().cfg.ventasMode=this.value;saveLS();re()" style="font-size:12px;border:1px solid #6EE7B7;border-radius:5px;padding:5px 8px;background:#fff;font-weight:600">'+
+          '<option value="anual"'+(vm==='anual'?' selected':'')+'>Un solo asiento anual (todas las ventas)</option>'+
+          '<option value="mensual"'+(vm==='mensual'?' selected':'')+'>Un asiento por mes</option>'+
+          '<option value="factura"'+(vm==='factura'?' selected':'')+'>Un asiento por cada factura</option>'+
+        '</select></div>';})()+
       '<div style="background:#F2F2F2;border-radius:6px;padding:8px 10px;margin-bottom:6px;display:flex;gap:8px;align-items:center;flex-wrap:wrap">'+
         '<label style="font-size:11px;cursor:pointer;display:flex;align-items:center;gap:5px"><input type="checkbox" id="iselall" onchange="toggleAllVentas(this.checked)" style="cursor:pointer"/> Todas</label>'+
         '<span id="vsel-count" style="font-size:11px;color:#111111;font-weight:600"></span>'+
