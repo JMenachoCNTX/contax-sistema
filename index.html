@@ -186,8 +186,12 @@ body.dark-mode .emp-box{background:#161616!important;color:#E2E8F0!important}
 // VERSIÓN DEL SISTEMA — Única fuente de verdad
 // Al aprobar una versión: subir VERSION y agregar una entrada al inicio de CHANGELOG.
 // ══════════════════════════════════════════════════════════
-const VERSION='V3.17';
+const VERSION='V3.18';
 const CHANGELOG=[
+  {v:'V3.18', fecha:'2026-08-11', cambios:[
+    'NUMMEROS IA: ahora puedes configurar una segunda API Key SOLO para imágenes/capturas (Visión), aparte de la principal. Por ejemplo: DeepSeek para el chat normal y Gemini para leer capturas del SIAT y adjuntar imágenes.',
+    'La key de Visión se usa automáticamente al "Rellenar desde captura del SIAT" y al adjuntar una imagen en el chat. Si no configuras key de Visión, se usa la principal (como antes). Ambas keys se sincronizan con el equipo.'
+  ]},
   {v:'V3.17', fecha:'2026-08-11', cambios:[
     'Configuración: nuevo botón "Rellenar desde captura del SIAT". Subes una captura de "Información del Contribuyente" y la IA (con visión) extrae y rellena Razón Social, NIT, Representante Legal, C.I. del Representante y Actividad Económica (solo las que están VIGENTES). Todos los campos quedan editables manualmente. Requiere API key en "NUMMEROS IA" (Claude, ChatGPT o Gemini; DeepSeek no admite imágenes).',
     'Nuevo campo "Representante Legal" (nombre) en Configuración. Para empresas S.A. / S.R.L., ese nombre y su C.I. ahora aparecen como firmante en los Estados Financieros (antes se mostraba la Razón Social). Si se deja vacío, se mantiene el comportamiento anterior (Razón Social + NIT).'
@@ -910,7 +914,9 @@ function globalSnapshot(){
     gsheet_url:localStorage.getItem('cx_gsheet_url')||null,
     gsheet_colcfg:localStorage.getItem('cx_gsheet_colcfg')||null,
     ia_key:localStorage.getItem('ia_key')||null,
-    ia_prov:localStorage.getItem('ia_prov')||null
+    ia_prov:localStorage.getItem('ia_prov')||null,
+    ia_vkey:localStorage.getItem('ia_vkey')||null,
+    ia_vprov:localStorage.getItem('ia_vprov')||null
   };
 }
 function applyGlobal(g){
@@ -926,6 +932,8 @@ function applyGlobal(g){
   if(g.gsheet_colcfg)try{localStorage.setItem('cx_gsheet_colcfg',g.gsheet_colcfg);}catch(e){}
   if(g.ia_key)try{localStorage.setItem('ia_key',g.ia_key);}catch(e){}
   if(g.ia_prov)try{localStorage.setItem('ia_prov',g.ia_prov);}catch(e){}
+  if(g.ia_vkey)try{localStorage.setItem('ia_vkey',g.ia_vkey);}catch(e){}
+  if(g.ia_vprov)try{localStorage.setItem('ia_vprov',g.ia_vprov);}catch(e){}
   try{localStorage.setItem('contax_v2',JSON.stringify({empresas:S.empresas,activeId:S.activeId,planCuentas:S.planCuentas,ufvData:S.ufvData,nits:S.nits}));}catch(e){}
 }
 function fbPushGlobal(){
@@ -968,7 +976,7 @@ function scheduleSyncGlobal(){
       // claves locales/personales que NO se sincronizan
       if(k==='cx_session'||k==='cu'||k==='ca'||k==='cx_darkmode'||k==='ai_reporte'||k==='cx_access'||k==='cx_override_code'||k.indexOf('ia_msgs')===0)return;
       if(k==='cx_authusers'||k==='cx_perms'){scheduleAcceso();return;}
-      if(k==='cx_vidautil'||k==='cx_plans'||k==='lista_eeff'||k==='cx_gsheet_url'||k==='cx_gsheet_colcfg'||k==='ia_key'||k==='ia_prov'){scheduleSyncGlobal();return;}
+      if(k==='cx_vidautil'||k==='cx_plans'||k==='lista_eeff'||k==='cx_gsheet_url'||k==='cx_gsheet_colcfg'||k==='ia_key'||k==='ia_prov'||k==='ia_vkey'||k==='ia_vprov'){scheduleSyncGlobal();return;}
       if(k==='contax_v2'){scheduleSync();scheduleSyncGlobal();return;}
       if(k.indexOf('cx_')===0&&S.activeId&&k.indexOf('_'+S.activeId)>-1){scheduleSync();}
     }catch(e){}
@@ -1804,13 +1812,20 @@ function renderConfig(c){
   '</div>';
 }
 
+// Credenciales para tareas con imagen: usa la key de VISIÓN si está configurada; si no, la principal.
+function iaVisionCreds(){
+  var vk=localStorage.getItem('ia_vkey')||'';
+  var vp=localStorage.getItem('ia_vprov')||'gemini';
+  if(vk)return {key:vk,prov:vp,dedicated:true};
+  return {key:localStorage.getItem('ia_key')||'',prov:localStorage.getItem('ia_prov')||'claude',dedicated:false};
+}
 function extractConfigFromImage(input){
   var f=input&&input.files&&input.files[0];if(!f)return;
   if(f.type.indexOf('image/')!==0){alert('Selecciona una imagen.');input.value='';return;}
   if(f.size>5*1024*1024){alert('La imagen es muy grande (máx 5 MB).');input.value='';return;}
-  var key=localStorage.getItem('ia_key')||'';var prov=localStorage.getItem('ia_prov')||'claude';
-  if(!key){alert('Primero configura tu API key en la pestaña "NUMMEROS IA".');input.value='';return;}
-  if(prov==='deepseek'){alert('DeepSeek no admite imágenes. Cambia a Claude, ChatGPT o Gemini en "NUMMEROS IA".');input.value='';return;}
+  var _cr=iaVisionCreds();var key=_cr.key,prov=_cr.prov;
+  if(!key){alert('Configura una API key con visión (Gemini, Claude o ChatGPT) en la pestaña "NUMMEROS IA".');input.value='';return;}
+  if(prov==='deepseek'){alert('DeepSeek no admite imágenes. Configura una API key de Visión (Gemini recomendado) en "NUMMEROS IA".');input.value='';return;}
   var rd=new FileReader();
   rd.onload=function(){
     var url=rd.result;var m=/^data:([^;]+);base64,(.*)$/.exec(url);var mime=m?m[1]:'image/png',b64=m?m[2]:'';
@@ -4080,6 +4095,18 @@ function renderIAApi(c){
         ?'<input type="password" id="ia-k" value="'+key+'" placeholder="Pega tu API key aquí" onblur="localStorage.setItem(\'ia_key\',this.value);re()"/>'
         :'<input type="password" value="'+(key?'••••••••••':'')+'" disabled placeholder="'+(key?'Configurada':'Aún no configurada por el administrador')+'" style="background:#F1F5F9;color:#64748B"/>')+
     '</div></div>'+
+    // Segunda key SOLO para imágenes/capturas (visión)
+    (function(){var vprov=localStorage.getItem('ia_vprov')||'gemini';var vkey=localStorage.getItem('ia_vkey')||'';return ''+
+      '<div style="background:#F0F9FF;border:1px solid #BAE6FD;border-radius:8px;padding:10px 12px;margin-bottom:12px">'+
+      '<div style="font-size:11px;font-weight:700;color:#0369A1;margin-bottom:6px"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-0.14em;margin-right:4px"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg> API Key para imágenes / capturas (opcional)</div>'+
+      '<div style="font-size:10px;color:#0369A1;margin-bottom:8px">Si tu proveedor principal no lee imágenes (como DeepSeek), configura aquí una key aparte (Gemini recomendado). Se usará SOLO al subir capturas; el chat normal seguirá usando el proveedor de arriba.</div>'+
+      '<div class="g2">'+
+      '<div><label>Proveedor de Visión</label><select id="ia-vp" onchange="localStorage.setItem(\'ia_vprov\',this.value)"'+(isCurrentAdmin()?'':' disabled')+'><option value="gemini"'+(vprov==='gemini'?' selected':'')+'>Gemini (Google)</option><option value="claude"'+(vprov==='claude'?' selected':'')+'>Claude (Anthropic)</option><option value="openai"'+(vprov==='openai'?' selected':'')+'>ChatGPT (OpenAI)</option></select></div>'+
+      '<div><label>API Key de Visión</label>'+
+        (isCurrentAdmin()
+          ?'<input type="password" id="ia-vk" value="'+vkey+'" placeholder="Pega tu API key de Gemini aquí" onblur="localStorage.setItem(\'ia_vkey\',this.value);re()"/>'
+          :'<input type="password" value="'+(vkey?'••••••••••':'')+'" disabled placeholder="'+(vkey?'Configurada':'Aún no configurada')+'" style="background:#F1F5F9;color:#64748B"/>')+
+      '</div></div></div>';})()+
     '<div style="background:#F8FAFC;border:1px solid #E2E8F0;border-radius:8px;padding:12px;height:280px;overflow-y:auto;margin-bottom:8px" id="ia-chat">'+
     (chat||'<div style="color:#888;text-align:center;padding:40px"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-0.14em;margin-right:4px"><path d="M21 12a8 8 0 01-11.5 7.2L4 20l1-4.5A8 8 0 1121 12z"/></svg> Inicia una conversación.<br><small>La IA tiene acceso a todos los datos de tu balance.</small></div>')+
     '</div>'+
@@ -4965,9 +4992,11 @@ async function sendFloatIA(){
   const inp=document.getElementById('fc-input');const msg=(inp&&inp.value?inp.value:'').trim();
   const img=window._iaImg;
   if(!msg&&!img)return;
-  const key=localStorage.getItem('ia_key')||'';const prov=localStorage.getItem('ia_prov')||'claude';
-  if(!key){alert('Configura tu API key en la pestaña NUMMEROS IA');return;}
-  if(img&&prov==='deepseek'){alert('DeepSeek no admite imágenes. Cambia a Claude, ChatGPT o Gemini para analizar una imagen.');return;}
+  // Con imagen adjunta usa la key de VISIÓN (Gemini); sin imagen, la principal (p. ej. DeepSeek).
+  var _cr=img?iaVisionCreds():{key:localStorage.getItem('ia_key')||'',prov:localStorage.getItem('ia_prov')||'claude'};
+  const key=_cr.key;const prov=_cr.prov;
+  if(!key){alert(img?'Configura una API key con visión (Gemini) en la pestaña NUMMEROS IA':'Configura tu API key en la pestaña NUMMEROS IA');return;}
+  if(img&&prov==='deepseek'){alert('El proveedor de visión no admite imágenes. Configura una API key de Visión (Gemini recomendado) en NUMMEROS IA.');return;}
   const msgs=getIaMsgs();
   const c=calcAll();const cfg=emp().cfg;
   const ctx=iaContext();
