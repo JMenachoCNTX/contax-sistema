@@ -186,8 +186,12 @@ body.dark-mode .emp-box{background:#161616!important;color:#E2E8F0!important}
 // VERSIÓN DEL SISTEMA — Única fuente de verdad
 // Al aprobar una versión: subir VERSION y agregar una entrada al inicio de CHANGELOG.
 // ══════════════════════════════════════════════════════════
-const VERSION='V3.16';
+const VERSION='V3.17';
 const CHANGELOG=[
+  {v:'V3.17', fecha:'2026-08-11', cambios:[
+    'Configuración: nuevo botón "Rellenar desde captura del SIAT". Subes una captura de "Información del Contribuyente" y la IA (con visión) extrae y rellena Razón Social, NIT, Representante Legal, C.I. del Representante y Actividad Económica (solo las que están VIGENTES). Todos los campos quedan editables manualmente. Requiere API key en "NUMMEROS IA" (Claude, ChatGPT o Gemini; DeepSeek no admite imágenes).',
+    'Nuevo campo "Representante Legal" (nombre) en Configuración. Para empresas S.A. / S.R.L., ese nombre y su C.I. ahora aparecen como firmante en los Estados Financieros (antes se mostraba la Razón Social). Si se deja vacío, se mantiene el comportamiento anterior (Razón Social + NIT).'
+  ]},
   {v:'V3.16', fecha:'2026-08-11', cambios:[
     'Menú lateral: al hacer clic fuera del menú, ahora se colapsa a una barra de solo íconos (antes desaparecía por completo). Al pasar el cursor sobre un ícono se muestra el nombre de la pestaña y un efecto 3D. El colapso/expansión tiene animación.',
     'Configuración: se corrigió la UFV de la Fecha de Inicio. Ahora, si ya cargaste las UFV, la UFV de la fecha por defecto se completa sola al abrir Configuración (antes había que cambiar la fecha ida y vuelta para que apareciera).'
@@ -1290,7 +1294,7 @@ const DEF_TR={caja:0,banco:0,cfIva:0,iueComp:0,vehiculo:0,depVehiculo:0,muebles:
 const ACCT_HIER={"111001001": {"C": 1, "G": 1, "SG": 1, "CP": "001", "CA": "001"}, "111002001": {"C": 1, "G": 1, "SG": 1, "CP": "002", "CA": "001"}, "116001001": {"C": 1, "G": 1, "SG": 6, "CP": "001", "CA": "001"}, "116006001": {"C": 1, "G": 1, "SG": 6, "CP": "006", "CA": "001"}, "123003001": {"C": 1, "G": 2, "SG": 3, "CP": "003", "CA": "001"}, "123004001": {"C": 1, "G": 2, "SG": 3, "CP": "004", "CA": "001"}, "123006001": {"C": 1, "G": 2, "SG": 3, "CP": "006", "CA": "001"}, "123007001": {"C": 1, "G": 2, "SG": 3, "CP": "007", "CA": "001"}, "123009001": {"C": 1, "G": 2, "SG": 3, "CP": "009", "CA": "001"}, "123010001": {"C": 1, "G": 2, "SG": 3, "CP": "010", "CA": "001"}, "124001001": {"C": 1, "G": 2, "SG": 4, "CP": "001", "CA": "001"}, "124001002": {"C": 1, "G": 2, "SG": 4, "CP": "001", "CA": "002"}, "124001003": {"C": 1, "G": 2, "SG": 4, "CP": "001", "CA": "003"}, "124001004": {"C": 1, "G": 2, "SG": 4, "CP": "001", "CA": "004"}, "124001005": {"C": 1, "G": 2, "SG": 4, "CP": "001", "CA": "005"}, "124001006": {"C": 1, "G": 2, "SG": 4, "CP": "001", "CA": "006"}, "212003001": {"C": 2, "G": 1, "SG": 2, "CP": "003", "CA": "001"}, "214001001": {"C": 2, "G": 1, "SG": 4, "CP": "001", "CA": "001"}, "214004001": {"C": 2, "G": 1, "SG": 4, "CP": "004", "CA": "001"}, "214006001": {"C": 2, "G": 1, "SG": 4, "CP": "006", "CA": "001"}, "214026001": {"C": 2, "G": 1, "SG": 4, "CP": "026", "CA": "001"}, "311001001": {"C": 3, "G": 1, "SG": 1, "CP": "001", "CA": "001"}, "311002001": {"C": 3, "G": 1, "SG": 1, "CP": "002", "CA": "001"}, "313001001": {"C": 3, "G": 1, "SG": 3, "CP": "001", "CA": "001"}, "314001001": {"C": 3, "G": 1, "SG": 4, "CP": "001", "CA": "001"}, "314002001": {"C": 3, "G": 1, "SG": 4, "CP": "002", "CA": "001"}, "411002001": {"C": 4, "G": 1, "SG": 1, "CP": "002", "CA": "001"}, "411002002": {"C": 4, "G": 1, "SG": 1, "CP": "002", "CA": "002"}, "411002003": {"C": 4, "G": 1, "SG": 1, "CP": "002", "CA": "003"}, "411002004": {"C": 4, "G": 1, "SG": 1, "CP": "002", "CA": "004"}, "411009001": {"C": 4, "G": 1, "SG": 1, "CP": "009", "CA": "001"}, "431012001": {"C": 4, "G": 3, "SG": 1, "CP": "012", "CA": "001"}, "441001001": {"C": 4, "G": 4, "SG": 1, "CP": "001", "CA": "001"}, "441002001": {"C": 4, "G": 4, "SG": 1, "CP": "002", "CA": "001"}, "441004001": {"C": 4, "G": 4, "SG": 1, "CP": "004", "CA": "001"}, "522001001": {"C": 5, "G": 2, "SG": 2, "CP": "001", "CA": "001"}, "522002001": {"C": 5, "G": 2, "SG": 2, "CP": "002", "CA": "001"}, "522003001": {"C": 5, "G": 2, "SG": 2, "CP": "003", "CA": "001"}, "522003002": {"C": 5, "G": 2, "SG": 2, "CP": "003", "CA": "002"}, "522005001": {"C": 5, "G": 2, "SG": 2, "CP": "005", "CA": "001"}, "522005002": {"C": 5, "G": 2, "SG": 2, "CP": "005", "CA": "002"}, "522005003": {"C": 5, "G": 2, "SG": 2, "CP": "005", "CA": "003"}, "522005004": {"C": 5, "G": 2, "SG": 2, "CP": "005", "CA": "004"}, "522005005": {"C": 5, "G": 2, "SG": 2, "CP": "005", "CA": "005"}, "522006001": {"C": 5, "G": 2, "SG": 2, "CP": "006", "CA": "001"}, "522008001": {"C": 5, "G": 2, "SG": 2, "CP": "008", "CA": "001"}, "522008002": {"C": 5, "G": 2, "SG": 2, "CP": "008", "CA": "002"}, "522009001": {"C": 5, "G": 2, "SG": 2, "CP": "009", "CA": "001"}, "522009002": {"C": 5, "G": 2, "SG": 2, "CP": "009", "CA": "002"}, "522011001": {"C": 5, "G": 2, "SG": 2, "CP": "011", "CA": "001"}, "522017001": {"C": 5, "G": 2, "SG": 2, "CP": "017", "CA": "001"}, "522018001": {"C": 5, "G": 2, "SG": 2, "CP": "018", "CA": "001"}, "522022001": {"C": 5, "G": 2, "SG": 2, "CP": "022", "CA": "001"}, "522023001": {"C": 5, "G": 2, "SG": 2, "CP": "023", "CA": "001"}, "522023002": {"C": 5, "G": 2, "SG": 2, "CP": "023", "CA": "002"}, "522023003": {"C": 5, "G": 2, "SG": 2, "CP": "023", "CA": "003"}, "522029001": {"C": 5, "G": 2, "SG": 2, "CP": "029", "CA": "001"}, "523002001": {"C": 5, "G": 2, "SG": 3, "CP": "002", "CA": "001"}, "523003001": {"C": 5, "G": 2, "SG": 3, "CP": "003", "CA": "001"}, "523005001": {"C": 5, "G": 2, "SG": 3, "CP": "005", "CA": "001"}, "524001001": {"C": 5, "G": 2, "SG": 4, "CP": "001", "CA": "001"}, "524001002": {"C": 5, "G": 2, "SG": 4, "CP": "001", "CA": "002"}, "524001003": {"C": 5, "G": 2, "SG": 4, "CP": "001", "CA": "003"}, "524001004": {"C": 5, "G": 2, "SG": 4, "CP": "001", "CA": "004"}, "524001005": {"C": 5, "G": 2, "SG": 4, "CP": "001", "CA": "005"}, "524001006": {"C": 5, "G": 2, "SG": 4, "CP": "001", "CA": "006"}, "525001001": {"C": 5, "G": 2, "SG": 5, "CP": "001", "CA": "001"}, "525002001": {"C": 5, "G": 2, "SG": 5, "CP": "002", "CA": "001"}, "525003001": {"C": 5, "G": 2, "SG": 5, "CP": "003", "CA": "001"}, "525004001": {"C": 5, "G": 2, "SG": 5, "CP": "004", "CA": "001"}, "525019001": {"C": 5, "G": 2, "SG": 5, "CP": "019", "CA": "001"}, "525019002": {"C": 5, "G": 2, "SG": 5, "CP": "019", "CA": "002"}, "526002001": {"C": 5, "G": 2, "SG": 6, "CP": "002", "CA": "001"}, "526002002": {"C": 5, "G": 2, "SG": 6, "CP": "002", "CA": "002"}, "532021001": {"C": 5, "G": 3, "SG": 2, "CP": "021", "CA": "001"}, "533003001": {"C": 5, "G": 3, "SG": 3, "CP": "003", "CA": "001"}, "533004001": {"C": 5, "G": 3, "SG": 3, "CP": "004", "CA": "001"}, "533004002": {"C": 5, "G": 3, "SG": 3, "CP": "004", "CA": "002"}, "534002001": {"C": 5, "G": 3, "SG": 4, "CP": "002", "CA": "001"}, "541002001": {"C": 5, "G": 4, "SG": 1, "CP": "002", "CA": "001"}, "541005001": {"C": 5, "G": 4, "SG": 1, "CP": "005", "CA": "001"}, "551009002": {"C": 5, "G": 5, "SG": 1, "CP": "009", "CA": "002"}, "561001001": {"C": 5, "G": 6, "SG": 1, "CP": "001", "CA": "001"}, "561004001": {"C": 5, "G": 6, "SG": 1, "CP": "004", "CA": "001"}};
 
 function newEmp(id){
-  return{id,cfg:{razonSocial:'',ci:'',nit:'',actividad:'',gestion:'2025',fechaInicio:'2025-01-01',fechaFin:'2025-12-31',ciudad:'SANTA CRUZ DE LA SIERRA',ufvInicio:'',ufvFin:'',contadorNombre:'',contadorCI:'',gasNoDed:'0',perdNComp:'0'},
+  return{id,cfg:{razonSocial:'',repLegal:'',ci:'',nit:'',actividad:'',gestion:'2025',fechaInicio:'2025-01-01',fechaFin:'2025-12-31',ciudad:'SANTA CRUZ DE LA SIERRA',ufvInicio:'',ufvFin:'',contadorNombre:'',contadorCI:'',gasNoDed:'0',perdNComp:'0'},
     traspaso:{...DEF_TR},rcvTxt:'',rcvData:[],rcvOverrides:{},extraApertura:[],ventasData:[],ventasOverrides:{},ingresos:[{mes:1,cuenta:'411002004',monto:''}],
     activos:[],otrosAsientos:JSON.parse(JSON.stringify(DEF_OA)),updatedAt:new Date().toISOString()};
 }
@@ -1744,6 +1748,15 @@ function renderConfig(c){
   const FIELD_ST='background:#FFFDE7;border:1.5px solid #F9A825;border-radius:5px;padding:5px 8px;font-size:12px;width:100%;outline:none;box-sizing:border-box';
 
   return '<div class="card"><div class="h2"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-0.14em;margin-right:5px"><rect x="5" y="3" width="14" height="18" rx="1"/><path d="M9 7h2M13 7h2M9 11h2M13 11h2M9 15h2M13 15h2"/></svg>Datos del Cliente</div>'+
+    // Cargar desde captura del SIAT (IA con visión)
+    '<div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;padding:10px;background:#F0F9FF;border:1px solid #BAE6FD;border-radius:8px;flex-wrap:wrap">'+
+      '<label style="display:inline-flex;align-items:center;gap:7px;background:'+(window._cfgExtracting?'#64748B':'#0891B2')+';color:#fff;padding:8px 14px;border-radius:7px;cursor:'+(window._cfgExtracting?'default':'pointer')+';font-size:12px;font-weight:600"'+(window._cfgExtracting?' ':'')+'>'+
+        (window._cfgExtracting
+          ? '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M21 12a9 9 0 1 1-6.2-8.5"/></svg> Leyendo captura…'
+          : '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg> Rellenar desde captura del SIAT')+
+        '<input type="file" accept="image/*" '+(window._cfgExtracting?'disabled':'')+' style="display:none" onchange="extractConfigFromImage(this)"/></label>'+
+      '<span style="font-size:11px;color:#0369A1;flex:1;min-width:200px">Sube la captura de "Información del Contribuyente" del SIAT y la IA rellenará Razón Social, NIT, Representante Legal, C.I. y Actividad Económica (vigentes). Requiere API key en "NUMMEROS IA".</span>'+
+    '</div>'+
     // Row 1: Razón Social + Plan de Cuentas
     '<div style="'+COL2+'">'+
       '<div><label>Razón Social</label><input type="text" value="'+(cfg.razonSocial||'')+'" onblur="emp().cfg.razonSocial=this.value;saveLS()" style="'+FIELD_ST+'"/></div>'+
@@ -1754,19 +1767,21 @@ function renderConfig(c){
         '<div style="font-size:10px;color:#888;margin-top:2px">'+S.planCuentas.length+' cuentas activas</div>'+
       '</div>'+
     '</div>'+
-    // Row 2: Actividad + C.I.
+    // Row 2: Actividad + NIT
     '<div style="'+COL2+'">'+
       '<div><label>Actividad Económica</label>'+
         '<input type="text" id="cfg-act" list="acts-list" value="'+(cfg.actividad||'')+'" onblur="emp().cfg.actividad=this.value;addAct(this.value);saveLS()" style="'+FIELD_ST+'"/>'+
         '<datalist id="acts-list">'+acts.map(function(a){return '<option value="'+a+'"/>';}).join('')+'</datalist>'+
       '</div>'+
-      '<div><label>C.I. del Representante</label><input type="text" value="'+(cfg.ci||'')+'" onblur="emp().cfg.ci=this.value;saveLS()" style="'+FIELD_ST+'"/></div>'+
-    '</div>'+
-    // Row 3: NIT + Ciudad
-    '<div style="'+COL2+'">'+
       '<div><label>NIT</label><input type="text" value="'+(cfg.nit||'')+'" onblur="emp().cfg.nit=this.value;saveLS()" style="'+FIELD_ST+'"/></div>'+
-      '<div><label>Ciudad</label><input type="text" value="'+(cfg.ciudad||'SANTA CRUZ DE LA SIERRA')+'" onblur="emp().cfg.ciudad=this.value;saveLS()" style="'+FIELD_ST+'"/></div>'+
     '</div>'+
+    // Row 3: Representante Legal (nombre) + C.I. Representante Legal
+    '<div style="'+COL2+'">'+
+      '<div><label>Representante Legal</label><input type="text" value="'+(cfg.repLegal||'').replace(/"/g,'&quot;')+'" onblur="emp().cfg.repLegal=this.value;saveLS()" placeholder="Nombre completo (firmante en EEFF)" style="'+FIELD_ST+'"/></div>'+
+      '<div><label>C.I. Representante Legal</label><input type="text" value="'+(cfg.ci||'')+'" onblur="emp().cfg.ci=this.value;saveLS()" style="'+FIELD_ST+'"/></div>'+
+    '</div>'+
+    // Row 4: Ciudad
+    '<div style="margin-bottom:8px"><label>Ciudad</label><input type="text" value="'+(cfg.ciudad||'SANTA CRUZ DE LA SIERRA').replace(/"/g,'&quot;')+'" onblur="emp().cfg.ciudad=this.value;saveLS()" style="'+FIELD_ST+'"/></div>'+
     '<div class="sep"></div><div class="h3"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-0.14em;margin-right:5px"><rect x="4" y="5" width="16" height="16" rx="2"/><path d="M4 9h16M8 3v4M16 3v4"/></svg>Período</div>'+
     // Row 4: Período
     '<div style="'+COL3+'">'+
@@ -1789,6 +1804,45 @@ function renderConfig(c){
   '</div>';
 }
 
+function extractConfigFromImage(input){
+  var f=input&&input.files&&input.files[0];if(!f)return;
+  if(f.type.indexOf('image/')!==0){alert('Selecciona una imagen.');input.value='';return;}
+  if(f.size>5*1024*1024){alert('La imagen es muy grande (máx 5 MB).');input.value='';return;}
+  var key=localStorage.getItem('ia_key')||'';var prov=localStorage.getItem('ia_prov')||'claude';
+  if(!key){alert('Primero configura tu API key en la pestaña "NUMMEROS IA".');input.value='';return;}
+  if(prov==='deepseek'){alert('DeepSeek no admite imágenes. Cambia a Claude, ChatGPT o Gemini en "NUMMEROS IA".');input.value='';return;}
+  var rd=new FileReader();
+  rd.onload=function(){
+    var url=rd.result;var m=/^data:([^;]+);base64,(.*)$/.exec(url);var mime=m?m[1]:'image/png',b64=m?m[2]:'';
+    window._cfgExtracting=true;re();
+    var prompt='Analiza esta captura del padrón del SIAT de Bolivia (Información del Contribuyente). Devuelve SOLO un JSON válido, sin texto adicional ni comillas de código, con esta forma exacta: {"razonSocial":"","nit":"","repLegal":"","repLegalCI":"","actividades":[{"codigo":"","nombre":"","estado":""}]}. Reglas: razonSocial = valor del campo "Razón Social". nit = valor del campo "NIT". repLegal = "Nombre Completo" del primer Representante Legal. repLegalCI = su "Número Documento". actividades = TODAS las actividades económicas listadas (primaria y secundaria), cada una con codigo, nombre y estado (por ejemplo "VIGENTE"). Si algún dato no aparece, deja cadena vacía.';
+    iaVision(prompt,mime,b64,url,key,prov).then(function(txt){
+      var jm=txt&&txt.match(/\{[\s\S]*\}/);if(!jm)throw new Error('La IA no devolvió datos reconocibles');
+      var d=JSON.parse(jm[0]);var cfg=emp().cfg;var filled=[];
+      if(d.razonSocial){cfg.razonSocial=String(d.razonSocial).trim();filled.push('Razón Social');}
+      if(d.nit){cfg.nit=String(d.nit).replace(/\s/g,'').trim();filled.push('NIT');}
+      if(d.repLegal){cfg.repLegal=String(d.repLegal).trim();filled.push('Representante Legal');}
+      if(d.repLegalCI){cfg.ci=String(d.repLegalCI).replace(/\s/g,'').trim();filled.push('C.I.');}
+      var acts=(d.actividades||[]).filter(function(a){return a&&/vigente/i.test(a.estado||'');});
+      if(acts.length){cfg.actividad=acts.map(function(a){return (a.nombre||'').trim();}).filter(Boolean).join('; ');filled.push('Actividad ('+acts.length+' vigente'+(acts.length>1?'s':'')+')');}
+      saveLS();window._cfgExtracting=false;re();
+      alert(filled.length?('✓ Datos extraídos: '+filled.join(', ')+'.\nRevísalos y edita lo que necesites.'):'La IA no encontró datos en la imagen. Intenta con una captura más clara.');
+    }).catch(function(e){window._cfgExtracting=false;re();alert('No se pudieron extraer los datos: '+(e&&e.message||e));});
+  };
+  rd.readAsDataURL(f);input.value='';
+}
+async function iaVision(prompt,mime,b64,url,key,prov){
+  if(prov==='claude'){
+    var r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01'},body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:900,messages:[{role:'user',content:[{type:'text',text:prompt},{type:'image',source:{type:'base64',media_type:mime,data:b64}}]}]})});
+    var d=await r.json();return (d.content&&d.content[0]&&d.content[0].text)||(d.error&&('Error: '+d.error.message))||'';
+  } else if(prov==='openai'){
+    var r=await fetch('https://api.openai.com/v1/chat/completions',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+key},body:JSON.stringify({model:'gpt-4o-mini',messages:[{role:'user',content:[{type:'text',text:prompt},{type:'image_url',image_url:{url:url}}]}]})});
+    var d=await r.json();return (d.choices&&d.choices[0]&&d.choices[0].message&&d.choices[0].message.content)||(d.error&&('Error: '+d.error.message))||'';
+  } else {
+    var r=await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key='+key,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({contents:[{parts:[{text:prompt},{inlineData:{mimeType:mime,data:b64}}]}]})});
+    var d=await r.json();return (d.candidates&&d.candidates[0]&&d.candidates[0].content&&d.candidates[0].content.parts&&d.candidates[0].content.parts[0]&&d.candidates[0].content.parts[0].text)||(d.error&&('Error: '+d.error.message))||'';
+  }
+}
 function renderApertura(){
   const tr=emp().traspaso;
   function tfA(label,k){
@@ -6105,7 +6159,7 @@ function renderNotasEEFF(c){
     nota(8,'Resultado de la Gestión',row2('Total Ingresos',fmt(tI)+' Bs')+row2('(-) Total Gastos',fmt(tG)+' Bs')+'<div style="display:flex;justify-content:space-between;padding:5px 0;border-top:2px solid #000000;font-weight:700"><span>'+(util>=0?'UTILIDAD':'PÉRDIDA')+' DE LA GESTIÓN</span><span>'+fmt(Math.abs(util))+' Bs</span></div>')+
     nota(9,'Hechos Posteriores','<p>Al momento de preparación, no se tienen conocimiento de hechos posteriores al '+isoToLocal(cfg.fechaFin)+' que afecten significativamente los presentes estados financieros.</p>')+
     '<div style="margin-top:40px;display:grid;grid-template-columns:1fr 1fr;gap:80px;max-width:500px;margin:40px auto 0">'+
-      '<div style="text-align:center"><div style="height:50px"></div><div style="border-top:1.5px solid #000000;padding-top:8px"><div style="font-weight:700;font-size:11px;color:#000000">'+cfg.razonSocial+'</div><div style="font-size:10px;color:#555">NIT: '+cfg.nit+'</div><div style="font-size:10px;color:#555">Representante Legal</div></div></div>'+
+      '<div style="text-align:center"><div style="height:50px"></div><div style="border-top:1.5px solid #000000;padding-top:8px"><div style="font-weight:700;font-size:11px;color:#000000">'+(cfg.repLegal||cfg.razonSocial)+'</div><div style="font-size:10px;color:#555">'+(cfg.repLegal?('C.I.: '+(cfg.ci||'—')):('NIT: '+cfg.nit))+'</div><div style="font-size:10px;color:#555">Representante Legal</div></div></div>'+
       '<div style="text-align:center"><div style="height:50px"></div><div style="border-top:1.5px solid #000000;padding-top:8px"><div style="font-weight:700;font-size:11px;color:#000000">'+cfg.contadorNombre+'</div><div style="font-size:10px;color:#555">C.I.: '+cfg.contadorCI+'</div><div style="font-size:10px;color:#555">Contador — CONTAX</div></div></div>'+
     '</div></div>';
 }
@@ -6207,7 +6261,9 @@ function pdfHeader(titulo){
 function pdfFirmas(c){
   var cfg=emp().cfg;
   function firma(nombre,ci,cargo){return '<div style="text-align:center"><div style="height:50px"></div><div style="border-top:1.5px solid #000000;padding-top:8px"><div style="font-weight:700;font-size:11px;color:#000000">'+nombre+'</div><div style="font-size:10px;color:#555">'+ci+'</div><div style="font-size:10px;color:#555">'+cargo+'</div></div></div>';}
-  return '<div style="margin-top:50px;page-break-inside:avoid"><div style="display:grid;grid-template-columns:1fr 1fr;gap:80px;max-width:500px;margin:0 auto">'+firma(cfg.razonSocial,'NIT: '+cfg.nit,'Representante Legal')+firma(cfg.contadorNombre,'C.I.: '+cfg.contadorCI,'Contador — CONTAX')+'</div></div>';
+  var repNom=cfg.repLegal||cfg.razonSocial;
+  var repDoc=cfg.repLegal?('C.I.: '+(cfg.ci||'—')):('NIT: '+cfg.nit);
+  return '<div style="margin-top:50px;page-break-inside:avoid"><div style="display:grid;grid-template-columns:1fr 1fr;gap:80px;max-width:500px;margin:0 auto">'+firma(repNom,repDoc,'Representante Legal')+firma(cfg.contadorNombre,'C.I.: '+cfg.contadorCI,'Contador — CONTAX')+'</div></div>';
 }
 function pdfBG(c){
   var cfg=emp().cfg;var M=c.M;var gs=c.gs;
