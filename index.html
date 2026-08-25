@@ -186,8 +186,12 @@ body.dark-mode .emp-box{background:#161616!important;color:#E2E8F0!important}
 // VERSIÓN DEL SISTEMA — Única fuente de verdad
 // Al aprobar una versión: subir VERSION y agregar una entrada al inicio de CHANGELOG.
 // ══════════════════════════════════════════════════════════
-const VERSION='V3.27';
+const VERSION='V3.28';
 const CHANGELOG=[
+  {v:'V3.28', fecha:'2026-08-11', cambios:[
+    'Exportar → PDF Completo (EEFF): ahora antes de cada estado aparece una página separadora con su nombre (Balance General, Estado de Resultados, Flujo de Efectivo, Evolución del Patrimonio, Balance de Comprobación de Sumas y Saldos, Cuadro de Activos Fijos, Notas a los Estados Financieros).',
+    'Exportar → PDF Análisis: misma página separadora antes de Resumen Tributario, Gráficos y Reporte Ejecutivo.'
+  ]},
   {v:'V3.27', fecha:'2026-08-11', cambios:[
     'Libro Diario: solución definitiva al pie de página que se encimaba con la última fila. Ahora la tabla reserva un espacio fijo al pie de CADA hoja (técnica de pie de tabla repetido), por lo que el contenido nunca se superpone con "Elaborado por CONTAX". No dependía de tu impresora ni del papel: era el pie de página flotante que no reservaba espacio en tablas largas.'
   ]},
@@ -6767,12 +6771,21 @@ function imprimirLibroDiario(tipo){
   var win=window.open('','_blank','width=900,height=760');if(!win){alert('Permite ventanas emergentes para descargar el PDF.');return;}
   win.document.write(doc);win.document.close();win.onload=function(){win.document.title='LibroDiario-'+etq+'-'+nombre;win.print();};
 }
+// Página separadora estilo carátula (título centrado entre líneas)
+function pdfDivisor(t,sub){return '<div style="display:flex;align-items:center;justify-content:center;min-height:225mm"><div style="text-align:center;max-width:80%"><div style="font-size:26px;font-weight:700;letter-spacing:.1em;border-top:2px solid #000;border-bottom:2px solid #000;padding:14px 40px">'+t+'</div>'+(sub?'<div style="font-size:12px;color:#555;margin-top:10px">'+sub+'</div>':'')+'</div></div>';}
 function exportPDFCompleto(){
   var c=calcAll();var cfg=emp().cfg;
   var nombre=(cfg.razonSocial||'').replace(/[^a-zA-Z0-9]/g,'_').substring(0,20);
-  var year=cfg.gestion||'2025';
+  var year=cfg.gestion||'2025';var subT=(cfg.razonSocial||'')+' — Gestión '+year;
   var coverPage=CARATULA_PDF?'<img src="'+CARATULA_PDF+'" style="display:block;margin:0 auto;height:250mm;width:auto;max-width:100%"/>':renderCover();
-  var sections=[coverPage,pdfBG(c),pdfER(c),pdfSS(c),pdfFlujo(c),pdfPatrimonio(c),pdfCuadroAF(),renderNotasEEFF(c)];
+  var sections=[coverPage,
+    pdfDivisor('BALANCE GENERAL',subT),pdfBG(c),
+    pdfDivisor('ESTADO DE RESULTADOS',subT),pdfER(c),
+    pdfDivisor('FLUJO DE EFECTIVO',subT),pdfFlujo(c),
+    pdfDivisor('EVOLUCIÓN DEL PATRIMONIO',subT),pdfPatrimonio(c),
+    pdfDivisor('BALANCE DE COMPROBACIÓN DE SUMAS Y SALDOS',subT),pdfSS(c),
+    pdfDivisor('CUADRO DE ACTIVOS FIJOS',subT),pdfCuadroAF(),
+    pdfDivisor('NOTAS A LOS ESTADOS FINANCIEROS',subT),renderNotasEEFF(c)];
   var doc=buildPrintDocument(sections);
   var win=window.open('','_blank','width=900,height=700');if(!win){alert('Permite ventanas emergentes.');return;}
   win.document.write(doc);win.document.close();win.onload=function(){win.document.title='EEFF-'+nombre+'-'+year;win.print();};
@@ -6783,18 +6796,17 @@ function exportContabilidadCompleta(){
   var cfg=emp().cfg;var E=calcAll().E;var numMap=comprobanteNums(E);
   var comps=E.filter(function(e){return e.lines&&e.lines.length;});
   if(!comps.length){alert('No hay asientos para exportar.');return;}
-  function divisor(t,sub){return '<div style="display:flex;align-items:center;justify-content:center;min-height:225mm"><div style="text-align:center"><div style="font-size:26px;font-weight:700;letter-spacing:.1em;border-top:2px solid #000;border-bottom:2px solid #000;padding:14px 40px">'+t+'</div>'+(sub?'<div style="font-size:12px;color:#555;margin-top:10px">'+sub+'</div>':'')+'</div></div>';}
   var subT=(cfg.razonSocial||'')+' — Gestión '+(cfg.gestion||'');
   var sections=[];
   // 1) Libro Diario
-  sections.push(divisor('LIBRO DIARIO',subT));
+  sections.push(pdfDivisor('LIBRO DIARIO',subT));
   sections.push(buildLibroDiarioHTML('all'));
   // 2) Libros Mayores
-  sections.push(divisor('LIBROS MAYORES',subT));
+  sections.push(pdfDivisor('LIBROS MAYORES',subT));
   var d=buildMayorData();
   d.groups.forEach(function(g){g.accounts.forEach(function(k){sections.push(buildMayorHTML(k,d.movsByAcct[k],d.numMap[k]));});});
   // 3) Comprobantes
-  sections.push(divisor('COMPROBANTES',subT));
+  sections.push(pdfDivisor('COMPROBANTES',subT));
   comps.forEach(function(e){sections.push(buildComprobanteHTML(e,numMap[e.id]));});
   var doc=buildPrintDocument(sections);
   var nombre=(cfg.razonSocial||'Contabilidad').replace(/[^a-zA-Z0-9]/g,'_').substring(0,24);
@@ -6812,9 +6824,12 @@ function exportPDFSingle(tipo,titulo){
   win.document.write(doc);win.document.close();win.onload=function(){win.print();};
 }
 function exportPDFAnalisis(){
-  var c=calcAll();
+  var c=calcAll();var cfg=emp().cfg;var subT=(cfg.razonSocial||'')+' — Gestión '+(cfg.gestion||'');
   var coverPage=CARATULA_PDF?'<img src="'+CARATULA_PDF+'" style="display:block;margin:0 auto;height:250mm;width:auto;max-width:100%"/>':(typeof renderCover==='function'?renderCover():'');
-  var doc=buildPrintDocument([coverPage,'<div class="pb">'+pdfTributario()+'</div>','<div class="pb">'+pdfGraficos(c)+'</div>',renderReporte(c)]);
+  var doc=buildPrintDocument([coverPage,
+    pdfDivisor('RESUMEN TRIBUTARIO',subT),pdfTributario(),
+    pdfDivisor('GRÁFICOS',subT),pdfGraficos(c),
+    pdfDivisor('REPORTE EJECUTIVO',subT),renderReporte(c)]);
   var win=window.open('','_blank');if(!win){alert('Permite ventanas emergentes.');return;}
   win.document.write(doc);win.document.close();win.onload=function(){win.print();};
 }
