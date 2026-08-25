@@ -186,8 +186,13 @@ body.dark-mode .emp-box{background:#161616!important;color:#E2E8F0!important}
 // VERSIÓN DEL SISTEMA — Única fuente de verdad
 // Al aprobar una versión: subir VERSION y agregar una entrada al inicio de CHANGELOG.
 // ══════════════════════════════════════════════════════════
-const VERSION='V3.29';
+const VERSION='V3.30';
 const CHANGELOG=[
+  {v:'V3.30', fecha:'2026-08-11', cambios:[
+    'Firma del contador en los PDF: en Configuración de cada cliente se elige el tipo de firma que se muestra al pie de cada hoja: Física (línea para firmar a mano), Sello digital con verificado, Imagen de firma del contador, o Línea compacta "Firmado digitalmente por…". Por defecto es Física; se puede cambiar por empresa en cualquier momento.',
+    'Se agregaron los campos Matrícula Profesional del contador y (para la opción Imagen) la carga de un PNG de la firma. Los datos (nombre, C.I., matrícula) salen en el sello.',
+    'Nota: el sello es la presentación VISUAL en cada hoja. La validez legal la sigue dando la única firma criptográfica que el contador aplica en Adobe con su token — así no hace falta firmar hoja por hoja.'
+  ]},
   {v:'V3.29', fecha:'2026-08-11', cambios:[
     'Libro Mayor y Comprobantes: se aplicó la misma corrección del pie de página que en el Libro Diario. Ahora reservan espacio fijo al pie de cada hoja, por lo que el contenido ya no se encima con "Elaborado por CONTAX". La fila de TOTALES pasó a ser parte del cuerpo (aparece una vez al final).'
   ]},
@@ -1349,7 +1354,7 @@ const DEF_TR={caja:0,banco:0,cfIva:0,iueComp:0,vehiculo:0,depVehiculo:0,muebles:
 const ACCT_HIER={"111001001": {"C": 1, "G": 1, "SG": 1, "CP": "001", "CA": "001"}, "111002001": {"C": 1, "G": 1, "SG": 1, "CP": "002", "CA": "001"}, "116001001": {"C": 1, "G": 1, "SG": 6, "CP": "001", "CA": "001"}, "116006001": {"C": 1, "G": 1, "SG": 6, "CP": "006", "CA": "001"}, "123003001": {"C": 1, "G": 2, "SG": 3, "CP": "003", "CA": "001"}, "123004001": {"C": 1, "G": 2, "SG": 3, "CP": "004", "CA": "001"}, "123006001": {"C": 1, "G": 2, "SG": 3, "CP": "006", "CA": "001"}, "123007001": {"C": 1, "G": 2, "SG": 3, "CP": "007", "CA": "001"}, "123009001": {"C": 1, "G": 2, "SG": 3, "CP": "009", "CA": "001"}, "123010001": {"C": 1, "G": 2, "SG": 3, "CP": "010", "CA": "001"}, "124001001": {"C": 1, "G": 2, "SG": 4, "CP": "001", "CA": "001"}, "124001002": {"C": 1, "G": 2, "SG": 4, "CP": "001", "CA": "002"}, "124001003": {"C": 1, "G": 2, "SG": 4, "CP": "001", "CA": "003"}, "124001004": {"C": 1, "G": 2, "SG": 4, "CP": "001", "CA": "004"}, "124001005": {"C": 1, "G": 2, "SG": 4, "CP": "001", "CA": "005"}, "124001006": {"C": 1, "G": 2, "SG": 4, "CP": "001", "CA": "006"}, "212003001": {"C": 2, "G": 1, "SG": 2, "CP": "003", "CA": "001"}, "214001001": {"C": 2, "G": 1, "SG": 4, "CP": "001", "CA": "001"}, "214004001": {"C": 2, "G": 1, "SG": 4, "CP": "004", "CA": "001"}, "214006001": {"C": 2, "G": 1, "SG": 4, "CP": "006", "CA": "001"}, "214026001": {"C": 2, "G": 1, "SG": 4, "CP": "026", "CA": "001"}, "311001001": {"C": 3, "G": 1, "SG": 1, "CP": "001", "CA": "001"}, "311002001": {"C": 3, "G": 1, "SG": 1, "CP": "002", "CA": "001"}, "313001001": {"C": 3, "G": 1, "SG": 3, "CP": "001", "CA": "001"}, "314001001": {"C": 3, "G": 1, "SG": 4, "CP": "001", "CA": "001"}, "314002001": {"C": 3, "G": 1, "SG": 4, "CP": "002", "CA": "001"}, "411002001": {"C": 4, "G": 1, "SG": 1, "CP": "002", "CA": "001"}, "411002002": {"C": 4, "G": 1, "SG": 1, "CP": "002", "CA": "002"}, "411002003": {"C": 4, "G": 1, "SG": 1, "CP": "002", "CA": "003"}, "411002004": {"C": 4, "G": 1, "SG": 1, "CP": "002", "CA": "004"}, "411009001": {"C": 4, "G": 1, "SG": 1, "CP": "009", "CA": "001"}, "431012001": {"C": 4, "G": 3, "SG": 1, "CP": "012", "CA": "001"}, "441001001": {"C": 4, "G": 4, "SG": 1, "CP": "001", "CA": "001"}, "441002001": {"C": 4, "G": 4, "SG": 1, "CP": "002", "CA": "001"}, "441004001": {"C": 4, "G": 4, "SG": 1, "CP": "004", "CA": "001"}, "522001001": {"C": 5, "G": 2, "SG": 2, "CP": "001", "CA": "001"}, "522002001": {"C": 5, "G": 2, "SG": 2, "CP": "002", "CA": "001"}, "522003001": {"C": 5, "G": 2, "SG": 2, "CP": "003", "CA": "001"}, "522003002": {"C": 5, "G": 2, "SG": 2, "CP": "003", "CA": "002"}, "522005001": {"C": 5, "G": 2, "SG": 2, "CP": "005", "CA": "001"}, "522005002": {"C": 5, "G": 2, "SG": 2, "CP": "005", "CA": "002"}, "522005003": {"C": 5, "G": 2, "SG": 2, "CP": "005", "CA": "003"}, "522005004": {"C": 5, "G": 2, "SG": 2, "CP": "005", "CA": "004"}, "522005005": {"C": 5, "G": 2, "SG": 2, "CP": "005", "CA": "005"}, "522006001": {"C": 5, "G": 2, "SG": 2, "CP": "006", "CA": "001"}, "522008001": {"C": 5, "G": 2, "SG": 2, "CP": "008", "CA": "001"}, "522008002": {"C": 5, "G": 2, "SG": 2, "CP": "008", "CA": "002"}, "522009001": {"C": 5, "G": 2, "SG": 2, "CP": "009", "CA": "001"}, "522009002": {"C": 5, "G": 2, "SG": 2, "CP": "009", "CA": "002"}, "522011001": {"C": 5, "G": 2, "SG": 2, "CP": "011", "CA": "001"}, "522017001": {"C": 5, "G": 2, "SG": 2, "CP": "017", "CA": "001"}, "522018001": {"C": 5, "G": 2, "SG": 2, "CP": "018", "CA": "001"}, "522022001": {"C": 5, "G": 2, "SG": 2, "CP": "022", "CA": "001"}, "522023001": {"C": 5, "G": 2, "SG": 2, "CP": "023", "CA": "001"}, "522023002": {"C": 5, "G": 2, "SG": 2, "CP": "023", "CA": "002"}, "522023003": {"C": 5, "G": 2, "SG": 2, "CP": "023", "CA": "003"}, "522029001": {"C": 5, "G": 2, "SG": 2, "CP": "029", "CA": "001"}, "523002001": {"C": 5, "G": 2, "SG": 3, "CP": "002", "CA": "001"}, "523003001": {"C": 5, "G": 2, "SG": 3, "CP": "003", "CA": "001"}, "523005001": {"C": 5, "G": 2, "SG": 3, "CP": "005", "CA": "001"}, "524001001": {"C": 5, "G": 2, "SG": 4, "CP": "001", "CA": "001"}, "524001002": {"C": 5, "G": 2, "SG": 4, "CP": "001", "CA": "002"}, "524001003": {"C": 5, "G": 2, "SG": 4, "CP": "001", "CA": "003"}, "524001004": {"C": 5, "G": 2, "SG": 4, "CP": "001", "CA": "004"}, "524001005": {"C": 5, "G": 2, "SG": 4, "CP": "001", "CA": "005"}, "524001006": {"C": 5, "G": 2, "SG": 4, "CP": "001", "CA": "006"}, "525001001": {"C": 5, "G": 2, "SG": 5, "CP": "001", "CA": "001"}, "525002001": {"C": 5, "G": 2, "SG": 5, "CP": "002", "CA": "001"}, "525003001": {"C": 5, "G": 2, "SG": 5, "CP": "003", "CA": "001"}, "525004001": {"C": 5, "G": 2, "SG": 5, "CP": "004", "CA": "001"}, "525019001": {"C": 5, "G": 2, "SG": 5, "CP": "019", "CA": "001"}, "525019002": {"C": 5, "G": 2, "SG": 5, "CP": "019", "CA": "002"}, "526002001": {"C": 5, "G": 2, "SG": 6, "CP": "002", "CA": "001"}, "526002002": {"C": 5, "G": 2, "SG": 6, "CP": "002", "CA": "002"}, "532021001": {"C": 5, "G": 3, "SG": 2, "CP": "021", "CA": "001"}, "533003001": {"C": 5, "G": 3, "SG": 3, "CP": "003", "CA": "001"}, "533004001": {"C": 5, "G": 3, "SG": 3, "CP": "004", "CA": "001"}, "533004002": {"C": 5, "G": 3, "SG": 3, "CP": "004", "CA": "002"}, "534002001": {"C": 5, "G": 3, "SG": 4, "CP": "002", "CA": "001"}, "541002001": {"C": 5, "G": 4, "SG": 1, "CP": "002", "CA": "001"}, "541005001": {"C": 5, "G": 4, "SG": 1, "CP": "005", "CA": "001"}, "551009002": {"C": 5, "G": 5, "SG": 1, "CP": "009", "CA": "002"}, "561001001": {"C": 5, "G": 6, "SG": 1, "CP": "001", "CA": "001"}, "561004001": {"C": 5, "G": 6, "SG": 1, "CP": "004", "CA": "001"}};
 
 function newEmp(id){
-  return{id,cfg:{razonSocial:'',repLegal:'',ci:'',nit:'',actividad:'',gestion:'2025',fechaInicio:'2025-01-01',fechaFin:'2025-12-31',ciudad:'SANTA CRUZ DE LA SIERRA',ufvInicio:'',ufvFin:'',contadorNombre:'',contadorCI:'',gasNoDed:'0',perdNComp:'0'},
+  return{id,cfg:{razonSocial:'',repLegal:'',ci:'',nit:'',actividad:'',gestion:'2025',fechaInicio:'2025-01-01',fechaFin:'2025-12-31',ciudad:'SANTA CRUZ DE LA SIERRA',ufvInicio:'',ufvFin:'',contadorNombre:'',contadorCI:'',contadorMat:'',firmaTipo:'fisica',firmaImg:'',gasNoDed:'0',perdNComp:'0'},
     traspaso:{...DEF_TR},rcvTxt:'',rcvData:[],rcvOverrides:{},extraApertura:[],ventasData:[],ventasOverrides:{},ingresos:[{mes:1,cuenta:'411002004',monto:''}],
     activos:[],otrosAsientos:JSON.parse(JSON.stringify(DEF_OA)),updatedAt:new Date().toISOString()};
 }
@@ -1909,10 +1914,23 @@ function renderConfig(c){
     '</div>'+
     (ui>0?'<div class="info ib" style="margin-bottom:10px">Ratio: <strong>'+uR.toFixed(6)+'</strong> → Inflación: <strong>'+r2((uR-1)*100).toFixed(4)+'%</strong> → Ajuste capital: <strong>'+fmt(r2((pn(emp().traspaso.capitalSocial)+pn(emp().traspaso.ajusteCapital))*(uR-1)))+' Bs</strong></div>':'')+
     '<div class="sep"></div><div class="h3"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-0.14em;margin-right:5px"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M14 6l4 4"/></svg>Contador</div>'+
-    '<div style="'+COL2+'">'+
-      '<div><label>Nombre completo del Contador</label><input type="text" value="'+(cfg.contadorNombre||'')+'" onblur="emp().cfg.contadorNombre=this.value;saveLS()" style="'+FIELD_ST+'"/></div>'+
+    '<div style="'+COL3+'">'+
+      '<div><label>Nombre completo del Contador</label><input type="text" value="'+(cfg.contadorNombre||'').replace(/"/g,'&quot;')+'" onblur="emp().cfg.contadorNombre=this.value;saveLS()" style="'+FIELD_ST+'"/></div>'+
       '<div><label>C.I. del Contador</label><input type="text" value="'+(cfg.contadorCI||'')+'" onblur="emp().cfg.contadorCI=this.value;saveLS()" style="'+FIELD_ST+'"/></div>'+
+      '<div><label>Matrícula Profesional</label><input type="text" value="'+(cfg.contadorMat||'').replace(/"/g,'&quot;')+'" onblur="emp().cfg.contadorMat=this.value;saveLS()" placeholder="Ej: CAUB 12345" style="'+FIELD_ST+'"/></div>'+
     '</div>'+
+    // Tipo de firma en los documentos (PDF)
+    (function(){var ft=cfg.firmaTipo||'fisica';var opt=function(v,l){return '<option value="'+v+'"'+(ft===v?' selected':'')+'>'+l+'</option>';};return '<div style="'+COL2+'">'+
+      '<div><label>Firma en los documentos (PDF)</label><select onchange="emp().cfg.firmaTipo=this.value;saveLS();re()" style="'+FIELD_ST+'">'+
+        opt('fisica','Física (línea para firmar a mano)')+
+        opt('check','Sello digital con verificado')+
+        opt('imagen','Imagen de firma del contador')+
+        opt('linea','Línea compacta "Firmado digitalmente por…"')+
+      '</select><div class="nota" style="font-size:10px">Aparece al pie de cada hoja. La validez legal la da la firma en Adobe con el token; esto es la presentación visual.</div></div>'+
+      (ft==='imagen'?'<div><label>Imagen de la firma (PNG)</label>'+
+        (cfg.firmaImg?'<div style="display:flex;align-items:center;gap:8px;margin-bottom:4px"><img src="'+cfg.firmaImg+'" style="height:34px;width:auto;border:1px solid #E2E8F0;border-radius:4px;background:#fff"/><button class="btn-del" style="font-size:10px;padding:3px 8px" onclick="emp().cfg.firmaImg=\'\';saveLS();re()">Quitar</button></div>':'')+
+        '<input type="file" accept="image/*" onchange="cargarFirmaImg(this)" style="font-size:11px"/></div>':'<div></div>')+
+    '</div>';})()+
 
   '</div>';
 }
@@ -6584,17 +6602,35 @@ function renderCover(){
       '<div style="position:absolute;bottom:22px;left:0;right:0;text-align:center"><div style="font-weight:700;font-size:11px;color:#fff;letter-spacing:.12em">SANTA CRUZ DE LA SIERRA</div><div style="font-size:10px;color:rgba(255,255,255,.7);margin-top:2px">BOLIVIA</div></div>'+
     '</div></div>';
 }
+function cargarFirmaImg(input){
+  var f=input&&input.files&&input.files[0];if(!f)return;
+  if(f.type.indexOf('image/')!==0){alert('Selecciona una imagen.');input.value='';return;}
+  if(f.size>1.5*1024*1024){alert('La imagen es muy grande (máx 1.5 MB). Usa un PNG pequeño con fondo transparente.');input.value='';return;}
+  var rd=new FileReader();rd.onload=function(){emp().cfg.firmaImg=rd.result;saveLS();re();};rd.readAsDataURL(f);
+}
+// Sello de firma del contador para el pie de cada hoja, según cfg.firmaTipo
+function firmaFooterHTML(){
+  var cfg=emp().cfg;var t=cfg.firmaTipo||'fisica';var nom=(cfg.contadorNombre||'').trim();
+  if(t==='fisica'||!nom)return '';
+  var ci=(cfg.contadorCI||'').trim();var mat=(cfg.contadorMat||'').trim();
+  var datos='C.I. '+(ci||'—')+(mat?(' · Mat. '+mat):'');
+  var chk='<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#0F6E56" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><circle cx="12" cy="12" r="9"/><path d="M8 12l2.5 2.5L16 9"/></svg>';
+  if(t==='check')return '<div style="border:1px solid #1D9E75;border-radius:4px;padding:1.5mm 2mm;display:flex;gap:4px;align-items:center;background:#E1F5EE">'+chk+'<div style="line-height:1.12"><div style="font-size:6px;color:#0F6E56">Firmado digitalmente por</div><div style="font-size:8px;font-weight:700;color:#04342C">'+nom+'</div><div style="font-size:6px;color:#0F6E56">'+datos+'</div></div></div>';
+  if(t==='imagen')return '<div style="text-align:center;line-height:1.12">'+(cfg.firmaImg?'<img src="'+cfg.firmaImg+'" style="height:14px;width:auto;display:block;margin:0 auto"/>':'')+'<div style="font-size:8px;font-weight:700">'+nom+'</div><div style="font-size:6px;color:#555">'+datos+'</div></div>';
+  return '<div style="display:flex;gap:4px;align-items:center">'+chk+'<span style="font-size:7px;color:#333">Firmado digitalmente por <strong>'+nom+'</strong> · '+datos+'</span></div>';
+}
 function buildPrintDocument(sections){
   var appCss='';try{var st=document.querySelector('style');if(st)appCss=st.textContent;}catch(e){}
-  var pageStyle=appCss+' @page{size:letter portrait;margin:7mm 8mm 12mm} @page ph{size:letter landscape;margin:7mm 8mm 12mm} .ph{page:ph} body{font-family:Segoe UI,Arial,sans-serif;font-size:10.5px;color:#0D0D0D;background:#fff;height:auto} .pb{page-break-after:always} .card{box-shadow:none;break-inside:avoid;margin-bottom:6px;padding:8px} .tbl-wrap{max-height:none!important;overflow:visible!important} thead{display:table-header-group} tr{break-inside:avoid} button,.btn,.btn-blue,.btn-green,.btn-orange,.btn-del,.btn-purple,.chat-fab,.chat-float,.nav,.hdr,.nav-toggle{display:none!important}';
+  var pageStyle=appCss+' @page{size:letter portrait;margin:7mm 8mm 15mm} @page ph{size:letter landscape;margin:7mm 8mm 15mm} .ph{page:ph} body{font-family:Segoe UI,Arial,sans-serif;font-size:10.5px;color:#0D0D0D;background:#fff;height:auto} .pb{page-break-after:always} .card{box-shadow:none;break-inside:avoid;margin-bottom:6px;padding:8px} .tbl-wrap{max-height:none!important;overflow:visible!important} thead{display:table-header-group} tr{break-inside:avoid} button,.btn,.btn-blue,.btn-green,.btn-orange,.btn-del,.btn-purple,.chat-fab,.chat-float,.nav,.hdr,.nav-toggle{display:none!important}';
   // Encabezado por sección: sólo NUMMEROS (compacto)
   var pdfHdr='<div style="display:flex;justify-content:flex-start;align-items:center;border-bottom:1px solid #000;padding-bottom:3px;margin-bottom:6px">'+
     '<img src="'+NUM_SOLO_POS+'" style="height:14px;width:auto"/>'+
   '</div>';
   // Pie de página CONTAX (fijo, se repite en cada página; compacto)
-  var pdfFoot='<div style="position:fixed;bottom:0;left:0;right:0;height:9mm;display:flex;justify-content:space-between;align-items:center;padding:1.5mm 3mm 0;border-top:1px solid #999">'+
-    '<span style="font-size:8px;color:#555">Elaborado por <strong style="color:#111;letter-spacing:.02em">CONTAX</strong></span>'+
-    '<img src="'+CTX_ISO+'" style="height:15px;width:auto"/>'+
+  var pdfFoot='<div style="position:fixed;bottom:0;left:0;right:0;min-height:9mm;display:flex;justify-content:space-between;align-items:flex-end;gap:8px;padding:1.5mm 3mm 1mm;border-top:1px solid #999">'+
+    '<span style="font-size:8px;color:#555;white-space:nowrap">Elaborado por <strong style="color:#111;letter-spacing:.02em">CONTAX</strong></span>'+
+    '<div style="flex:1;display:flex;justify-content:center">'+firmaFooterHTML()+'</div>'+
+    '<img src="'+CTX_ISO+'" style="height:15px;width:auto;flex-shrink:0"/>'+
   '</div>';
   var body=sections.map(function(s,i){
     var str=String(s);
