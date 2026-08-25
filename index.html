@@ -186,8 +186,11 @@ body.dark-mode .emp-box{background:#161616!important;color:#E2E8F0!important}
 // VERSIÓN DEL SISTEMA — Única fuente de verdad
 // Al aprobar una versión: subir VERSION y agregar una entrada al inicio de CHANGELOG.
 // ══════════════════════════════════════════════════════════
-const VERSION='V3.28';
+const VERSION='V3.29';
 const CHANGELOG=[
+  {v:'V3.29', fecha:'2026-08-11', cambios:[
+    'Libro Mayor y Comprobantes: se aplicó la misma corrección del pie de página que en el Libro Diario. Ahora reservan espacio fijo al pie de cada hoja, por lo que el contenido ya no se encima con "Elaborado por CONTAX". La fila de TOTALES pasó a ser parte del cuerpo (aparece una vez al final).'
+  ]},
   {v:'V3.28', fecha:'2026-08-11', cambios:[
     'Exportar → PDF Completo (EEFF): ahora antes de cada estado aparece una página separadora con su nombre (Balance General, Estado de Resultados, Flujo de Efectivo, Evolución del Patrimonio, Balance de Comprobación de Sumas y Saldos, Cuadro de Activos Fijos, Notas a los Estados Financieros).',
     'Exportar → PDF Análisis: misma página separadora antes de Resumen Tributario, Gráficos y Reporte Ejecutivo.'
@@ -6630,8 +6633,8 @@ function buildComprobanteHTML(e,num){
     '</div>'+
     '<div style="font-size:11px;padding:4px 0 8px;border-bottom:1px dashed #ccc;margin-bottom:8px"><strong>GLOSA:</strong> '+glosa+'</div>'+
     '<table style="width:100%;border-collapse:collapse;font-size:11px"><thead><tr style="background:#111;color:#fff"><th style="text-align:left;padding:5px 8px">CUENTA</th><th style="text-align:left;padding:5px 8px">NOMBRE</th><th style="text-align:right;padding:5px 8px">DEBE</th><th style="text-align:right;padding:5px 8px">HABER</th></tr></thead>'+
-    '<tbody>'+rows+'</tbody>'+
-    '<tfoot><tr style="background:#000;color:#fff;font-weight:700"><td colspan="2" style="padding:5px 8px">TOTALES</td><td style="text-align:right;padding:5px 8px;font-family:monospace">'+fmt(totD)+'</td><td style="text-align:right;padding:5px 8px;font-family:monospace">'+fmt(totH)+'</td></tr></tfoot></table>'+
+    '<tbody>'+rows+'<tr style="background:#000;color:#fff;font-weight:700"><td colspan="2" style="padding:5px 8px">TOTALES</td><td style="text-align:right;padding:5px 8px;font-family:monospace">'+fmt(totD)+'</td><td style="text-align:right;padding:5px 8px;font-family:monospace">'+fmt(totH)+'</td></tr></tbody>'+
+    '<tfoot><tr><td colspan="4" style="height:13mm;border:none"></td></tr></tfoot></table>'+
     '<div style="margin-top:8px;font-size:11px;font-weight:700;border:1px solid #ddd;background:#F8FAFC;padding:5px 8px;border-radius:4px">'+literal+'</div>'+
     '<div style="margin-top:32px;display:grid;grid-template-columns:1fr 1fr;gap:60px;max-width:460px">'+
       '<div style="text-align:center;border-top:1px solid #000;padding-top:5px;font-size:10px;color:#555">Elaborado por</div>'+
@@ -6693,8 +6696,8 @@ function buildMayorHTML(k,movs,num){
     '</div>'+
     '<div style="font-size:12px;padding:4px 0 8px;border-bottom:1px dashed #ccc;margin-bottom:8px"><strong>CUENTA:</strong> <span style="font-family:monospace">'+k+'</span> — '+acctName(k)+'</div>'+
     '<table style="width:100%;border-collapse:collapse;font-size:11px"><thead><tr style="background:#111;color:#fff"><th style="text-align:left;padding:5px 8px">DESCRIPCIÓN</th><th style="text-align:center;padding:5px 8px">TIPO</th><th style="text-align:right;padding:5px 8px">DEBE</th><th style="text-align:right;padding:5px 8px">HABER</th><th style="text-align:right;padding:5px 8px">SALDO</th></tr></thead>'+
-    '<tbody>'+rows+'</tbody>'+
-    '<tfoot><tr style="background:#000;color:#fff;font-weight:700"><td colspan="2" style="padding:5px 8px">TOTALES</td><td style="text-align:right;padding:5px 8px;font-family:monospace">'+fmt(saldoD)+'</td><td style="text-align:right;padding:5px 8px;font-family:monospace">'+fmt(saldoH)+'</td><td style="text-align:right;padding:5px 8px;font-family:monospace">'+fmt(fin)+'</td></tr></tfoot></table>'+
+    '<tbody>'+rows+'<tr style="background:#000;color:#fff;font-weight:700"><td colspan="2" style="padding:5px 8px">TOTALES</td><td style="text-align:right;padding:5px 8px;font-family:monospace">'+fmt(saldoD)+'</td><td style="text-align:right;padding:5px 8px;font-family:monospace">'+fmt(saldoH)+'</td><td style="text-align:right;padding:5px 8px;font-family:monospace">'+fmt(fin)+'</td></tr></tbody>'+
+    '<tfoot><tr><td colspan="5" style="height:13mm;border:none"></td></tr></tfoot></table>'+
   '</div>';
 }
 function verMayor(k){
