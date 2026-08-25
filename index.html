@@ -186,8 +186,11 @@ body.dark-mode .emp-box{background:#161616!important;color:#E2E8F0!important}
 // VERSIÓN DEL SISTEMA — Única fuente de verdad
 // Al aprobar una versión: subir VERSION y agregar una entrada al inicio de CHANGELOG.
 // ══════════════════════════════════════════════════════════
-const VERSION='V3.30';
+const VERSION='V3.31';
 const CHANGELOG=[
+  {v:'V3.31', fecha:'2026-08-11', cambios:[
+    'Firma del contador: ahora, además del sello al pie de cada hoja, la firma (imagen o sello digital) aparece ENCIMA de la línea del bloque de firmas del Contador en los Estados Financieros — que es donde va la firma. Con la opción "Física" ese espacio queda en blanco para firmar a mano.'
+  ]},
   {v:'V3.30', fecha:'2026-08-11', cambios:[
     'Firma del contador en los PDF: en Configuración de cada cliente se elige el tipo de firma que se muestra al pie de cada hoja: Física (línea para firmar a mano), Sello digital con verificado, Imagen de firma del contador, o Línea compacta "Firmado digitalmente por…". Por defecto es Física; se puede cambiar por empresa en cualquier momento.',
     'Se agregaron los campos Matrícula Profesional del contador y (para la opción Imagen) la carga de un PNG de la firma. Los datos (nombre, C.I., matrícula) salen en el sello.',
@@ -6451,10 +6454,10 @@ function pdfHeader(titulo){
 }
 function pdfFirmas(c){
   var cfg=emp().cfg;
-  function firma(nombre,ci,cargo){return '<div style="text-align:center"><div style="height:50px"></div><div style="border-top:1.5px solid #000000;padding-top:8px"><div style="font-weight:700;font-size:11px;color:#000000">'+nombre+'</div><div style="font-size:10px;color:#555">'+ci+'</div><div style="font-size:10px;color:#555">'+cargo+'</div></div></div>';}
+  function firma(nombre,ci,cargo,sig){return '<div style="text-align:center"><div style="height:50px;display:flex;align-items:flex-end;justify-content:center;padding-bottom:2px">'+(sig||'')+'</div><div style="border-top:1.5px solid #000000;padding-top:8px"><div style="font-weight:700;font-size:11px;color:#000000">'+nombre+'</div><div style="font-size:10px;color:#555">'+ci+'</div><div style="font-size:10px;color:#555">'+cargo+'</div></div></div>';}
   var repNom=cfg.repLegal||cfg.razonSocial;
   var repDoc=cfg.repLegal?('C.I.: '+(cfg.ci||'—')):('NIT: '+cfg.nit);
-  return '<div style="margin-top:50px;page-break-inside:avoid"><div style="display:grid;grid-template-columns:1fr 1fr;gap:80px;max-width:500px;margin:0 auto">'+firma(repNom,repDoc,'Representante Legal')+firma(cfg.contadorNombre,'C.I.: '+cfg.contadorCI,'Contador — CONTAX')+'</div></div>';
+  return '<div style="margin-top:50px;page-break-inside:avoid"><div style="display:grid;grid-template-columns:1fr 1fr;gap:80px;max-width:500px;margin:0 auto">'+firma(repNom,repDoc,'Representante Legal','')+firma(cfg.contadorNombre,'C.I.: '+cfg.contadorCI,'Contador — CONTAX',firmaBloqueHTML())+'</div></div>';
 }
 function pdfBG(c){
   var cfg=emp().cfg;var M=c.M;var gs=c.gs;
@@ -6618,6 +6621,15 @@ function firmaFooterHTML(){
   if(t==='check')return '<div style="border:1px solid #1D9E75;border-radius:4px;padding:1.5mm 2mm;display:flex;gap:4px;align-items:center;background:#E1F5EE">'+chk+'<div style="line-height:1.12"><div style="font-size:6px;color:#0F6E56">Firmado digitalmente por</div><div style="font-size:8px;font-weight:700;color:#04342C">'+nom+'</div><div style="font-size:6px;color:#0F6E56">'+datos+'</div></div></div>';
   if(t==='imagen')return '<div style="text-align:center;line-height:1.12">'+(cfg.firmaImg?'<img src="'+cfg.firmaImg+'" style="height:14px;width:auto;display:block;margin:0 auto"/>':'')+'<div style="font-size:8px;font-weight:700">'+nom+'</div><div style="font-size:6px;color:#555">'+datos+'</div></div>';
   return '<div style="display:flex;gap:4px;align-items:center">'+chk+'<span style="font-size:7px;color:#333">Firmado digitalmente por <strong>'+nom+'</strong> · '+datos+'</span></div>';
+}
+// Sello de firma para el bloque de firmas (encima de la línea)
+function firmaBloqueHTML(){
+  var cfg=emp().cfg;var t=cfg.firmaTipo||'fisica';var nom=(cfg.contadorNombre||'').trim();
+  if(t==='fisica'||!nom)return '';
+  if(t==='imagen')return cfg.firmaImg?'<img src="'+cfg.firmaImg+'" style="height:44px;width:auto;max-width:190px"/>':'';
+  var chk='<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#0F6E56" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M8 12l2.5 2.5L16 9"/></svg>';
+  if(t==='check')return '<div style="display:inline-flex;gap:5px;align-items:center;border:1px solid #1D9E75;border-radius:5px;padding:3px 9px;background:#E1F5EE">'+chk+'<div style="text-align:left;line-height:1.15"><div style="font-size:8px;color:#0F6E56">Firmado digitalmente</div><div style="font-size:10px;font-weight:700;color:#04342C">'+nom+'</div></div></div>';
+  return '<div style="display:inline-flex;gap:5px;align-items:center">'+chk+'<span style="font-size:10px;color:#333">Firmado digitalmente</span></div>';
 }
 function buildPrintDocument(sections){
   var appCss='';try{var st=document.querySelector('style');if(st)appCss=st.textContent;}catch(e){}
