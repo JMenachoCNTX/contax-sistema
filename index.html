@@ -186,8 +186,13 @@ body.dark-mode .emp-box{background:#161616!important;color:#E2E8F0!important}
 // VERSIÓN DEL SISTEMA — Única fuente de verdad
 // Al aprobar una versión: subir VERSION y agregar una entrada al inicio de CHANGELOG.
 // ══════════════════════════════════════════════════════════
-const VERSION='V3.32';
+const VERSION='V3.33';
 const CHANGELOG=[
+  {v:'V3.33', fecha:'2026-08-11', cambios:[
+    'Balance de Apertura: nuevo reporte que se genera automáticamente desde el "Asiento de Apertura", agrupado por Activo Corriente / No Corriente (Disponibles, Bienes de Cambio, Bienes de Uso…), Pasivo y Patrimonio. Se descarga en PDF y Excel desde el botón "Exportar".',
+    'Configuración: nuevo campo "Tipo de Empresa" (Unipersonal / S.R.L. / S.A.). Define el firmante del Balance de Apertura (Propietario o Representante Legal) y el desglose de socios.',
+    'Asiento de Apertura: para S.R.L. / S.A. se agregó una sección de "Socios y aportes de capital"; el Balance de Apertura muestra "Capital Limitado" con el desglose de cada socio, y avisa si la suma no coincide con el Capital.'
+  ]},
   {v:'V3.32', fecha:'2026-08-11', cambios:[
     'Compensaciones: corregido el problema de que no se guardaban los datos. Antes se almacenaban en una clave aparte que la sincronización en la nube podía sobrescribir; ahora se guardan dentro del objeto de cada empresa y se sincronizan de forma atómica con el resto de sus datos. Los datos existentes se migran automáticamente.'
   ]},
@@ -1360,8 +1365,8 @@ const DEF_TR={caja:0,banco:0,cfIva:0,iueComp:0,vehiculo:0,depVehiculo:0,muebles:
 const ACCT_HIER={"111001001": {"C": 1, "G": 1, "SG": 1, "CP": "001", "CA": "001"}, "111002001": {"C": 1, "G": 1, "SG": 1, "CP": "002", "CA": "001"}, "116001001": {"C": 1, "G": 1, "SG": 6, "CP": "001", "CA": "001"}, "116006001": {"C": 1, "G": 1, "SG": 6, "CP": "006", "CA": "001"}, "123003001": {"C": 1, "G": 2, "SG": 3, "CP": "003", "CA": "001"}, "123004001": {"C": 1, "G": 2, "SG": 3, "CP": "004", "CA": "001"}, "123006001": {"C": 1, "G": 2, "SG": 3, "CP": "006", "CA": "001"}, "123007001": {"C": 1, "G": 2, "SG": 3, "CP": "007", "CA": "001"}, "123009001": {"C": 1, "G": 2, "SG": 3, "CP": "009", "CA": "001"}, "123010001": {"C": 1, "G": 2, "SG": 3, "CP": "010", "CA": "001"}, "124001001": {"C": 1, "G": 2, "SG": 4, "CP": "001", "CA": "001"}, "124001002": {"C": 1, "G": 2, "SG": 4, "CP": "001", "CA": "002"}, "124001003": {"C": 1, "G": 2, "SG": 4, "CP": "001", "CA": "003"}, "124001004": {"C": 1, "G": 2, "SG": 4, "CP": "001", "CA": "004"}, "124001005": {"C": 1, "G": 2, "SG": 4, "CP": "001", "CA": "005"}, "124001006": {"C": 1, "G": 2, "SG": 4, "CP": "001", "CA": "006"}, "212003001": {"C": 2, "G": 1, "SG": 2, "CP": "003", "CA": "001"}, "214001001": {"C": 2, "G": 1, "SG": 4, "CP": "001", "CA": "001"}, "214004001": {"C": 2, "G": 1, "SG": 4, "CP": "004", "CA": "001"}, "214006001": {"C": 2, "G": 1, "SG": 4, "CP": "006", "CA": "001"}, "214026001": {"C": 2, "G": 1, "SG": 4, "CP": "026", "CA": "001"}, "311001001": {"C": 3, "G": 1, "SG": 1, "CP": "001", "CA": "001"}, "311002001": {"C": 3, "G": 1, "SG": 1, "CP": "002", "CA": "001"}, "313001001": {"C": 3, "G": 1, "SG": 3, "CP": "001", "CA": "001"}, "314001001": {"C": 3, "G": 1, "SG": 4, "CP": "001", "CA": "001"}, "314002001": {"C": 3, "G": 1, "SG": 4, "CP": "002", "CA": "001"}, "411002001": {"C": 4, "G": 1, "SG": 1, "CP": "002", "CA": "001"}, "411002002": {"C": 4, "G": 1, "SG": 1, "CP": "002", "CA": "002"}, "411002003": {"C": 4, "G": 1, "SG": 1, "CP": "002", "CA": "003"}, "411002004": {"C": 4, "G": 1, "SG": 1, "CP": "002", "CA": "004"}, "411009001": {"C": 4, "G": 1, "SG": 1, "CP": "009", "CA": "001"}, "431012001": {"C": 4, "G": 3, "SG": 1, "CP": "012", "CA": "001"}, "441001001": {"C": 4, "G": 4, "SG": 1, "CP": "001", "CA": "001"}, "441002001": {"C": 4, "G": 4, "SG": 1, "CP": "002", "CA": "001"}, "441004001": {"C": 4, "G": 4, "SG": 1, "CP": "004", "CA": "001"}, "522001001": {"C": 5, "G": 2, "SG": 2, "CP": "001", "CA": "001"}, "522002001": {"C": 5, "G": 2, "SG": 2, "CP": "002", "CA": "001"}, "522003001": {"C": 5, "G": 2, "SG": 2, "CP": "003", "CA": "001"}, "522003002": {"C": 5, "G": 2, "SG": 2, "CP": "003", "CA": "002"}, "522005001": {"C": 5, "G": 2, "SG": 2, "CP": "005", "CA": "001"}, "522005002": {"C": 5, "G": 2, "SG": 2, "CP": "005", "CA": "002"}, "522005003": {"C": 5, "G": 2, "SG": 2, "CP": "005", "CA": "003"}, "522005004": {"C": 5, "G": 2, "SG": 2, "CP": "005", "CA": "004"}, "522005005": {"C": 5, "G": 2, "SG": 2, "CP": "005", "CA": "005"}, "522006001": {"C": 5, "G": 2, "SG": 2, "CP": "006", "CA": "001"}, "522008001": {"C": 5, "G": 2, "SG": 2, "CP": "008", "CA": "001"}, "522008002": {"C": 5, "G": 2, "SG": 2, "CP": "008", "CA": "002"}, "522009001": {"C": 5, "G": 2, "SG": 2, "CP": "009", "CA": "001"}, "522009002": {"C": 5, "G": 2, "SG": 2, "CP": "009", "CA": "002"}, "522011001": {"C": 5, "G": 2, "SG": 2, "CP": "011", "CA": "001"}, "522017001": {"C": 5, "G": 2, "SG": 2, "CP": "017", "CA": "001"}, "522018001": {"C": 5, "G": 2, "SG": 2, "CP": "018", "CA": "001"}, "522022001": {"C": 5, "G": 2, "SG": 2, "CP": "022", "CA": "001"}, "522023001": {"C": 5, "G": 2, "SG": 2, "CP": "023", "CA": "001"}, "522023002": {"C": 5, "G": 2, "SG": 2, "CP": "023", "CA": "002"}, "522023003": {"C": 5, "G": 2, "SG": 2, "CP": "023", "CA": "003"}, "522029001": {"C": 5, "G": 2, "SG": 2, "CP": "029", "CA": "001"}, "523002001": {"C": 5, "G": 2, "SG": 3, "CP": "002", "CA": "001"}, "523003001": {"C": 5, "G": 2, "SG": 3, "CP": "003", "CA": "001"}, "523005001": {"C": 5, "G": 2, "SG": 3, "CP": "005", "CA": "001"}, "524001001": {"C": 5, "G": 2, "SG": 4, "CP": "001", "CA": "001"}, "524001002": {"C": 5, "G": 2, "SG": 4, "CP": "001", "CA": "002"}, "524001003": {"C": 5, "G": 2, "SG": 4, "CP": "001", "CA": "003"}, "524001004": {"C": 5, "G": 2, "SG": 4, "CP": "001", "CA": "004"}, "524001005": {"C": 5, "G": 2, "SG": 4, "CP": "001", "CA": "005"}, "524001006": {"C": 5, "G": 2, "SG": 4, "CP": "001", "CA": "006"}, "525001001": {"C": 5, "G": 2, "SG": 5, "CP": "001", "CA": "001"}, "525002001": {"C": 5, "G": 2, "SG": 5, "CP": "002", "CA": "001"}, "525003001": {"C": 5, "G": 2, "SG": 5, "CP": "003", "CA": "001"}, "525004001": {"C": 5, "G": 2, "SG": 5, "CP": "004", "CA": "001"}, "525019001": {"C": 5, "G": 2, "SG": 5, "CP": "019", "CA": "001"}, "525019002": {"C": 5, "G": 2, "SG": 5, "CP": "019", "CA": "002"}, "526002001": {"C": 5, "G": 2, "SG": 6, "CP": "002", "CA": "001"}, "526002002": {"C": 5, "G": 2, "SG": 6, "CP": "002", "CA": "002"}, "532021001": {"C": 5, "G": 3, "SG": 2, "CP": "021", "CA": "001"}, "533003001": {"C": 5, "G": 3, "SG": 3, "CP": "003", "CA": "001"}, "533004001": {"C": 5, "G": 3, "SG": 3, "CP": "004", "CA": "001"}, "533004002": {"C": 5, "G": 3, "SG": 3, "CP": "004", "CA": "002"}, "534002001": {"C": 5, "G": 3, "SG": 4, "CP": "002", "CA": "001"}, "541002001": {"C": 5, "G": 4, "SG": 1, "CP": "002", "CA": "001"}, "541005001": {"C": 5, "G": 4, "SG": 1, "CP": "005", "CA": "001"}, "551009002": {"C": 5, "G": 5, "SG": 1, "CP": "009", "CA": "002"}, "561001001": {"C": 5, "G": 6, "SG": 1, "CP": "001", "CA": "001"}, "561004001": {"C": 5, "G": 6, "SG": 1, "CP": "004", "CA": "001"}};
 
 function newEmp(id){
-  return{id,cfg:{razonSocial:'',repLegal:'',ci:'',nit:'',actividad:'',gestion:'2025',fechaInicio:'2025-01-01',fechaFin:'2025-12-31',ciudad:'SANTA CRUZ DE LA SIERRA',ufvInicio:'',ufvFin:'',contadorNombre:'',contadorCI:'',contadorMat:'',firmaTipo:'fisica',firmaImg:'',gasNoDed:'0',perdNComp:'0'},
-    traspaso:{...DEF_TR},rcvTxt:'',rcvData:[],rcvOverrides:{},extraApertura:[],ventasData:[],ventasOverrides:{},ingresos:[{mes:1,cuenta:'411002004',monto:''}],
+  return{id,cfg:{razonSocial:'',repLegal:'',ci:'',nit:'',actividad:'',tipoEmpresa:'unipersonal',gestion:'2025',fechaInicio:'2025-01-01',fechaFin:'2025-12-31',ciudad:'SANTA CRUZ DE LA SIERRA',ufvInicio:'',ufvFin:'',contadorNombre:'',contadorCI:'',contadorMat:'',firmaTipo:'fisica',firmaImg:'',gasNoDed:'0',perdNComp:'0'},
+    socios:[],traspaso:{...DEF_TR},rcvTxt:'',rcvData:[],rcvOverrides:{},extraApertura:[],ventasData:[],ventasOverrides:{},ingresos:[{mes:1,cuenta:'411002004',monto:''}],
     activos:[],otrosAsientos:JSON.parse(JSON.stringify(DEF_OA)),updatedAt:new Date().toISOString()};
 }
 
@@ -1904,8 +1909,11 @@ function renderConfig(c){
       '<div><label>Representante Legal</label><input type="text" value="'+(cfg.repLegal||'').replace(/"/g,'&quot;')+'" onblur="emp().cfg.repLegal=this.value;saveLS()" placeholder="Nombre completo (firmante en EEFF)" style="'+FIELD_ST+'"/></div>'+
       '<div><label>C.I. Representante Legal</label><input type="text" value="'+(cfg.ci||'')+'" onblur="emp().cfg.ci=this.value;saveLS()" style="'+FIELD_ST+'"/></div>'+
     '</div>'+
-    // Row 4: Ciudad
-    '<div style="margin-bottom:8px"><label>Ciudad</label><input type="text" value="'+(cfg.ciudad||'SANTA CRUZ DE LA SIERRA').replace(/"/g,'&quot;')+'" onblur="emp().cfg.ciudad=this.value;saveLS()" style="'+FIELD_ST+'"/></div>'+
+    // Row 4: Ciudad + Tipo de empresa
+    (function(){var te=cfg.tipoEmpresa||'unipersonal';var opt=function(v,l){return '<option value="'+v+'"'+(te===v?' selected':'')+'>'+l+'</option>';};return '<div style="'+COL2+'">'+
+      '<div><label>Ciudad</label><input type="text" value="'+(cfg.ciudad||'SANTA CRUZ DE LA SIERRA').replace(/"/g,'&quot;')+'" onblur="emp().cfg.ciudad=this.value;saveLS()" style="'+FIELD_ST+'"/></div>'+
+      '<div><label>Tipo de Empresa</label><select onchange="emp().cfg.tipoEmpresa=this.value;saveLS();re()" style="'+FIELD_ST+'">'+opt('unipersonal','Empresa Unipersonal')+opt('srl','S.R.L. (Sociedad de Resp. Ltda.)')+opt('sa','S.A. (Sociedad Anónima)')+'</select><div class="nota" style="font-size:10px">Define el firmante (Propietario / Representante Legal) y el desglose de socios en el Balance de Apertura.</div></div>'+
+    '</div>';})()+
     '<div class="sep"></div><div class="h3"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-0.14em;margin-right:5px"><rect x="4" y="5" width="16" height="16" rx="2"/><path d="M4 9h16M8 3v4M16 3v4"/></svg>Período</div>'+
     // Row 4: Período
     '<div style="'+COL3+'">'+
@@ -2052,6 +2060,19 @@ function renderApertura(){
           '<td><button class="btn-del" style="font-size:10px;padding:3px 6px" onclick="emp().extraApertura.splice('+i+',1);saveLS();re()">x</button></td></tr>';
       }).join('')+'</tbody></table></div>')+
     '<div class="info ib" style="margin-top:6px;font-size:11px">Los saldos aqui se incluyen en el Asiento de Apertura y en el Balance General.</div>'+
+    ((emp().cfg.tipoEmpresa==='srl'||emp().cfg.tipoEmpresa==='sa')?(function(){
+      var socios=emp().socios||[];var sumS=r2(socios.reduce(function(s,x){return r2(s+pn(x.aporte));},0));var cap=r2(pn(tr.capitalSocial));var difS=r2(sumS-cap);
+      return '<div class="sep"></div><div class="h3" style="display:flex;justify-content:space-between;align-items:center"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-0.14em;margin-right:5px"><circle cx="9" cy="8" r="3"/><path d="M3 20a6 6 0 0112 0"/><path d="M16 6a3 3 0 010 6M22 20a6 6 0 00-4-5.6"/></svg>Socios y aportes de capital'+
+        '<button class="btn-blue" style="font-size:10px;padding:4px 10px" onclick="addSocio()">+ Agregar socio</button></div>'+
+        (socios.length===0?'<div class="nota">Agrega cada socio con su aporte. La suma debe coincidir con el Capital. Aparecen en el Balance de Apertura bajo "Capital Limitado".</div>':
+        '<div class="tbl-wrap" style="max-height:220px"><table><thead><tr><th>Socio</th><th class="r">Aporte (Bs)</th><th></th></tr></thead><tbody>'+
+        socios.map(function(s,i){return '<tr>'+
+          '<td><input type="text" value="'+(s.nombre||'').replace(/"/g,'&quot;')+'" placeholder="Nombre del socio" onblur="if(emp().socios['+i+'])emp().socios['+i+'].nombre=this.value;saveLS()" style="width:100%;border:1px solid #E2E8F0;border-radius:4px;padding:4px 6px;font-size:11px"/></td>'+
+          '<td class="r"><input type="text" class="n" value="'+(s.aporte?String(s.aporte).replace('.',','):'')+'" onblur="if(emp().socios['+i+'])emp().socios['+i+'].aporte=pn(this.value);saveLS();re()" style="width:120px;background:#FFFDE7;border:1px solid #F9A825;border-radius:4px;padding:4px 6px;font-size:11px;text-align:right"/></td>'+
+          '<td><button class="btn-del" style="font-size:10px;padding:3px 6px" onclick="emp().socios.splice('+i+',1);saveLS();re()">x</button></td></tr>';}).join('')+
+        '</tbody></table></div>'+
+        '<div class="info '+(difS===0?'ig':'ir')+'" style="margin-top:6px;font-size:11px">Suma de aportes: <strong>'+fmt(sumS)+'</strong> | Capital: <strong>'+fmt(cap)+'</strong> | '+(difS===0?'<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-0.12em"><path d="M20 6L9 17l-5-5"/></svg> coincide':'<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-0.12em"><path d="M12 2l10 19H2z"/><path d="M12 9v5"/></svg> difieren en '+fmt(difS))+'</div>');
+    })():'')+
     '<div class="sep"></div>'+
     '<div class="info '+(dif===0?'ig':'ir')+'" style="margin-top:10px">'+
     '<strong>Total Activo:</strong> '+fmt(actT)+' | <strong>Pasivo:</strong> '+fmt(pasT)+' | <strong>Patrimonio:</strong> '+fmt(patT)+' | <strong>Diferencia: '+fmt(dif)+' '+(dif===0?'<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-0.12em"><path d="M20 6L9 17l-5-5"/></svg> CUADRADO':'<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-0.12em"><path d="M12 2l10 19H2z"/><path d="M12 9v5M12 18h.01"/></svg> DESCUADRADO')+'</strong></div>'+
@@ -2059,6 +2080,7 @@ function renderApertura(){
 }
 
 
+function addSocio(){var e=emp();if(!Array.isArray(e.socios))e.socios=[];e.socios.push({nombre:'',aporte:''});saveLS();re();}
 // RCV filter state
 var _rcvFilter='';
 var _venFilter='';
@@ -6825,6 +6847,81 @@ function imprimirLibroDiario(tipo){
   var win=window.open('','_blank','width=900,height=760');if(!win){alert('Permite ventanas emergentes para descargar el PDF.');return;}
   win.document.write(doc);win.document.close();win.onload=function(){win.document.title='LibroDiario-'+etq+'-'+nombre;win.print();};
 }
+// ═══ BALANCE DE APERTURA ═════════════════════════════════
+function fechaLarga(iso){var M=['ENERO','FEBRERO','MARZO','ABRIL','MAYO','JUNIO','JULIO','AGOSTO','SEPTIEMBRE','OCTUBRE','NOVIEMBRE','DICIEMBRE'];var p=String(iso||'').split('-');if(p.length!==3)return String(iso||'');return ('0'+parseInt(p[2],10)).slice(-2)+' DE '+(M[parseInt(p[1],10)-1]||'')+' DE '+p[0];}
+function aptSub(k){var p3=k.slice(0,3);if(p3==='111')return 'Disponibles';if(p3==='112')return 'Inversiones Temporales';if(p3==='113')return 'Cuentas por Cobrar';if(p3==='114')return 'Bienes de Cambio';if(k.slice(0,2)==='11')return 'Créditos Fiscales';if(k.slice(0,2)==='12')return 'Bienes de Uso';return 'Otros Activos';}
+function aperturaBalanceData(){
+  var E=genEntries();var ape=E.find(function(x){return x.id==='APE';});var lines=(ape&&ape.lines)||[];
+  var net={};lines.forEach(function(l){if(!l.c)return;net[l.c]=r2((net[l.c]||0)+(l.d||0)-(l.h||0));});
+  var AC={},ANC={},PAS={},PAT=[];var tAC=0,tANC=0,tPAS=0,tPAT=0;
+  Object.keys(net).sort().forEach(function(k){var v=net[k];if(r2(v)===0)return;var t=acctTipo(k);
+    if(t==='A'){var val=r2(v);var sub=aptSub(k);if(k.slice(0,2)==='12'){(ANC[sub]=ANC[sub]||[]).push({c:k,v:val});tANC=r2(tANC+val);}else{(AC[sub]=AC[sub]||[]).push({c:k,v:val});tAC=r2(tAC+val);}}
+    else if(t==='P'){var pv=r2(-v);(PAS['Pasivo Corriente']=PAS['Pasivo Corriente']||[]).push({c:k,v:pv});tPAS=r2(tPAS+pv);}
+    else if(t==='PT'){var ptv=r2(-v);PAT.push({c:k,v:ptv});tPAT=r2(tPAT+ptv);}
+  });
+  return {AC:AC,ANC:ANC,PAS:PAS,PAT:PAT,tAC:tAC,tANC:tANC,tPAS:tPAS,tPAT:tPAT,tA:r2(tAC+tANC)};
+}
+function pdfBalanceApertura(){
+  var cfg=emp().cfg;var d=aperturaBalanceData();var te=cfg.tipoEmpresa||'unipersonal';
+  var capLabel=te==='srl'?'Capital Limitado':(te==='sa'?'Capital Social':'Capital');
+  var firmante=te==='unipersonal'?'PROPIETARIO':'REPRESENTANTE LEGAL';
+  var ciudad=(cfg.ciudad||'').trim();var ciudadTxt=(ciudad?ciudad:'')+' - BOLIVIA';
+  function R(con,det,tot,o){o=o||{};var pl=o.indent||0;return '<tr>'+
+    '<td style="padding:2px 4px 2px '+(4+pl*14)+'px;'+(o.bold?'font-weight:700':'')+';'+(o.ul?'text-decoration:underline':'')+';font-size:11px;white-space:nowrap">'+con+'</td>'+
+    '<td style="padding:2px 10px;text-align:right;font-family:monospace;font-size:11px;'+(o.detUl?'border-top:1px solid #000':'')+'">'+(det!=null?fmt(det):'')+'</td>'+
+    '<td style="padding:2px 4px;text-align:right;font-family:monospace;font-size:11px;font-weight:'+(o.bold?'700':'400')+';'+(o.totUl?'border-top:1px solid #000':'')+'">'+(tot!=null?fmt(tot):'')+'</td>'+
+  '</tr>';}
+  var rows='';
+  rows+=R('ACTIVO',null,null,{bold:true,ul:true});
+  rows+=R('ACTIVO CORRIENTE',null,null,{bold:true,ul:true});
+  Object.keys(d.AC).forEach(function(sg){rows+=R(sg,null,null,{bold:true,ul:true,indent:0});d.AC[sg].forEach(function(a){rows+=R(acctName(a.c),a.v,null,{});});});
+  rows+=R('TOTAL ACTIVO CORRIENTE',null,d.tAC,{bold:true,ul:true,totUl:true});
+  if(Object.keys(d.ANC).length){rows+=R('&nbsp;',null,null,{});rows+=R('ACTIVO NO CORRIENTE',null,null,{bold:true,ul:true});
+    Object.keys(d.ANC).forEach(function(sg){rows+=R(sg,null,null,{bold:true,ul:true});d.ANC[sg].forEach(function(a){rows+=R(acctName(a.c),a.v,null,{});});});
+    rows+=R('TOTAL ACTIVO NO CORRIENTE',null,d.tANC,{bold:true,ul:true,totUl:true});}
+  rows+=R('TOTAL ACTIVO',null,d.tA,{bold:true,ul:true,totUl:true});
+  rows+=R('&nbsp;',null,null,{});
+  if(d.tPAS!==0){rows+=R('PASIVO',null,null,{bold:true,ul:true});Object.keys(d.PAS).forEach(function(sg){rows+=R(sg.toUpperCase(),null,null,{bold:true,ul:true});d.PAS[sg].forEach(function(a){rows+=R(acctName(a.c),a.v,null,{});});});rows+=R('TOTAL PASIVO',null,d.tPAS,{bold:true,ul:true,totUl:true});rows+=R('&nbsp;',null,null,{});}
+  rows+=R('PATRIMONIO',null,null,{bold:true,ul:true});
+  rows+=R('Capital',null,null,{bold:true,ul:true});
+  d.PAT.forEach(function(a){var nm=(a.c==='311001001')?capLabel:acctName(a.c);rows+=R(nm,a.v,null,{});
+    if(a.c==='311001001'&&(te==='srl'||te==='sa')){(emp().socios||[]).forEach(function(s){if(!(s.nombre||pn(s.aporte)))return;rows+=R(s.nombre||'Socio',pn(s.aporte),null,{indent:1});});}});
+  rows+=R('TOTAL PATRIMONIO',null,d.tPAT,{bold:true,ul:true,totUl:true});
+  rows+=R('TOTAL PASIVO Y PATRIMONIO',null,r2(d.tPAS+d.tPAT),{bold:true,ul:true,totUl:true});
+  var firmas='<div style="margin-top:60px;display:grid;grid-template-columns:1fr 1fr;gap:80px;max-width:520px;margin-left:auto;margin-right:auto">'+
+    '<div style="text-align:center"><div style="height:46px;display:flex;align-items:flex-end;justify-content:center;padding-bottom:2px"></div><div style="border-top:1.5px solid #000;padding-top:6px;font-weight:700;font-size:11px">'+firmante+'</div></div>'+
+    '<div style="text-align:center"><div style="height:46px;display:flex;align-items:flex-end;justify-content:center;padding-bottom:2px">'+firmaBloqueHTML()+'</div><div style="border-top:1.5px solid #000;padding-top:6px;font-weight:700;font-size:11px">CONTADOR</div>'+(cfg.contadorNombre?'<div style="font-size:9px;color:#555">'+cfg.contadorNombre+'</div>':'')+'</div>'+
+  '</div>';
+  return '<div>'+
+    '<div style="font-weight:700;font-size:13px">'+(cfg.razonSocial||'')+'</div><div style="font-size:11px;color:#333">'+ciudadTxt+'</div>'+
+    '<div style="text-align:center;margin:14px 0 4px"><div style="font-weight:700;font-size:18px;text-decoration:underline">BALANCE DE APERTURA</div><div style="font-size:11px;font-weight:700;margin-top:3px">AL '+fechaLarga(cfg.fechaInicio)+'</div><div style="font-size:11px;font-weight:700">(EXPRESADO EN BOLIVIANOS)</div></div>'+
+    '<table style="width:100%;max-width:560px;margin-top:14px;border-collapse:collapse">'+rows+'</table>'+
+    firmas+
+  '</div>';
+}
+function exportBalanceAperturaPDF(){
+  var cfg=emp().cfg;var nombre=(cfg.razonSocial||'Apertura').replace(/[^a-zA-Z0-9]/g,'_').substring(0,24);
+  var doc=buildPrintDocument([pdfBalanceApertura()]);
+  var win=window.open('','_blank','width=900,height=760');if(!win){alert('Permite ventanas emergentes.');return;}
+  win.document.write(doc);win.document.close();win.onload=function(){win.document.title='Balance-Apertura-'+nombre;win.print();};
+}
+function exportBalanceAperturaXL(){
+  var cfg=emp().cfg;var d=aperturaBalanceData();var te=cfg.tipoEmpresa||'unipersonal';
+  var capLabel=te==='srl'?'Capital Limitado':(te==='sa'?'Capital Social':'Capital');
+  var rows=[[cfg.razonSocial||''],[(cfg.ciudad||'')+' - BOLIVIA'],[],['BALANCE DE APERTURA'],['AL '+fechaLarga(cfg.fechaInicio)],['(EXPRESADO EN BOLIVIANOS)'],[],['CONCEPTO','DETALLE','TOTAL'],['ACTIVO']];
+  rows.push(['ACTIVO CORRIENTE']);
+  Object.keys(d.AC).forEach(function(sg){rows.push([sg]);d.AC[sg].forEach(function(a){rows.push(['  '+acctName(a.c),a.v]);});});
+  rows.push(['TOTAL ACTIVO CORRIENTE','',d.tAC]);
+  if(Object.keys(d.ANC).length){rows.push(['ACTIVO NO CORRIENTE']);Object.keys(d.ANC).forEach(function(sg){rows.push([sg]);d.ANC[sg].forEach(function(a){rows.push(['  '+acctName(a.c),a.v]);});});rows.push(['TOTAL ACTIVO NO CORRIENTE','',d.tANC]);}
+  rows.push(['TOTAL ACTIVO','',d.tA],[]);
+  if(d.tPAS!==0){rows.push(['PASIVO']);Object.keys(d.PAS).forEach(function(sg){rows.push([sg.toUpperCase()]);d.PAS[sg].forEach(function(a){rows.push(['  '+acctName(a.c),a.v]);});});rows.push(['TOTAL PASIVO','',d.tPAS],[]);}
+  rows.push(['PATRIMONIO'],['Capital']);
+  d.PAT.forEach(function(a){var nm=(a.c==='311001001')?capLabel:acctName(a.c);rows.push(['  '+nm,a.v]);if(a.c==='311001001'&&(te==='srl'||te==='sa')){(emp().socios||[]).forEach(function(s){if(!(s.nombre||pn(s.aporte)))return;rows.push(['    '+(s.nombre||'Socio'),pn(s.aporte)]);});}});
+  rows.push(['TOTAL PATRIMONIO','',d.tPAT],['TOTAL PASIVO Y PATRIMONIO','',r2(d.tPAS+d.tPAT)]);
+  var wb=XLSX.utils.book_new();var ws=XLSX.utils.aoa_to_sheet(rows);ws['!cols']=[{wch:40},{wch:16},{wch:16}];
+  XLSX.utils.book_append_sheet(wb,ws,'Balance de Apertura');
+  XLSX.writeFile(wb,'Balance_Apertura_'+((cfg.razonSocial||'empresa').replace(/[^a-zA-Z0-9]/g,'_'))+'.xlsx');
+}
 // Página separadora estilo carátula (título centrado entre líneas)
 function pdfDivisor(t,sub){return '<div style="display:flex;align-items:center;justify-content:center;min-height:225mm"><div style="text-align:center;max-width:80%"><div style="font-size:26px;font-weight:700;letter-spacing:.1em;border-top:2px solid #000;border-bottom:2px solid #000;padding:14px 40px">'+t+'</div>'+(sub?'<div style="font-size:12px;color:#555;margin-top:10px">'+sub+'</div>':'')+'</div></div>';}
 function exportPDFCompleto(){
@@ -6965,6 +7062,8 @@ function renderExportModal(){
     {icon:'<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-0.14em;margin-right:4px"><path d="M6 2h8l4 4v16H6z"/><path d="M14 2v4h4M9 12h6M9 16h6"/></svg>',title:'PDF Completo (con carátula)',desc:'Carátula + BG + ER + S&S + Flujo + Patrimonio + AF + Notas. Hoja carta.',file:'EEFF-'+nombre+'-'+year+'.pdf',color:'#DC2626',action:'exportPDFCompleto()'},
     {icon:'<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-0.14em;margin-right:4px"><path d="M3 7l6 6 4-4 7 8"/><path d="M17 17h4v-4"/></svg>',title:'PDF Análisis',desc:'Resumen Tributario + Gráficos + Reporte Ejecutivo',file:'Analisis-'+nombre+'-'+year+'.pdf',color:'#000000',action:'exportPDFAnalisis()'},
     {icon:'<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-0.14em;margin-right:4px"><path d="M4 19.5A2.5 2.5 0 016.5 17H20M4 4.5A2.5 2.5 0 016.5 2H20v20H6.5A2.5 2.5 0 014 19.5z"/></svg>',title:'PDF — Libros y Comprobantes',desc:'Libro Diario + Libros Mayores + Comprobantes (Ingreso, Egreso y Traspaso) en un solo PDF.',file:'Libros-'+nombre+'-'+year+'.pdf',color:'#7C3AED',action:'exportContabilidadCompleta()'},
+    {icon:'<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-0.14em;margin-right:4px"><path d="M6 2h8l4 4v16H6z"/><path d="M9 12h6M9 16h6M9 8h2"/></svg>',title:'PDF — Balance de Apertura',desc:'Balance de Apertura a partir del Asiento de Apertura (Unipersonal o S.R.L./S.A. con socios).',file:'Balance-Apertura-'+nombre+'.pdf',color:'#0891B2',action:'exportBalanceAperturaPDF()'},
+    {icon:'<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-0.14em;margin-right:4px"><path d="M4 20V11M10 20V4M16 20v-7M4 20h16"/></svg>',title:'Excel — Balance de Apertura',desc:'El mismo Balance de Apertura en Excel.',file:'Balance_Apertura_'+nombre+'.xlsx',color:'#059669',action:'exportBalanceAperturaXL()'},
     {icon:'<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-0.14em;margin-right:4px"><path d="M6 2h8l4 4v16H6z"/><path d="M14 2v4h4M9 12h6M9 16h6"/></svg>',title:'PDF — Notas EEFF',desc:'Notas a los Estados Financieros en PDF (hoja carta).',file:'SIAT-EEFF-'+nit+'-'+year+'-12.pdf',color:'#DC2626',action:'exportNotasPDF()'},
     {icon:'<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-0.14em;margin-right:4px"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M14 6l4 4"/></svg>',title:'Word — Notas EEFF',desc:'Notas en formato Word editable',file:'Notas_EEFF_'+nombre+'_'+year+'.doc',color:'#142740',action:'exportNotasWord()'},
     {icon:'<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-0.14em;margin-right:4px"><path d="M5 3h11l3 3v15H5z"/><path d="M8 3v6h7M8 21v-6h8v6"/></svg>',title:'Respaldo completo (JSON)',desc:'TODOS los datos del sistema. Guárdalo como copia de seguridad o para pasar a otro equipo.',file:'CONTAX_respaldo_'+VERSION+'.json',color:'#2B2B2B',action:'exportBackup()'},
