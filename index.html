@@ -186,8 +186,11 @@ body.dark-mode .emp-box{background:#161616!important;color:#E2E8F0!important}
 // VERSIÓN DEL SISTEMA — Única fuente de verdad
 // Al aprobar una versión: subir VERSION y agregar una entrada al inicio de CHANGELOG.
 // ══════════════════════════════════════════════════════════
-const VERSION='V3.33';
+const VERSION='V3.34';
 const CHANGELOG=[
+  {v:'V3.34', fecha:'2026-08-11', cambios:[
+    'Balance de Apertura: se agregó el NIT debajo de la razón social. En la firma, ahora aparece el nombre del Representante Legal (o del propietario/razón social en empresas unipersonales) y su C.I. debajo del nombre. El bloque del Contador también muestra su C.I.'
+  ]},
   {v:'V3.33', fecha:'2026-08-11', cambios:[
     'Balance de Apertura: nuevo reporte que se genera automáticamente desde el "Asiento de Apertura", agrupado por Activo Corriente / No Corriente (Disponibles, Bienes de Cambio, Bienes de Uso…), Pasivo y Patrimonio. Se descarga en PDF y Excel desde el botón "Exportar".',
     'Configuración: nuevo campo "Tipo de Empresa" (Unipersonal / S.R.L. / S.A.). Define el firmante del Balance de Apertura (Propietario o Representante Legal) y el desglose de socios.',
@@ -6888,12 +6891,20 @@ function pdfBalanceApertura(){
     if(a.c==='311001001'&&(te==='srl'||te==='sa')){(emp().socios||[]).forEach(function(s){if(!(s.nombre||pn(s.aporte)))return;rows+=R(s.nombre||'Socio',pn(s.aporte),null,{indent:1});});}});
   rows+=R('TOTAL PATRIMONIO',null,d.tPAT,{bold:true,ul:true,totUl:true});
   rows+=R('TOTAL PASIVO Y PATRIMONIO',null,r2(d.tPAS+d.tPAT),{bold:true,ul:true,totUl:true});
+  var firmanteNom=(te==='unipersonal')?(cfg.razonSocial||''):(cfg.repLegal||cfg.razonSocial||'');
+  var firmanteCI=(cfg.ci||'').trim();
   var firmas='<div style="margin-top:60px;display:grid;grid-template-columns:1fr 1fr;gap:80px;max-width:520px;margin-left:auto;margin-right:auto">'+
-    '<div style="text-align:center"><div style="height:46px;display:flex;align-items:flex-end;justify-content:center;padding-bottom:2px"></div><div style="border-top:1.5px solid #000;padding-top:6px;font-weight:700;font-size:11px">'+firmante+'</div></div>'+
-    '<div style="text-align:center"><div style="height:46px;display:flex;align-items:flex-end;justify-content:center;padding-bottom:2px">'+firmaBloqueHTML()+'</div><div style="border-top:1.5px solid #000;padding-top:6px;font-weight:700;font-size:11px">CONTADOR</div>'+(cfg.contadorNombre?'<div style="font-size:9px;color:#555">'+cfg.contadorNombre+'</div>':'')+'</div>'+
+    '<div style="text-align:center"><div style="height:46px;display:flex;align-items:flex-end;justify-content:center;padding-bottom:2px"></div><div style="border-top:1.5px solid #000;padding-top:6px">'+
+      (firmanteNom?'<div style="font-weight:700;font-size:11px">'+firmanteNom+'</div>':'')+
+      (firmanteCI?'<div style="font-size:10px;color:#555">C.I.: '+firmanteCI+'</div>':'')+
+      '<div style="font-size:10px;color:#555">'+firmante+'</div></div></div>'+
+    '<div style="text-align:center"><div style="height:46px;display:flex;align-items:flex-end;justify-content:center;padding-bottom:2px">'+firmaBloqueHTML()+'</div><div style="border-top:1.5px solid #000;padding-top:6px">'+
+      (cfg.contadorNombre?'<div style="font-weight:700;font-size:11px">'+cfg.contadorNombre+'</div>':'')+
+      (cfg.contadorCI?'<div style="font-size:10px;color:#555">C.I.: '+cfg.contadorCI+'</div>':'')+
+      '<div style="font-size:10px;color:#555">CONTADOR</div></div></div>'+
   '</div>';
   return '<div>'+
-    '<div style="font-weight:700;font-size:13px">'+(cfg.razonSocial||'')+'</div><div style="font-size:11px;color:#333">'+ciudadTxt+'</div>'+
+    '<div style="font-weight:700;font-size:13px">'+(cfg.razonSocial||'')+'</div><div style="font-size:11px;color:#333">NIT: '+(cfg.nit||'—')+'</div><div style="font-size:11px;color:#333">'+ciudadTxt+'</div>'+
     '<div style="text-align:center;margin:14px 0 4px"><div style="font-weight:700;font-size:18px;text-decoration:underline">BALANCE DE APERTURA</div><div style="font-size:11px;font-weight:700;margin-top:3px">AL '+fechaLarga(cfg.fechaInicio)+'</div><div style="font-size:11px;font-weight:700">(EXPRESADO EN BOLIVIANOS)</div></div>'+
     '<table style="width:100%;max-width:560px;margin-top:14px;border-collapse:collapse">'+rows+'</table>'+
     firmas+
@@ -6908,7 +6919,7 @@ function exportBalanceAperturaPDF(){
 function exportBalanceAperturaXL(){
   var cfg=emp().cfg;var d=aperturaBalanceData();var te=cfg.tipoEmpresa||'unipersonal';
   var capLabel=te==='srl'?'Capital Limitado':(te==='sa'?'Capital Social':'Capital');
-  var rows=[[cfg.razonSocial||''],[(cfg.ciudad||'')+' - BOLIVIA'],[],['BALANCE DE APERTURA'],['AL '+fechaLarga(cfg.fechaInicio)],['(EXPRESADO EN BOLIVIANOS)'],[],['CONCEPTO','DETALLE','TOTAL'],['ACTIVO']];
+  var rows=[[cfg.razonSocial||''],['NIT: '+(cfg.nit||'—')],[(cfg.ciudad||'')+' - BOLIVIA'],[],['BALANCE DE APERTURA'],['AL '+fechaLarga(cfg.fechaInicio)],['(EXPRESADO EN BOLIVIANOS)'],[],['CONCEPTO','DETALLE','TOTAL'],['ACTIVO']];
   rows.push(['ACTIVO CORRIENTE']);
   Object.keys(d.AC).forEach(function(sg){rows.push([sg]);d.AC[sg].forEach(function(a){rows.push(['  '+acctName(a.c),a.v]);});});
   rows.push(['TOTAL ACTIVO CORRIENTE','',d.tAC]);
